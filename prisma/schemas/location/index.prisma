@@ -1,0 +1,10 @@
+model Location {
+    id          Int           @id @default(autoincrement())
+    latitude    Float
+    longitude   Float
+    user        User?         @relation
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+
+    @@schema("public")
+}

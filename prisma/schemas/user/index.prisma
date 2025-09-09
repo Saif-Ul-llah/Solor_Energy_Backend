@@ -1,0 +1,46 @@
+model User {
+    id               String            @id @default(uuid())
+    email            String            @unique
+    password         String?
+    phoneNumber      String?
+    isGoogleLogin    Boolean           @default(false)
+    role             Role
+    IsActive         Boolean           @default(false)
+    createdAt        DateTime          @default(now())
+    locationId       Int?              @unique
+    location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    address          String?
+    fcmToken         String?
+    StripeCustomerId String?
+    verification     UserVerification?
+
+    @@schema("user")
+}
+
+model UserVerification {
+    id                Int                @id @default(autoincrement())
+    userId            String             @unique
+    resetOtp          Int?
+    resetOtpExpiresAt DateTime?
+    isEmailVerified   VerificationStatus @default(NOT_VERIFIED)
+    user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@schema("user")
+}
+
+enum Role {
+    ADMIN
+    SUB_ADMIN
+    DISTRIBUTOR
+    INSTALLER
+    CUSTOMER
+
+    @@schema("user")
+}
+
+enum VerificationStatus {
+    VERIFIED
+    NOT_VERIFIED
+
+    @@schema("user")
+}
