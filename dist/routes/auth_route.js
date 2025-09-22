@@ -1,0 +1,15 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.authRouter = void 0;
+const express_1 = require("express");
+const imports_1 = require("../imports");
+const router = (0, express_1.Router)();
+exports.authRouter = router;
+router.post("/login", imports_1.login);
+router.post("/apple-login", imports_1.appleLogin);
+router.post("/google-login", imports_1.googleLogin);
+router.post("/register", imports_1.register);
+router.post("/forgot-password", imports_1.forgotPassword);
+router.post("/verify-otp", imports_1.verifyOTP);
+router.post("/reset-password", imports_1.checkToken, imports_1.resetPassword);
+router.post("/change-password", imports_1.checkToken, imports_1.changePassword);

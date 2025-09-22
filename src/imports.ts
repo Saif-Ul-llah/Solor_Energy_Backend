@@ -9,4 +9,4 @@ export * from "./utils/index";
 export * from "./modules/index";
 export * from "./routes/index";
 export * from "./services/index";
-
+export * from "./modules/auth/auth_route"

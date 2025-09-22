@@ -3,23 +3,25 @@ import {
   changePassword,
   checkToken,
   forgotPassword,
-  register,
+  
   resetPassword,
   verifyOTP,
-  login,
+  // login,
   googleLogin,
   appleLogin,
-} from "../imports";
+
+} from "../../imports";
+import AuthController from "./auth_controller";
 
 const router = Router();
 
-router.post("/login", login);
+router.post("/login", AuthController.login);
 router.post("/apple-login", appleLogin);
 router.post("/google-login", googleLogin);
-router.post("/register", register);
+router.post("/register", AuthController.register);
 router.post("/forgot-password", forgotPassword);
 router.post("/verify-otp", verifyOTP);
 router.post("/reset-password", checkToken, resetPassword);
 router.post("/change-password", checkToken, changePassword);
 
-export { router as authRouter };
+export default router;

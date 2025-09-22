@@ -1,4 +1,4 @@
-import { appConfig, authRouter, errorHandler, Server } from "./imports";
+import { appConfig, allRoutes, errorHandler, Server } from "./imports";
 import { createServer } from "http";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
@@ -26,7 +26,7 @@ app.use("/", (req: Request, res: Response, next: NextFunction) => {
   next();
 });
 
-app.use("/api/auth", authRouter);
+app.use("/api", allRoutes);
 
 app.use(errorHandler);
 
