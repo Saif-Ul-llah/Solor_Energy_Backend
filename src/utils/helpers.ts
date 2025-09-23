@@ -16,7 +16,7 @@ export async function encryptpass(password: string): Promise<string> {
   return hashPassword;
 }
 
-export async function comparepassword(
+export async function comparePassword(
   password: string,
   hashPassword: string | null
 ): Promise<boolean> {
