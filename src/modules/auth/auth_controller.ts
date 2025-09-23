@@ -5,7 +5,7 @@ import {
   Response,
   prisma,
   generateOTP,
-  comparepassword,
+  comparePassword,
   generateToken,
   appConfig,
   sendResponse,
@@ -76,7 +76,7 @@ export default AuthController;
 //     //   if (!user) {
 //     //     return sendResponse(res, 404, "User not found.");
 //     //   }
-//     //   const isPasswordValid = await comparepassword(password, user.password);
+//     //   const isPasswordValid = await comparePassword(password, user.password);
 //     //   if (!isPasswordValid) {
 //     //     return sendResponse(res, 401, "Invalid credentials.");
 //     //   }
@@ -222,7 +222,7 @@ export const changePassword = asyncHandler(
     // if (!user) {
     //   return sendResponse(res, 404, "User not found.");
     // }
-    // const isPasswordValid = await comparepassword(oldPassword, user.password);
+    // const isPasswordValid = await comparePassword(oldPassword, user.password);
     // if (!isPasswordValid) {
     //   return sendResponse(res, 401, "Old password is incorrect.");
     // }
