@@ -8,6 +8,7 @@ interface ApiResponse {
   data: object;
   message: string;
   statusCode: number;
+  status ?: string
 }
 
 export async function encryptpass(password: string): Promise<string> {
@@ -80,75 +81,8 @@ export async function generateOTP() {
   return OTP;
 }
 
-export const calculateDistance = (
-  lat1: number,
-  lon1: number,
-  lat2: number,
-  lon2: number
-) => {
-  const toRadians = (degree: number) => degree * (Math.PI / 180);
-  const R = 6371;
 
-  const dLat = toRadians(lat2 - lat1);
-  const dLon = toRadians(lon2 - lon1);
 
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(lat1)) *
-      Math.cos(toRadians(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-
-  const distance = R * c;
-  return distance;
-};
-
-export class File {
-  public static getFileName = async (file: string) => {
-    const { name, ext } = path.parse(file);
-    const fileName = `${name}${ext}`;
-    return fileName;
-  };
-
-  static getFilePath = async (fileName: string) => {
-    const __dirname = path.dirname(path.dirname(path.dirname(fileName)));
-    const filePath = path.resolve(
-      __dirname,
-      "src",
-      "public",
-      "uploads",
-      "files",
-      fileName
-    );
-    return filePath;
-  };
-
-  public static removeFileFromFs = async (
-    params: string
-  ): Promise<{ status: string; message: string }> => {
-    try {
-      const fileName = await File.getFileName(params);
-      if (!fileName) {
-        throw new Error("File Name is Invalid");
-      }
-
-      const filePath = await File.getFilePath(fileName);
-
-      await fs.promises.access(filePath, fs.constants.F_OK);
-
-      await fs.promises.unlink(filePath);
-
-      return { status: "Success", message: "File deleted successfully" };
-    } catch (err: any) {
-      if (err.code === "ENOENT") {
-        return { status: "error", message: "File not found" };
-      } else {
-        return { status: "error", message: `Error: ${err.message}` };
-      }
-    }
-  };
-}
 
 export function getSignUpHtml(fullName: string, otp: string) {
   return `
