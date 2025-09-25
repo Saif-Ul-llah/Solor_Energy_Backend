@@ -6,7 +6,7 @@
   "main": "app.ts",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start":"node dist/app.js",
+    "start": "node dist/app.js",
     "build": "tsc",
     "dev": "nodemon --watch src --ext ts --exec ts-node src/app.ts",
     "build:schema": "ts-node prisma/build-schema.ts",
@@ -22,6 +22,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
+    "express-validator": "^6.14.1",
     "firebase-admin": "^13.4.0",
     "nodemailer": "^7.0.3",
     "nodemon": "^3.1.10",
