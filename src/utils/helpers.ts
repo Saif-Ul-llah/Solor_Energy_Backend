@@ -1,7 +1,7 @@
 import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
 import path from "path";
-import fs from "fs";
+import fs, { stat } from "fs";
 import { appConfig, Response } from "../imports";
 
 interface ApiResponse {
@@ -11,7 +11,7 @@ interface ApiResponse {
   status ?: string
 }
 
-export async function encryptpass(password: string): Promise<string> {
+export async function encryptPass(password: string): Promise<string> {
   const salt = await bcrypt.genSalt(10);
   const hashPassword = await bcrypt.hash(password, salt);
   return hashPassword;
@@ -37,12 +37,14 @@ export const sendResponse = (
   res: Response,
   statusCode: number,
   message: string,
-  data: object = {}
+  data: object = {},
+  status ?: string
 ) => {
   const response: ApiResponse = {
-    data,
+    status,
     message,
     statusCode,
+    data,
   };
   return res.status(statusCode).json(response);
 };

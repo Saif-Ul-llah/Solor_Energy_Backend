@@ -3,6 +3,6 @@ import authRouter from "../modules/auth/auth_route";
 
 const router = express.Router();
 
-router.use("/auth", authRouter);
+router.use(authRouter);
 
 export { router as allRoutes };
