@@ -3,22 +3,12 @@ import {
   NextFunction,
   Request,
   Response,
-  prisma,
-  generateOTP,
-  comparePassword,
-  generateToken,
-  appConfig,
   sendResponse,
-  transporter,
-  bcrypt,
-  getSignUpHtml,
-  getEmailVerificationHtml,
-  Roles,
   registerValidation,
   HttpError,
   registerInterface,
 } from "../../imports";
-import * as jwt from "jsonwebtoken";
+
 import AuthServices from "./auth_services";
 class AuthController {
   public static register = asyncHandler(
