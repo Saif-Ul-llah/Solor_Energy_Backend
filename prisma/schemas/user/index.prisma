@@ -2,17 +2,20 @@ model User {
     id               String            @id @default(uuid())
     email            String            @unique
     password         String?
-    phoneNumber      String?
+    phoneNumber      String
     isGoogleLogin    Boolean           @default(false)
     role             Role
-    IsActive         Boolean           @default(false)
+    IsActive         Boolean           @default(true)
     createdAt        DateTime          @default(now())
     locationId       Int?              @unique
     location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    memberId         String?
+    memberPassword   String?
+    fullName         String
     address          String?
     fcmToken         String?
     StripeCustomerId String?
-    verification     UserVerification?
+ 
 
     @@schema("user")
 }

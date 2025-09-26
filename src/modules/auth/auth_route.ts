@@ -1,7 +1,5 @@
 import { Router } from "express";
-import {
-  checkToken,
-} from "../../imports";
+import { checkToken } from "../../imports";
 import AuthController from "./auth_controller";
 
 const router = Router();

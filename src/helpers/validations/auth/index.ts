@@ -1,12 +1,54 @@
-// const { body } = require('express-validator');
-import { body } from "express-validator";
+import Joi from "joi";
 
-export const loginValidation = [
-  // Validate that the email is a valid email address
-  body("email").isEmail().withMessage("Invalid email address"),
+// Login Validation schema
+export const loginValidation = Joi.object({
+  email: Joi.string()
+    .email({ tlds: { allow: false } }) // disables top-level domain validation to allow any domain
+    .required()
+    .messages({
+      "string.email": "Invalid email address",
+      "any.required": "Email is required",
+    }),
 
-  // Validate that the password has a minimum length of 6 characters
-  body("password")
-    .isLength({ min: 6 })
-    .withMessage("Password must be at least 6 characters long"),
-];
+  password: Joi.string().min(6).required().messages({
+    "string.min": "Password must be at least 6 characters long",
+    "any.required": "Password is required",
+  }),
+});
+
+// Register Validation schema
+export const registerValidation = Joi.object({
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .required()
+    .messages({
+      "string.email": "Invalid email address",
+      "any.required": "Email is required",
+    }),
+
+  password: Joi.string().min(6).required().messages({
+    "string.min": "Password must be at least 6 characters long",
+    "any.required": "Password is required",
+  }),
+
+  fullName: Joi.string().min(1).required().messages({
+    "string.base": "Full name must be a string",
+    "string.empty": "Full name must be a string and not empty",
+    "any.required": "Full name is required",
+  }),
+
+  phoneNumber: Joi.string().min(1).required().messages({
+    "string.base": "Phone number must be a string",
+    "string.empty": "Phone number must be a string and not empty",
+    "any.required": "Phone number is required",
+  }),
+
+  role: Joi.string()
+    .valid("ADMIN", "SUB_ADMIN", "DISTRIBUTOR", "INSTALLER", "CUSTOMER")
+    .default("CUSTOMER")
+    .messages({
+      "any.only":
+        "Role must be one of: ADMIN, SUB_ADMIN, DISTRIBUTOR, INSTALLER, CUSTOMER",
+      "any.required": "Role is required",
+    }),
+});
