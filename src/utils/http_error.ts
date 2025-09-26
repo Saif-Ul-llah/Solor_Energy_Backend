@@ -70,6 +70,13 @@ class HttpError extends Error {
   static validationError(message: string | string[]) {
     return new HttpError(message, "validation-error", 400);
   }
+
+  static badRequest(message: string) {
+    return new HttpError(message, "bad-request", 400);
+  }
+  static unauthorized(message: string) {
+    return new HttpError(message, "unauthorized", 401);
+  }
 }
 
 export { HttpError };

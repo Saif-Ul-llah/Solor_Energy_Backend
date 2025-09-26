@@ -27,7 +27,7 @@ model User {
     phoneNumber      String
     isGoogleLogin    Boolean           @default(false)
     role             Role
-    IsActive         Boolean           @default(false)
+    IsActive         Boolean           @default(true)
     createdAt        DateTime          @default(now())
     locationId       Int?              @unique
     location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
@@ -48,6 +48,7 @@ model UserVerification {
     resetOtp          Int?
     resetOtpExpiresAt DateTime?
     isEmailVerified   VerificationStatus @default(NOT_VERIFIED)
+    refreshToken      String? 
     user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@schema("user")

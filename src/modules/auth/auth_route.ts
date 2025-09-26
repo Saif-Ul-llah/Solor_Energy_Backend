@@ -5,8 +5,6 @@ import AuthController from "./auth_controller";
 const router = Router();
 
 router.post("/login", AuthController.login);
-// router.post("/apple-login", appleLogin);
-// router.post("/google-login", googleLogin);
 router.post("/register", AuthController.register);
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/verify-otp", AuthController.verifyOTP);
