@@ -1,5 +1,15 @@
-import { encryptPass, HttpError, registerInterface } from "../../imports";
+import {
+  encryptPass,
+  comparePass,
+  HttpError,
+  registerInterface,
+} from "../../imports";
 import AuthRepo from "./auth_repo";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../../utils/helpers";
+
 
 class AuthServices {
   public static registerService = async (payload: registerInterface) => {
@@ -8,6 +18,79 @@ class AuthServices {
     payload.password = await encryptPass(payload.password);
     const user = await AuthRepo.registerRepo(payload);
     return user;
+  };
+
+  public static loginService = async (email: string, password: string) => {
+    const user = await AuthRepo.findByEmail(email);
+    if (!user || !user.password) throw HttpError.notFound("User not found");
+
+    const isMatch = await comparePass(password, user.password);
+    if (!isMatch) throw HttpError.unauthorized("Invalid credentials");
+
+    const payload = { id: user.id, role: user.role };
+    const accessToken = generateAccessToken(payload);
+    const refreshToken = generateRefreshToken(payload);
+
+    await AuthRepo.updateRefreshToken(user.id, refreshToken);
+
+    return { accessToken, refreshToken, user };
+  };
+
+  public static forgotPasswordService = async (email: string) => {
+    const user = await AuthRepo.findByEmail(email);
+    if (!user) throw HttpError.notFound("User not found");
+
+    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+    await AuthRepo.saveResetOtp(user.id, otp, expiresAt);
+
+    // TODO: send OTP via email/SMS
+    return { otp }; // remove in prod
+  };
+
+  public static verifyOtpService = async (email: string, otp: number) => {
+    const user = await AuthRepo.findByEmail(email);
+    if (!user) throw HttpError.notFound("User not found");
+
+    const record = await AuthRepo.verifyOtp(user.id, otp);
+    if (!record) throw HttpError.badRequest("Invalid or expired OTP");
+
+    return { message: "OTP verified successfully" };
+  };
+
+  public static resetPasswordService = async (
+    email: string,
+    otp: number,
+    newPassword: string
+  ) => {
+    const user = await AuthRepo.findByEmail(email);
+    if (!user) throw HttpError.notFound("User not found");
+
+    const record = await AuthRepo.verifyOtp(user.id, otp);
+    if (!record) throw HttpError.badRequest("Invalid or expired OTP");
+
+    const hashed = await encryptPass(newPassword);
+    await AuthRepo.resetPassword(user.id, hashed);
+
+    return { message: "Password reset successful" };
+  };
+
+  public static changePasswordService = async (
+    userId: string,
+    oldPassword: string,
+    newPassword: string
+  ) => {
+    const user = await AuthRepo.findByEmail(userId);
+    if (!user || !user.password) throw HttpError.notFound("User not found");
+
+    const isMatch = await comparePass(oldPassword, user.password);
+    if (!isMatch) throw HttpError.unauthorized("Invalid old password");
+
+    const hashed = await encryptPass(newPassword);
+    await AuthRepo.changePassword(user.id, hashed);
+
+    return { message: "Password changed successfully" };
   };
 }
 

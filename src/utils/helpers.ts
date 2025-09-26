@@ -2,7 +2,8 @@ import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
 import path from "path";
 import fs, { stat } from "fs";
-import { appConfig, Response } from "../imports";
+import { appConfig, Response,dotenv } from "../imports";
+dotenv.config();
 
 interface ApiResponse {
   data: object;
@@ -130,3 +131,30 @@ export function getEmailVerificationHtml(fullName: string, otp: string) {
                     </div>
                 `;
 }
+
+
+const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET as string || "solar_energy";
+const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET as string||"scarron";
+
+export const generateAccessToken = (payload: object) => {
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: "15m" });
+};
+
+export const generateRefreshToken = (payload: object) => {
+  return jwt.sign(payload, REFRESH_SECRET, { expiresIn: "7d" });
+};
+
+export const verifyAccessToken = (token: string) => {
+  return jwt.verify(token, ACCESS_SECRET);
+};
+
+export const verifyRefreshToken = (token: string) => {
+  return jwt.verify(token, REFRESH_SECRET);
+};
+
+export const comparePass = async (
+  password: string,
+  hashedPassword: string
+): Promise<boolean> => {
+  return bcrypt.compare(password, hashedPassword);
+};
