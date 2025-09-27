@@ -13,3 +13,13 @@ export interface registerInterface {
   fullName: string;
   phoneNumber: string;
 }
+
+export interface loginInterface {
+  email: string;
+  password: string;
+}
+
+export interface resetPassInterface {
+  newPassword: string;
+  email: string;
+}

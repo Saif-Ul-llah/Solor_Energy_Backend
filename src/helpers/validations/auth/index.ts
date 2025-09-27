@@ -52,3 +52,21 @@ export const registerValidation = Joi.object({
       "any.required": "Role is required",
     }),
 });
+
+// reset password validation schema
+export const resetPasswordValidation = Joi.object({
+  newPassword: Joi.string().min(6).required().messages({
+    "string.min": "Password must be at least 6 characters long",
+    "any.required": "Password is required",
+  }),
+
+  email: Joi.string()
+    .email({ tlds: { allow: false } })
+    .required()
+    .messages({
+      "string.email": "Invalid email address",
+      "any.required": "Email is required",
+    }),
+
+  
+});

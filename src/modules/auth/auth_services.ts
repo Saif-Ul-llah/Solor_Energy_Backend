@@ -3,13 +3,11 @@ import {
   comparePass,
   HttpError,
   registerInterface,
+  loginInterface,
+  resetPassInterface,
 } from "../../imports";
 import AuthRepo from "./auth_repo";
-import {
-  generateAccessToken,
-  generateRefreshToken,
-} from "../../utils/helpers";
-
+import { generateAccessToken, generateRefreshToken } from "../../utils/helpers";
 
 class AuthServices {
   public static registerService = async (payload: registerInterface) => {
@@ -20,20 +18,20 @@ class AuthServices {
     return user;
   };
 
-  public static loginService = async (email: string, password: string) => {
-    const user = await AuthRepo.findByEmail(email);
+  public static loginService = async (payload: loginInterface) => {
+    const user = await AuthRepo.findByEmail(payload.email);
     if (!user || !user.password) throw HttpError.notFound("User not found");
 
-    const isMatch = await comparePass(password, user.password);
+    const isMatch = await comparePass(payload.password, user.password);
     if (!isMatch) throw HttpError.unauthorized("Invalid credentials");
 
-    const payload = { id: user.id, role: user.role };
-    const accessToken = generateAccessToken(payload);
-    const refreshToken = generateRefreshToken(payload);
+    const data = { id: user.id, role: user.role };
+    const accessToken = generateAccessToken(data);
+    const refreshToken = generateRefreshToken(data);
 
     await AuthRepo.updateRefreshToken(user.id, refreshToken);
 
-    return { accessToken, refreshToken, user };
+    return { accessToken, refreshToken };
   };
 
   public static forgotPasswordService = async (email: string) => {
@@ -59,16 +57,13 @@ class AuthServices {
     return { message: "OTP verified successfully" };
   };
 
-  public static resetPasswordService = async (
-    email: string,
-    otp: number,
-    newPassword: string
-  ) => {
+  public static resetPasswordService = async (payload: resetPassInterface) => {
+    let { email, newPassword } = payload;
     const user = await AuthRepo.findByEmail(email);
     if (!user) throw HttpError.notFound("User not found");
 
-    const record = await AuthRepo.verifyOtp(user.id, otp);
-    if (!record) throw HttpError.badRequest("Invalid or expired OTP");
+    // const record = await AuthRepo.verifyOtp(user.id, otp);
+    // if (!record) throw HttpError.badRequest("Invalid or expired OTP");
 
     const hashed = await encryptPass(newPassword);
     await AuthRepo.resetPassword(user.id, hashed);
