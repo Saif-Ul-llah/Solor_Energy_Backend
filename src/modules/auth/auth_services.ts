@@ -5,9 +5,14 @@ import {
   registerInterface,
   loginInterface,
   resetPassInterface,
+  sendMail,
 } from "../../imports";
 import AuthRepo from "./auth_repo";
-import { generateAccessToken, generateRefreshToken } from "../../utils/helpers";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+  getEmailVerificationHtml,
+} from "../../utils/helpers";
 
 class AuthServices {
   public static registerService = async (payload: registerInterface) => {
@@ -42,9 +47,16 @@ class AuthServices {
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
 
     await AuthRepo.saveResetOtp(user.id, otp, expiresAt);
+    let template = await getEmailVerificationHtml({
+      otp: `${otp}`,
+      email: user.email,
+      validMinutes: 10,
+      userName: user.fullName,
+    });
+    console.log("OTP is :", otp);
+    await sendMail({ email, subject: "Password Reset OTP", html: template });
 
-    // TODO: send OTP via email/SMS
-    return { otp }; // remove in prod
+    return [];
   };
 
   public static verifyOtpService = async (email: string, otp: number) => {

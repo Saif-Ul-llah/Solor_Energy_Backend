@@ -28,7 +28,13 @@ class AuthController {
         value as registerInterface
       );
 
-      return sendResponse(res, 201, "User registered successfully", user);
+      return sendResponse(
+        res,
+        201,
+        "User registered successfully",
+        user,
+        "success"
+      );
     }
   );
 
@@ -42,7 +48,7 @@ class AuthController {
         return next(HttpError.validationError(error.details[0].message));
       }
       const result = await AuthServices.loginService(value);
-      return sendResponse(res, 200, "Login successful", result);
+      return sendResponse(res, 200, "Login successful", result, "success");
     }
   );
 
@@ -53,7 +59,7 @@ class AuthController {
         return next(HttpError.validationError("Email is required"));
       }
       const result = await AuthServices.forgotPasswordService(email);
-      return sendResponse(res, 200, "OTP sent successfully", result);
+      return sendResponse(res, 200, "OTP sent successfully", result, "success");
     }
   );
 
@@ -64,25 +70,22 @@ class AuthController {
         return next(HttpError.validationError("Email and OTP are required"));
       }
       const result = await AuthServices.verifyOtpService(email, otp);
-      return sendResponse(res, 200, result.message, []);
+      return sendResponse(res, 200, result.message, [], "success");
     }
   );
 
   public static resetPassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-    
-      const user =req.user;
-        const { error, value } = resetPasswordValidation.validate({
+      const user = req.user;
+      const { error, value } = resetPasswordValidation.validate({
         ...req.body,
-        email:user.email
+        email: user.email,
       });
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
-      const result = await AuthServices.resetPasswordService(
-      value
-      );
-      return sendResponse(res, 200, result.message, []);
+      const result = await AuthServices.resetPasswordService(value);
+      return sendResponse(res, 200, result.message, [], "success");
     }
   );
 
@@ -95,7 +98,7 @@ class AuthController {
         oldPassword,
         newPassword
       );
-      return sendResponse(res, 200, result.message, []);
+      return sendResponse(res, 200, result.message, [], "success");
     }
   );
 }

@@ -23,3 +23,18 @@ export interface resetPassInterface {
   newPassword: string;
   email: string;
 }
+
+export interface SendOtpOptions {
+  email: string|null;
+  otp: string;
+  validMinutes: number;
+  userName?: string;
+  sendDate?: string;
+  year?: number;
+}
+
+export interface SendMail {
+  email: string;
+  subject: string;
+  html: string;
+}
