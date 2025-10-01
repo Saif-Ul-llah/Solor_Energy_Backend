@@ -5,6 +5,6 @@ model Location {
     user        User?         @relation
     createdAt   DateTime      @default(now())
     updatedAt   DateTime      @updatedAt
-
+    plants      Plant[]
     @@schema("public")
 }

@@ -30,7 +30,26 @@ class AuthServices {
     const isMatch = await comparePass(payload.password, user.password);
     if (!isMatch) throw HttpError.unauthorized("Invalid credentials");
 
-    // if (user.TFA_enabled){}
+    if (user.TFA_enabled) {
+      const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit OTP
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 min
+
+      await AuthRepo.saveResetOtp(user.id, otp, expiresAt);
+      let template = await getEmailVerificationHtml({
+        otp: `${otp}`,
+        email: user.email,
+        validMinutes: 10,
+        userName: user.fullName,
+      });
+      console.log("OTP is :", otp);
+      await sendMail({
+        email: user.email,
+        subject: "Password Reset OTP",
+        html: template,
+      });
+
+      return;
+    }
     const data = { id: user.id, role: user.role };
     const accessToken = generateAccessToken(data);
     const refreshToken = generateRefreshToken(data);

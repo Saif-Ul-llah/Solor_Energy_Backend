@@ -1,20 +1,20 @@
 model User {
-    id               String            @id @default(uuid())
-    email            String            @unique
-    password         String?
-    phoneNumber      String
-    role             Role
-    IsActive         Boolean           @default(true)
-    createdAt        DateTime          @default(now())
-    locationId       Int?              @unique
-    location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    memberId         String?            @unique
-    memberPassword   String?
-    fullName         String
-    address          String?
-    fcmToken         String?
-    TFA_enabled      Boolean           @default(false)
-    verification     UserVerification?
+    id           String            @id @default(uuid())
+    email        String            @unique
+    password     String?
+    phoneNumber  String
+    role         Role
+    IsActive     Boolean           @default(true)
+    createdAt    DateTime          @default(now())
+    locationId   Int?              @unique
+    location     Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    fullName     String
+    address      String?
+    fcmToken     String?
+    TFA_enabled  Boolean           @default(false)
+    verification UserVerification?
+    customer     Plant[]           @relation("customer")
+    installer    Plant[]           @relation("installer")
 
     @@schema("user")
 }
@@ -25,7 +25,7 @@ model UserVerification {
     resetOtp          Int?
     resetOtpExpiresAt DateTime?
     isEmailVerified   VerificationStatus @default(NOT_VERIFIED)
-    refreshToken      String? 
+    refreshToken      String?
     user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@schema("user")
