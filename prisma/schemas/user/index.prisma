@@ -3,18 +3,17 @@ model User {
     email            String            @unique
     password         String?
     phoneNumber      String
-    isGoogleLogin    Boolean           @default(false)
     role             Role
     IsActive         Boolean           @default(true)
     createdAt        DateTime          @default(now())
     locationId       Int?              @unique
     location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    memberId         String?
+    memberId         String?            @unique
     memberPassword   String?
     fullName         String
     address          String?
     fcmToken         String?
-    StripeCustomerId String?
+    TFA_enabled      Boolean           @default(false)
     verification     UserVerification?
 
     @@schema("user")

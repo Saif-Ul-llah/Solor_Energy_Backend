@@ -30,6 +30,7 @@ class AuthServices {
     const isMatch = await comparePass(payload.password, user.password);
     if (!isMatch) throw HttpError.unauthorized("Invalid credentials");
 
+    // if (user.TFA_enabled){}
     const data = { id: user.id, role: user.role };
     const accessToken = generateAccessToken(data);
     const refreshToken = generateRefreshToken(data);
