@@ -1,0 +1,25 @@
+model Plant {
+    id               String            @id @default(uuid())
+    createdAt        DateTime          @default(now())
+    customerId       Int?              @unique
+    customer         User              @relation(fields: [customerId], references: [id], onDelete: Cascade)
+    installerId      Int?              @unique
+    installer        User              @relation(fields: [installerId], references: [id], onDelete: Cascade)
+
+    name             String
+    plantType        PlantType
+    capacity         Int
+    region           String
+    locationId       Int?              @unique
+    location         Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    tariff          Float  
+    
+    @@schema("public")
+}
+
+enum PlantType {
+    Grid
+    Grid_Meter
+    Hybrid
+}
+
