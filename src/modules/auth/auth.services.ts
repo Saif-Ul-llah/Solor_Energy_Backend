@@ -7,7 +7,7 @@ import {
   resetPassInterface,
   sendMail,
 } from "../../imports";
-import AuthRepo from "./auth_repo";
+import AuthRepo from "./auth.repo";
 import {
   generateAccessToken,
   generateRefreshToken,
@@ -56,7 +56,7 @@ class AuthServices {
 
     await AuthRepo.updateRefreshToken(user.id, refreshToken);
 
-    return { accessToken, refreshToken };
+    return { accessToken, refreshToken, role: user.role };
   };
 
   public static forgotPasswordService = async (email: string) => {
@@ -79,13 +79,26 @@ class AuthServices {
     return [];
   };
 
-  public static verifyOtpService = async (email: string, otp: number) => {
+  public static verifyOtpService = async (
+    email: string,
+    otp: number,
+    TFA: boolean
+  ) => {
     const user = await AuthRepo.findByEmail(email);
     if (!user) throw HttpError.notFound("User not found");
 
     const record = await AuthRepo.verifyOtp(user.id, otp);
     if (!record) throw HttpError.badRequest("Invalid or expired OTP");
-
+    if (TFA) {
+      const data = { id: user.id, role: user.role };
+      const accessToken = generateAccessToken(data);
+      const refreshToken = generateRefreshToken(data);
+      return {
+        message: "OTP verified successfully",
+        accessToken,
+        refreshToken,
+      };
+    }
     return { message: "OTP verified successfully" };
   };
 
