@@ -169,7 +169,9 @@ export function getEmailVerificationHtml({
                         Email Verification Required
                       </h1>
                       <p style="margin:8px 0 0 0; font-size:15px; line-height:22px; color:#374151;">
-                        Hello ${userName ? userName + "," : ""} please use the code below to verify your email address for <strong>Solar Energy</strong>. 
+                        Hello ${
+                          userName ? userName + "," : ""
+                        } please use the code below to verify your email address for <strong>Solar Energy</strong>. 
                         This code will expire in <strong style="color:#111827;">${validMinutes} minutes</strong>.
                       </p>
                     </td>
@@ -225,7 +227,6 @@ export function getEmailVerificationHtml({
   </html>
   `;
 }
-
 
 const ACCESS_SECRET =
   (process.env.ACCESS_TOKEN_SECRET as string) || "solar_energy";

@@ -77,7 +77,13 @@ class AuthController {
         return next(HttpError.validationError("Email and OTP are required"));
       }
       const result = await AuthServices.verifyOtpService(email, otp, TFA);
-      return sendResponse(res, 200, result.message, [], "success");
+      return sendResponse(
+        res,
+        200,
+        result.message,
+        result.data || [],
+        "success"
+      );
     }
   );
 
@@ -115,8 +121,5 @@ class AuthController {
   /*===========================================================================================
                                 User Management 
 ===========================================================================================*/
-
-
-
 }
 export default AuthController;

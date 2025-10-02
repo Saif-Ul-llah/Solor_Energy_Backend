@@ -86,6 +86,7 @@ class AuthServices {
   ) => {
     const user = await AuthRepo.findByEmail(email);
     if (!user) throw HttpError.notFound("User not found");
+    console.log(TFA, "check ");
 
     const record = await AuthRepo.verifyOtp(user.id, otp);
     if (!record) throw HttpError.badRequest("Invalid or expired OTP");
@@ -94,12 +95,11 @@ class AuthServices {
       const accessToken = generateAccessToken(data);
       const refreshToken = generateRefreshToken(data);
       return {
-        message: "OTP verified successfully",
-        accessToken,
-        refreshToken,
+        message: "OTP verified successfully test",
+        data: { accessToken, refreshToken, role: user.role },
       };
     }
-    return { message: "OTP verified successfully" };
+    return { message: "OTP verified successfully", data: [true] };
   };
 
   public static resetPasswordService = async (payload: resetPassInterface) => {

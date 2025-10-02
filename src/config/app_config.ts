@@ -20,7 +20,7 @@ export const appConfig: AppConfig = {
   dbUrl:
     process.env.DB_URL ||
     "postgresql://postgres:postgres@localhost:5432/four_ways",
-  jwtSecret: process.env.JWT_SECRET || "secret",
+  jwtSecret: (process.env.ACCESS_TOKEN_SECRET as string) || "solar_energy",
   appUrl: process.env.APP_URL || "http://localhost:5000",
   postgresPassword: process.env.POSTGRES_PASSWORD || "postgres",
   emailUser: process.env.EMAIL_USER || "email",
