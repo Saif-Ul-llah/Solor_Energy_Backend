@@ -16,6 +16,10 @@ model User {
     customer     Plant[]           @relation("customer")
     installer    Plant[]           @relation("installer")
 
+    parentId String?
+    parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
+    children User[]  @relation("UserHierarchy")
+
     @@schema("user")
 }
 

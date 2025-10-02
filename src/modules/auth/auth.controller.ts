@@ -11,9 +11,10 @@ import {
   resetPasswordValidation,
 } from "../../imports";
 
-import AuthServices from "./auth_services";
+import AuthServices from "./auth.services";
 
 class AuthController {
+  /**==============================  Register New User  ============================== */
   public static register = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { error, value } = registerValidation.validate({
@@ -38,6 +39,8 @@ class AuthController {
     }
   );
 
+  /**==============================  Login User  ============================== */
+
   public static login = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { error, value } = loginValidation.validate({
@@ -52,6 +55,8 @@ class AuthController {
     }
   );
 
+  /**==============================  Forget Password  ============================== */
+
   public static forgotPassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { email } = req.body;
@@ -63,16 +68,20 @@ class AuthController {
     }
   );
 
+  /**==============================  Verify OTP  ============================== */
+
   public static verifyOTP = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const { email, otp } = req.body;
+      const { email, otp, TFA = false } = req.body;
       if (!email || !otp) {
         return next(HttpError.validationError("Email and OTP are required"));
       }
-      const result = await AuthServices.verifyOtpService(email, otp);
+      const result = await AuthServices.verifyOtpService(email, otp, TFA);
       return sendResponse(res, 200, result.message, [], "success");
     }
   );
+
+  /**==============================  Reset Password  ============================== */
 
   public static resetPassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -89,6 +98,8 @@ class AuthController {
     }
   );
 
+  /**==============================  Changed Password   ============================== */
+
   public static changePassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const userId = (req as any).user.id; // populated by checkToken
@@ -101,5 +112,11 @@ class AuthController {
       return sendResponse(res, 200, result.message, [], "success");
     }
   );
+  /*===========================================================================================
+                                User Management 
+===========================================================================================*/
+
+
+
 }
 export default AuthController;
