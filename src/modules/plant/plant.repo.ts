@@ -15,7 +15,12 @@ class PlantRepo {
   //   return user;
   // };
 
-  
+  public static createPlant = async (payload: any) => {
+    const plant = await prisma.plant.create({
+      data: payload,
+    });
+    return plant;
+  };
 }
 
 export default PlantRepo;

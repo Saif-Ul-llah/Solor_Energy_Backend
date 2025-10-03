@@ -15,6 +15,7 @@ import {
 } from "../../utils/helpers";
 
 class AuthServices {
+  
   public static registerService = async (payload: registerInterface) => {
     let alreadyExists = await AuthRepo.checkEmailExists(payload.email);
     if (alreadyExists) throw HttpError.alreadyExists("Email");
