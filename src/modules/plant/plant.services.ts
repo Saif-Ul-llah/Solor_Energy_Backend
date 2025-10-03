@@ -9,6 +9,12 @@ class PlantService {
   //   const user = await AuthRepo.registerRepo(payload);
   //   return user;
   // };
+
+  public static createPlant = async (payload: any) => {
+    const plant = await PlantRepo.createPlant(payload);
+    return plant;
+  }
+
 }
 
 export default PlantService;
