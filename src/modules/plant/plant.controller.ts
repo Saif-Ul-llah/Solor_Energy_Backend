@@ -6,6 +6,7 @@ import {
   sendResponse,
   HttpError,
   plantValidation,
+  PlantInterface,
 } from "../../imports";
 
 import PlantServices from "./plant.services";
@@ -20,7 +21,7 @@ class PlantController {
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
-      const plant = await PlantServices.createPlant(value);
+      const plant = await PlantServices.createPlant(value as PlantInterface);
       if (plant) {
         return sendResponse(
           res,

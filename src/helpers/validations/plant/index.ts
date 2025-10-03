@@ -35,21 +35,48 @@ export const plantValidation = Joi.object({
       "any.only": "Plant type must be one of [Grid, Grid_Meter, Hybrid]",
       "any.required": "Plant type is required",
     }),
+  timeZone: Joi.string().optional().allow(null, "").messages({
+    "string.base": "Time zone must be a string",
+  }),
+  address: Joi.string().min(1).required().messages({
+    "string.base": "Address must be a string",
+    "string.empty": "Address must be a string and not empty",
+    "any.required": "Address is required",
+  }),
+  currency: Joi.string().min(1).required().messages({
+    "string.base": "Currency must be a string",
+    "string.empty": "Currency must be a string and not empty",
+    "any.required": "Currency is required",
+  }),
+  installationDate: Joi.date().required().messages({
+    "date.base": "Installation date must be a valid date",
+    "any.required": "Installation date is required",
+  }),
+  gridConnectionType: Joi.string().optional().allow(null, "").messages({
+    "string.base": "Grid connection type must be a string",
+  }),
+  gridConnectionDate: Joi.date().optional().allow(null).messages({
+    "date.base": "Grid connection date must be a valid date",
+  }),
+  notes: Joi.string().optional().allow(null, "").messages({
+    "string.base": "Notes must be a string",
+  }),
+  imagesNotes: Joi.string().optional().allow(null, "").messages({
+    "string.base": "Images notes must be a string",
+  }),
+  plantImage: Joi.array().items(Joi.string().uri()).optional().messages({
+    "array.base": "Plant images must be an array of strings (URLs)",
+    "string.uri": "Each plant image must be a valid URL",
+  }),
+  customerId: Joi.string().uuid().required().messages({
+    "string.base": "Customer ID must be a string",
+    "string.guid": "Customer ID must be a valid UUID",
+    "any.required": "Customer ID is required",
+  }),
+  installerId: Joi.string().uuid().required().messages({
+    "string.base": "Installer ID must be a string",
+    "string.guid": "Installer ID must be a valid UUID",
+    "any.required": "Installer ID is required",
+  }),
+
 });
-
-// id        String   @id @default(uuid())
-// createdAt DateTime @default(now())
-
-// customerId String @unique
-// customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
-
-// installerId String @unique
-// installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
-
-// name       String
-// plantType  PlantType
-// capacity   Int
-// region     String
-// locationId Int?      @unique
-// location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
-// tariff     Float

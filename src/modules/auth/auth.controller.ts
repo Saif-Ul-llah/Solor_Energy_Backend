@@ -1,3 +1,4 @@
+import { Role } from "@prisma/client";
 import {
   asyncHandler,
   NextFunction,
@@ -121,5 +122,20 @@ class AuthController {
   /*===========================================================================================
                                 User Management 
 ===========================================================================================*/
+
+  public static userList = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      let { role = "ADMIN" } = req.query;
+      const users = await AuthServices.userListService(role as Role, user);
+      return sendResponse(
+        res,
+        200,
+        "User list fetched successfully",
+        users,
+        "success"
+      );
+    }
+  );
 }
 export default AuthController;
