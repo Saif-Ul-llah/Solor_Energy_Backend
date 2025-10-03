@@ -21,32 +21,51 @@ model Location {
 }
 
 model Plant {
-    id        String   @id @default(uuid())
-    createdAt DateTime @default(now())
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
 
-    customerId String @unique
-    customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String @unique
+  customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
 
-    installerId String @unique
-    installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
+  installerId String @unique
+  installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
 
-    name       String
-    plantType  PlantType
-    capacity   Int
-    region     String
-    locationId Int?      @unique
-    location   Location? @relation(fields: [locationId], references: [id], onDelete: Cascade)
-    tariff     Float
+  name               String
+  plantType          PlantType
+  capacity           Int
+  region             String
+  locationId         Int       @unique
+  location           Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  tariff             Float
+  timeZone           String?
+  address            String
+  currency           String    @default("USD")
+  installationDate   DateTime  @default(now())
+  gridConnectionType String?
+  gridConnectionDate DateTime?
+  notes              String?
+  imagesNotes        String?
+  plantImage         Media[]
 
-    @@schema("public")
+  @@schema("public")
 }
 
 enum PlantType {
-    Grid
-    Grid_Meter
-    Hybrid
+  Grid
+  Grid_Meter
+  Hybrid
 
-    @@schema("public")
+  @@schema("public")
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  file_url  String
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
 }
 
 model User {

@@ -12,6 +12,7 @@ export interface registerInterface {
   role: Roles;
   fullName: string;
   phoneNumber: string;
+  parentId?: string;
 }
 
 export interface loginInterface {

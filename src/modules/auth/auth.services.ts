@@ -13,6 +13,7 @@ import {
   generateRefreshToken,
   getEmailVerificationHtml,
 } from "../../utils/helpers";
+import { Role, User } from "@prisma/client";
 
 class AuthServices {
   
@@ -133,6 +134,12 @@ class AuthServices {
 
     return { message: "Password changed successfully" };
   };
+
+  // ================ User Management =================
+  public static userListService = async (role: Role,user:User) => {
+    const users = await AuthRepo.userList(role,user);
+    return users;
+  }
 }
 
 export default AuthServices;
