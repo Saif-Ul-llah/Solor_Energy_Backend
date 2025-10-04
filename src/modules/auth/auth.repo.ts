@@ -95,12 +95,9 @@ class AuthRepo {
     userId: string,
     role?: Role
   ): Promise<User[]> {
-    const whereClause = role
-      ? { role, parentId: userId }
-      : { parentId: userId };
-
+    // always fetch all children regardless of role
     const children = await prisma.user.findMany({
-      where: whereClause,
+      where: { parentId: userId },
       select: {
         id: true,
         email: true,
@@ -109,10 +106,15 @@ class AuthRepo {
       },
     });
 
-    let allChildren: any = [...children];
+    let allChildren: any[] = [];
 
-    // Recursively fetch children's children
     for (const child of children) {
+      // if child matches the role, add it
+      if (!role || child.role === role) {
+        allChildren.push(child);
+      }
+
+      // recurse for deeper levels
       const childDescendants = await this.getChildrenRecursively(
         child.id,
         role
