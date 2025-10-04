@@ -1,3 +1,4 @@
+import { User } from "@prisma/client";
 import {
   asyncHandler,
   NextFunction,
@@ -28,6 +29,22 @@ class PlantController {
           201,
           "Plant created successfully",
           plant,
+          "success"
+        );
+      }
+    }
+  );
+
+  public  static getAllPlants = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user
+     const plants = await PlantServices.getAllPlants(user as User);
+      if (plants) {
+        return sendResponse(
+          res,
+          200,
+          "Plants fetched successfully",
+          plants,
           "success"
         );
       }

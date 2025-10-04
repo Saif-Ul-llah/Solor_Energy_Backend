@@ -1,9 +1,8 @@
-import { Plant } from "@prisma/client";
-import { PlantInterface, prisma, registerInterface } from "../../imports";
+import { Plant, Role, User } from "@prisma/client";
+import { PlantInterface, prisma } from "../../imports";
 
 class PlantRepo {
-
-public static async createPlant(payload: PlantInterface) {
+  public static async createPlant(payload: PlantInterface) {
     const data: any = {
       name: payload.name,
       plantType: payload.plantType,
@@ -43,6 +42,51 @@ public static async createPlant(payload: PlantInterface) {
 
     const plant = await prisma.plant.create({ data });
     return plant;
+  }
+
+
+  private static async getChildrenRecursively(
+    userId: string,
+    role?: Role
+  ): Promise<String[]> {
+    // always fetch all children regardless of role
+    const children = await prisma.user.findMany({
+      where: { parentId: userId },
+      select: {
+        role: true,
+        id: true,
+      },
+    });
+
+    let allChildren: any[] = [];
+
+    for (const child of children) {
+      // if child matches the role, add it
+      if (!role || child.role === role) {
+        allChildren.push(child);
+      }
+
+      // recurse for deeper levels
+      const childDescendants = await this.getChildrenRecursively(
+        child.id,
+        role
+      );
+      allChildren = [...allChildren, ...childDescendants];
+    }
+
+    return allChildren;
+  }
+
+  // Get My and nested plants
+  public static async getAllPlants(user: User): Promise<Plant[]> {
+    // Get Nested Installer's Ids
+    let nestedPlants = await this.getChildrenRecursively(user.id, "INSTALLER")
+    const plants = await prisma.plant.findMany({
+      where: {
+        installerId: { in: [user.id, ...nestedPlants.map((p:any) => p.id)] },
+      },
+    });
+    return plants;
   }
 }
 
