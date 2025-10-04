@@ -45,6 +45,7 @@ model Plant {
   gridConnectionDate DateTime?
   notes              String?
   imagesNotes        String?
+  plantProfile      String?
   plantImage         Media[]
 
   @@schema("public")
@@ -81,6 +82,7 @@ model User {
     fullName     String
     address      String?
     fcmToken     String?
+    imageUrl    String?
     TFA_enabled  Boolean           @default(false)
     verification UserVerification?
     customer     Plant[]           @relation("customer")

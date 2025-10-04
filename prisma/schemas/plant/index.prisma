@@ -23,6 +23,7 @@ model Plant {
   gridConnectionDate DateTime?
   notes              String?
   imagesNotes        String?
+  plantProfile      String?
   plantImage         Media[]
 
   @@schema("public")

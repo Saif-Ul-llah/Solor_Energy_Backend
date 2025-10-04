@@ -77,7 +77,7 @@ class AuthController {
       if (!email || !otp) {
         return next(HttpError.validationError("Email and OTP are required"));
       }
-      const result = await AuthServices.verifyOtpService(email, otp, TFA);
+      const result: any = await AuthServices.verifyOtpService(email, otp, TFA);
       return sendResponse(
         res,
         200,
@@ -126,7 +126,7 @@ class AuthController {
   public static userList = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
-      let { role = "ADMIN" } = req.query;
+      let { role = null } = req.query;
       const users = await AuthServices.userListService(role as Role, user);
       return sendResponse(
         res,

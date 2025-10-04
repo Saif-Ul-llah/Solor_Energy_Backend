@@ -16,7 +16,6 @@ import {
 import { Role, User } from "@prisma/client";
 
 class AuthServices {
-  
   public static registerService = async (payload: registerInterface) => {
     let alreadyExists = await AuthRepo.checkEmailExists(payload.email);
     if (alreadyExists) throw HttpError.alreadyExists("Email");
@@ -88,20 +87,20 @@ class AuthServices {
   ) => {
     const user = await AuthRepo.findByEmail(email);
     if (!user) throw HttpError.notFound("User not found");
-    console.log(TFA, "check ");
+    // console.log(TFA, "check ");
 
     const record = await AuthRepo.verifyOtp(user.id, otp);
     if (!record) throw HttpError.badRequest("Invalid or expired OTP");
-    if (TFA) {
-      const data = { id: user.id, role: user.role };
-      const accessToken = generateAccessToken(data);
-      const refreshToken = generateRefreshToken(data);
-      return {
-        message: "OTP verified successfully test",
-        data: { accessToken, refreshToken, role: user.role },
-      };
-    }
-    return { message: "OTP verified successfully", data: [true] };
+    // if (TFA) {
+    const data = { id: user.id, role: user.role };
+    const accessToken = generateAccessToken(data);
+    const refreshToken = generateRefreshToken(data);
+    return {
+      message: "OTP verified successfully test",
+      data: { accessToken, refreshToken, role: user.role },
+    };
+    // }
+    // return { message: "OTP verified successfully", data: [] };
   };
 
   public static resetPasswordService = async (payload: resetPassInterface) => {
@@ -136,10 +135,10 @@ class AuthServices {
   };
 
   // ================ User Management =================
-  public static userListService = async (role: Role,user:User) => {
-    const users = await AuthRepo.userList(role,user);
+  public static userListService = async (role: Role, user: User) => {
+    const users = await AuthRepo.userList(role, user);
     return users;
-  }
+  };
 }
 
 export default AuthServices;
