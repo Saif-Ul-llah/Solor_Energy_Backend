@@ -77,6 +77,9 @@ class HttpError extends Error {
   static unauthorized(message: string) {
     return new HttpError(message, "unauthorized", 401);
   }
+  static internalServerError(message: string) {
+    return new HttpError(message, "internal-server-error", 400);
+  }
 }
 
 export { HttpError };

@@ -6,6 +6,8 @@ import {
   loginInterface,
   resetPassInterface,
   sendMail,
+  registerMonitorUser,
+  dotenv,
 } from "../../imports";
 import AuthRepo from "./auth.repo";
 import {
@@ -15,10 +17,31 @@ import {
 } from "../../utils/helpers";
 import { Role, User } from "@prisma/client";
 
+dotenv.config();
 class AuthServices {
   public static registerService = async (payload: registerInterface) => {
     let alreadyExists = await AuthRepo.checkEmailExists(payload.email);
     if (alreadyExists) throw HttpError.alreadyExists("Email");
+    // Create new Monitor User on CloudInverters Platform
+    if (payload.role == "CUSTOMER") {
+      console.log(
+        "\n\n==== Registering monitor user on CloudInverters platform ====\n\n"
+      );
+
+      const registrationResponse = await registerMonitorUser(
+        payload.email,
+        process.env.MONITOR_ACCOUNT_PASSWORD as string,
+        process.env.MONITOR_ACCOUNT_PASSWORD as string
+      );
+      // console.log("registrationResponse", registrationResponse);
+
+      if (!registrationResponse.status) {
+        throw HttpError.internalServerError(
+          registrationResponse.message || "Failed to register monitor user"
+        );
+      }
+    }
+
     payload.password = await encryptPass(payload.password);
     const user = await AuthRepo.registerRepo(payload);
     return user;
