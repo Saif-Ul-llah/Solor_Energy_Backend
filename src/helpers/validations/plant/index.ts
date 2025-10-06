@@ -78,5 +78,8 @@ export const plantValidation = Joi.object({
     "string.guid": "Installer ID must be a valid UUID",
     "any.required": "Installer ID is required",
   }),
-
+  plantProfile: Joi.string().uri().optional().allow(null, "").messages({
+    "string.base": "Plant profile must be a string (URL)",
+    "string.uri": "Plant profile must be a valid URL",
+  }),
 });
