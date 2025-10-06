@@ -2,10 +2,10 @@ model Plant {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
-  customerId String @unique
+  customerId String
   customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
 
-  installerId String @unique
+  installerId String
   installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
 
   name               String
@@ -23,7 +23,7 @@ model Plant {
   gridConnectionDate DateTime?
   notes              String?
   imagesNotes        String?
-  plantProfile      String?
+  plantProfile       String?
   plantImage         Media[]
 
   @@schema("public")
