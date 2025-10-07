@@ -28,6 +28,7 @@ class AuthRepo {
         role: true,
         fullName: true,
         phoneNumber: true,
+        imageUrl: true,
       },
     });
     return user;
@@ -37,6 +38,7 @@ class AuthRepo {
     const user = await prisma.user.findUnique({ where: { email } });
     return user;
   };
+
   public static findByEmail = async (email: string) => {
     return prisma.user.findUnique({
       where: { email },
@@ -87,6 +89,12 @@ class AuthRepo {
     return prisma.user.update({
       where: { id: userId },
       data: { password: newPassword },
+    });
+  };
+
+  public static findById = async (userId: string) => {
+    return prisma.user.findUnique({
+      where: { id: userId },
     });
   };
 

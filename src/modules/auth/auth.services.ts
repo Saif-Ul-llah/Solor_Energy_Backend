@@ -8,6 +8,7 @@ import {
   sendMail,
   registerMonitorUser,
   dotenv,
+  getUserData,
 } from "../../imports";
 import AuthRepo from "./auth.repo";
 import {
@@ -79,8 +80,9 @@ class AuthServices {
     const refreshToken = generateRefreshToken(data);
 
     await AuthRepo.updateRefreshToken(user.id, refreshToken);
+    let abstract = getUserData(user);
 
-    return { accessToken, refreshToken, role: user.role };
+    return { accessToken, refreshToken, ...abstract };
   };
 
   public static forgotPasswordService = async (email: string) => {
@@ -156,6 +158,12 @@ class AuthServices {
 
     return { message: "Password changed successfully" };
   };
+
+  public static getUserByIdService = async (userId: string) => {
+    const user = await AuthRepo.findById(userId);
+    if (!user) throw HttpError.notFound("User not found");
+    return getUserData(user);
+  }
 
   // ================ User Management =================
   public static userListService = async (role: Role, user: User) => {

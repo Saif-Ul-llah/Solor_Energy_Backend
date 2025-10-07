@@ -51,12 +51,22 @@ export const registerValidation = Joi.object({
         "Role must be one of: ADMIN, SUB_ADMIN, DISTRIBUTOR, INSTALLER, CUSTOMER",
       "any.required": "Role is required",
     }),
-    // when role == admin thein parentId is not required
-    parentId: Joi.string().when('role', { is: 'ADMIN', then: Joi.optional(), otherwise: Joi.required() }).messages({
+  // when role == admin thein parentId is not required
+  parentId: Joi.string()
+    .when("role", {
+      is: "ADMIN",
+      then: Joi.optional(),
+      otherwise: Joi.required(),
+    })
+    .messages({
       "string.base": "Parent ID must be a string",
       "string.empty": "Parent ID must be a string and not empty",
       "any.required": "Parent ID is required unless role is ADMIN",
     }),
+  imageUrl: Joi.string().uri().messages({
+    "string.uri": "Image URL must be a valid URI",
+    "string.base": "Image URL must be a string",
+  }),
 });
 
 // reset password validation schema
@@ -73,6 +83,4 @@ export const resetPasswordValidation = Joi.object({
       "string.email": "Invalid email address",
       "any.required": "Email is required",
     }),
-
-  
 });

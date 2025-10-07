@@ -26,7 +26,7 @@ export interface resetPassInterface {
 }
 
 export interface SendOtpOptions {
-  email: string|null;
+  email: string | null;
   otp: string;
   validMinutes: number;
   userName?: string;
@@ -38,4 +38,33 @@ export interface SendMail {
   email: string;
   subject: string;
   html: string;
+}
+
+export interface UserInterface {
+  id: string;
+  email: string;
+  role: Roles;
+  fullName: string;
+  phoneNumber: string;
+  parentId?: string;
+  IsActive: boolean;
+  address?: string;
+  imageUrl?: string;
+  TFA_enabled: boolean;
+}
+
+export function getUserData(user: any) {
+  const abstract: UserInterface = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    fullName: user.fullName,
+    phoneNumber: user.phoneNumber,
+    parentId: user.parentId,
+    IsActive: user.IsActive,
+    address: user.address,
+    imageUrl: user.imageUrl,
+    TFA_enabled: user.TFA_enabled,
+  };
+  return abstract;
 }

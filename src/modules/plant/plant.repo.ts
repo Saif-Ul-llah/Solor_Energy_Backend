@@ -31,6 +31,7 @@ class PlantRepo {
           longitude: payload.longitude,
         },
       },
+      plantProfile: payload.plantProfile,
       plantImage: payload.plantImage
         ? {
             create: payload.plantImage.map((url) => ({
@@ -43,7 +44,6 @@ class PlantRepo {
     const plant = await prisma.plant.create({ data });
     return plant;
   }
-
 
   private static async getChildrenRecursively(
     userId: string,
@@ -80,10 +80,10 @@ class PlantRepo {
   // Get My and nested plants
   public static async getAllPlants(user: User): Promise<Plant[]> {
     // Get Nested Installer's Ids
-    let nestedPlants = await this.getChildrenRecursively(user.id, "INSTALLER")
+    let nestedPlants = await this.getChildrenRecursively(user.id, "INSTALLER");
     const plants = await prisma.plant.findMany({
       where: {
-        installerId: { in: [user.id, ...nestedPlants.map((p:any) => p.id)] },
+        installerId: { in: [user.id, ...nestedPlants.map((p: any) => p.id)] },
       },
     });
     return plants;
