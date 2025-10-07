@@ -13,6 +13,8 @@ export interface registerInterface {
   fullName: string;
   phoneNumber: string;
   parentId?: string;
+  imageUrl?: string;
+  language: string;
 }
 
 export interface loginInterface {

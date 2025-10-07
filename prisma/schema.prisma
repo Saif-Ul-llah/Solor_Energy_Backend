@@ -87,7 +87,7 @@ model User {
     verification UserVerification?
     customer     Plant[]           @relation("customer")
     installer    Plant[]           @relation("installer")
-
+    language    String        
     parentId String?
     parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
     children User[]  @relation("UserHierarchy")

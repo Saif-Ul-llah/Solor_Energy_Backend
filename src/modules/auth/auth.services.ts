@@ -9,6 +9,7 @@ import {
   registerMonitorUser,
   dotenv,
   getUserData,
+  verifyRefreshToken,
 } from "../../imports";
 import AuthRepo from "./auth.repo";
 import {
@@ -163,7 +164,45 @@ class AuthServices {
     const user = await AuthRepo.findById(userId);
     if (!user) throw HttpError.notFound("User not found");
     return getUserData(user);
-  }
+  };
+
+  public static refreshTokenService = async (refreshToken: string) => {
+    const user = await AuthRepo.findByRefreshToken(refreshToken);
+    if (!user) throw HttpError.unauthorized("Invalid refresh token");
+
+    const checkExpiry = verifyRefreshToken(refreshToken);
+    if (!checkExpiry) throw HttpError.unauthorized("Refresh token expired");
+
+    const data = { id: user.id, role: user.role };
+    const accessToken = generateAccessToken(data);
+
+    return accessToken;
+  };
+
+  public static updateUserService = async (payload: any) => {
+    const {
+      userId,
+      fullName,
+      phoneNumber,
+      address,
+      imageUrl,
+      parentId,
+      TFA_enabled,
+      fcmToken,
+    } = payload;
+    const user = await AuthRepo.findById(userId);
+    if (!user) throw HttpError.notFound("User not found");
+    return await AuthRepo.updateUser(
+      userId,
+      fullName,
+      phoneNumber,
+      address,
+      imageUrl,
+      parentId,
+      TFA_enabled,
+      fcmToken
+    );
+  };
 
   // ================ User Management =================
   public static userListService = async (role: Role, user: User) => {

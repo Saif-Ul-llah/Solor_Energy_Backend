@@ -10,11 +10,12 @@ router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/verify-otp", AuthController.verifyOTP);
 router.post("/reset-password", checkToken, AuthController.resetPassword);
 router.post("/change-password", checkToken, AuthController.changePassword);
+router.post ("/refreshToken", AuthController.refreshToken);
 
 // ======================== User Management ========================
 router.get("/user_list" , checkToken, AuthController.userList);
 router.get("/getUserById" , checkToken, AuthController.getUserById);
-// router.put("/update_user/:id" , checkToken, AuthController.updateUser);
+router.put("/update_user" , checkToken, AuthController.updateUser);
 // router.delete("/delete_user/:id" , checkToken, AuthController.deleteUser);
 
 export default router;
