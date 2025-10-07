@@ -30,7 +30,7 @@ model Plant {
   installerId String
   installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
 
-  name               String
+  name               String    @unique
   plantType          PlantType
   capacity           Int
   region             String
@@ -87,7 +87,8 @@ model User {
     verification UserVerification?
     customer     Plant[]           @relation("customer")
     installer    Plant[]           @relation("installer")
-    language    String        
+    language    String    
+        
     parentId String?
     parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
     children User[]  @relation("UserHierarchy")
