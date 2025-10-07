@@ -82,4 +82,7 @@ export const plantValidation = Joi.object({
     "string.base": "Plant profile must be a string (URL)",
     "string.uri": "Plant profile must be a valid URL",
   }),
+  notifyCustomer: Joi.boolean().optional().messages({
+    "boolean.base": "Notify customer must be a boolean",
+  }),
 });

@@ -13,7 +13,7 @@ router.post("/change-password", checkToken, AuthController.changePassword);
 
 // ======================== User Management ========================
 router.get("/user_list" , checkToken, AuthController.userList);
-// router.get("/user/:id" , checkToken, AuthController.getUserById);
+router.get("/getUserById" , checkToken, AuthController.getUserById);
 // router.put("/update_user/:id" , checkToken, AuthController.updateUser);
 // router.delete("/delete_user/:id" , checkToken, AuthController.deleteUser);
 

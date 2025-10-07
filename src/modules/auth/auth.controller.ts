@@ -119,9 +119,23 @@ class AuthController {
       return sendResponse(res, 200, result.message, [], "success");
     }
   );
+  
+/**==============================  Get User By Id   ============================== */
+
+public static getUserById = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.query.userId as string;
+      if (!userId) {
+        return next(HttpError.validationError("User ID is required"));
+      }
+      const user = await AuthServices.getUserByIdService(userId);
+      return sendResponse(res, 200, "User fetched successfully", user, "success");
+    }
+  );
+
   /*===========================================================================================
                                 User Management 
-===========================================================================================*/
+  ===========================================================================================*/
 
   public static userList = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
