@@ -98,6 +98,36 @@ class AuthRepo {
     });
   };
 
+  public static findByRefreshToken = async (refreshToken: string) => {
+    return prisma.user.findFirst({
+      where: { verification: { refreshToken } },
+    });
+  };
+
+  public static updateUser = async (
+    userId: string,
+    fullName?: string,
+    phoneNumber?: string,
+    address?: string,
+    imageUrl?: string,
+    parentId?: string,
+    TFA_enabled?: boolean,
+    fcmToken?: string
+  ) => {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        fullName,
+        phoneNumber,
+        address,
+        imageUrl,
+        parentId,
+        TFA_enabled,
+        fcmToken,
+      },
+    });
+  };
+
   // ================ User Management =================
   private static async getChildrenRecursively(
     userId: string,

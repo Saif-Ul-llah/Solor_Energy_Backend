@@ -51,7 +51,7 @@ export const registerValidation = Joi.object({
         "Role must be one of: ADMIN, SUB_ADMIN, DISTRIBUTOR, INSTALLER, CUSTOMER",
       "any.required": "Role is required",
     }),
-  // when role == admin thein parentId is not required
+  // when role == admin then parentId is not required
   parentId: Joi.string()
     .when("role", {
       is: "ADMIN",
@@ -66,6 +66,10 @@ export const registerValidation = Joi.object({
   imageUrl: Joi.string().uri().messages({
     "string.uri": "Image URL must be a valid URI",
     "string.base": "Image URL must be a string",
+  }),
+  language: Joi.string().required().messages({
+    "string.base": "Language must be a string",
+    "string.empty": "Language cannot be empty",
   }),
 });
 
@@ -83,4 +87,45 @@ export const resetPasswordValidation = Joi.object({
       "string.email": "Invalid email address",
       "any.required": "Email is required",
     }),
+});
+
+// Update user validation schema
+export const updateUserValidation = Joi.object({
+  userId: Joi.string().guid().required().messages({
+    "string.base": "User ID must be a string",
+    "string.guid": "User ID must be a valid UUID",
+  }),
+  
+  fullName: Joi.string().min(1).optional().messages({
+    "string.base": "Full name must be a string",
+    "string.empty": "Full name cannot be empty",
+    "any.required": "Full name is required",
+  }),
+
+  phoneNumber: Joi.string().min(1).optional().messages({
+    "string.base": "Phone number must be a string",
+    "string.empty": "Phone number cannot be empty",
+    "any.required": "Phone number is required",
+  }),
+
+  imageUrl: Joi.string().uri().optional().messages({
+    "string.uri": "Image URL must be a valid URI",
+    "string.base": "Image URL must be a string",
+  }),
+
+  parentId: Joi.string().optional().messages({
+    "string.base": "Parent ID must be a string",
+    "string.empty": "Parent ID cannot be empty",
+  }),
+  TFA_enabled: Joi.boolean().optional().messages({
+    "boolean.base": "TFA_enabled must be a boolean",
+  }),
+  address: Joi.string().optional().messages({
+    "string.base": "Address must be a string",
+    "string.empty": "Address cannot be empty",
+  }),
+ fcmToken: Joi.string().optional().messages({
+    "string.base": "FCM Token must be a string",
+    "string.empty": "FCM Token cannot be empty",
+  }),
 });

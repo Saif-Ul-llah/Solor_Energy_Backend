@@ -10,6 +10,8 @@ import {
   registerInterface,
   loginValidation,
   resetPasswordValidation,
+  updateUserValidation,
+  getUserData,
 } from "../../imports";
 
 import AuthServices from "./auth.services";
@@ -119,17 +121,62 @@ class AuthController {
       return sendResponse(res, 200, result.message, [], "success");
     }
   );
-  
-/**==============================  Get User By Id   ============================== */
 
-public static getUserById = asyncHandler(
+  /**==============================  Get User By Id   ============================== */
+
+  public static getUserById = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const userId = req.query.userId as string;
       if (!userId) {
         return next(HttpError.validationError("User ID is required"));
       }
       const user = await AuthServices.getUserByIdService(userId);
-      return sendResponse(res, 200, "User fetched successfully", user, "success");
+      return sendResponse(
+        res,
+        200,
+        "User fetched successfully",
+        user,
+        "success"
+      );
+    }
+  );
+
+  /*=========================== Refresh Token =========================== */
+  public static refreshToken = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { refreshToken } = req.body;
+      if (!refreshToken)
+        next(HttpError.validationError("Refresh Token is required"));
+      const result: String = await AuthServices.refreshTokenService(
+        refreshToken
+      );
+      return sendResponse(
+        res,
+        200,
+        "Token refreshed successfully",
+        result,
+        "success"
+      );
+    }
+  );
+
+  /*=========================== Update User =========================== */
+  public static updateUser = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { error, value } = updateUserValidation.validate({
+        ...req.body,
+      });
+      if (error) {
+        return next(HttpError.validationError(error.details[0].message));
+      }
+      const user = await AuthServices.updateUserService(value);
+      return sendResponse(
+        res,
+        200,
+        "User updated successfully",
+        getUserData(user),
+        "success"
+      );
     }
   );
 
