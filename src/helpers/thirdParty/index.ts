@@ -7,13 +7,12 @@ dotenv.config();
 interface ApiResponse {
   [key: string]: any;
 }
- const CLOUD_BASEURL = process.env.CLOUD_BASEURL as string;
- 
+const CLOUD_BASEURL = process.env.CLOUD_BASEURL as string;
+
 // Function to get operation signature
 export const getOperationSignature = async (
   MemberID: string,
-  Password: string,
-
+  Password: string
 ): Promise<ApiResponse> => {
   const data = qs.stringify({
     MemberID: MemberID,
@@ -42,14 +41,12 @@ export const getOperationSignature = async (
 export const registerMonitorUser = async (
   MemberID: string,
   Password: string,
-  Confirm: string,
-
+  Confirm: string
 ): Promise<ApiResponse> => {
   // First, get the operation signature
   const signatureResponse = await getOperationSignature(
     process.env.SERVICE_ACCOUNT_ID as string,
-    process.env.SERVICE_ACCOUNT_PASS as string,
-
+    process.env.SERVICE_ACCOUNT_PASS as string
   );
   const data = new FormData();
   data.append("OSSMemberID", process.env.SERVICE_ACCOUNT_ID as string);
@@ -74,5 +71,66 @@ export const registerMonitorUser = async (
   } catch (error) {
     console.error("Error registering monitor user:", error);
     throw error; // Re-throw the error to allow for handling upstream
+  }
+};
+
+export const getEndUserInfo = async (): Promise<ApiResponse> => {
+  const signatureResponse = await getOperationSignature(
+    process.env.SERVICE_ACCOUNT_ID as string,
+    process.env.SERVICE_ACCOUNT_PASS as string
+  );
+
+  const data = qs.stringify({
+    MemberID: process.env.SERVICE_ACCOUNT_ID as string,
+    Sign: signatureResponse,
+  });
+
+  const config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getEndUserInfo`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching end user info:", error);
+    throw error;
+  }
+};
+
+
+export const getGroupList = async (
+  MemberID: string,
+  Sign: string,
+  inputValue: string = "" // optional or empty string by default
+): Promise<ApiResponse> => {
+  const data = qs.stringify({
+    inputValue: inputValue,
+    MemberID: MemberID,
+    Sign: Sign,
+  });
+
+  const config = {
+    method: "post",
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getGroupList`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data: data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching group list:", error);
+    throw error;
   }
 };

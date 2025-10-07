@@ -45,7 +45,7 @@ class PlantRepo {
     return plant;
   }
 
-  private static async getChildrenRecursively(
+  public static async getChildrenRecursively(
     userId: string,
     role?: Role
   ): Promise<String[]> {
@@ -55,6 +55,7 @@ class PlantRepo {
       select: {
         role: true,
         id: true,
+        email: true,
       },
     });
 
@@ -78,12 +79,11 @@ class PlantRepo {
   }
 
   // Get My and nested plants
-  public static async getAllPlants(user: User): Promise<Plant[]> {
+  public static async getAllPlants(user: User ,userIdsList: string[]): Promise<Plant[]> {
     // Get Nested Installer's Ids
-    let nestedPlants = await this.getChildrenRecursively(user.id, "INSTALLER");
     const plants = await prisma.plant.findMany({
       where: {
-        installerId: { in: [user.id, ...nestedPlants.map((p: any) => p.id)] },
+        installerId: { in: [user.id, ...userIdsList] },
       },
     });
     return plants;
