@@ -1,5 +1,5 @@
 import nodemailer, { Transporter } from "nodemailer";
-import { SendMail } from "~/imports";
+import { logger, SendMail } from "../imports";
 
 
 export const sendMail = async ({
@@ -24,7 +24,7 @@ export const sendMail = async ({
     };
 
     await transporter.sendMail(mailOptions);
-    console.log(`✅ OTP sent to ${email}`);
+    logger(`✅ OTP sent to ${email}`);
   } catch (error) {
     console.error("❌ Error sending OTP:", error);
     throw new Error("Error sending OTP");

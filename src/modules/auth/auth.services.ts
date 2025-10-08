@@ -10,6 +10,7 @@ import {
   dotenv,
   getUserData,
   verifyRefreshToken,
+  logger,
 } from "../../imports";
 import AuthRepo from "./auth.repo";
 import {
@@ -26,7 +27,7 @@ class AuthServices {
     if (alreadyExists) throw HttpError.alreadyExists("Email");
     // Create new Monitor User on CloudInverters Platform
     if (payload.role == "CUSTOMER") {
-      console.log(
+      logger(
         "\n\n==== Registering monitor user on CloudInverters platform ====\n\n"
       );
 
@@ -35,7 +36,7 @@ class AuthServices {
         process.env.MONITOR_ACCOUNT_PASSWORD as string,
         process.env.MONITOR_ACCOUNT_PASSWORD as string
       );
-      // console.log("registrationResponse", registrationResponse);
+      // logger("registrationResponse", registrationResponse);
 
       if (!registrationResponse.status) {
         throw HttpError.internalServerError(
@@ -70,11 +71,11 @@ class AuthServices {
       console.log("OTP is :", otp);
       await sendMail({
         email: user.email,
-        subject: "Password Reset OTP",
+        subject: "Two-Factor Authentication OTP",
         html: template,
       });
 
-      return;
+      return { message: "TFA enabled, OTP sent to email"};
     }
     const data = { id: user.id, role: user.role };
     const accessToken = generateAccessToken(data);
@@ -113,7 +114,6 @@ class AuthServices {
   ) => {
     const user = await AuthRepo.findByEmail(email);
     if (!user) throw HttpError.notFound("User not found");
-    // console.log(TFA, "check ");
 
     const record = await AuthRepo.verifyOtp(user.id, otp);
     if (!record) throw HttpError.badRequest("Invalid or expired OTP");

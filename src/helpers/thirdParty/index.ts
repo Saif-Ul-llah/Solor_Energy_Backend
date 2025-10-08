@@ -104,7 +104,6 @@ export const getEndUserInfo = async (): Promise<ApiResponse> => {
   }
 };
 
-
 export const getGroupList = async (
   MemberID: string,
   Sign: string,
@@ -131,6 +130,83 @@ export const getGroupList = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching group list:", error);
+    throw error;
+  }
+};
+
+// Function to insert group info
+export const insertGroupInfo = async (
+  MemberID: string,
+  GroupName: string,
+  StartDate: string,
+  PlantType: string,
+  Kwp: string,
+  Price: string,
+  Lng: string,
+  Lat: string,
+  CurrencyUnit: string,
+  Sign: string
+): Promise<ApiResponse> => {
+  
+  const data = qs.stringify({
+    MemberID,
+    GroupName,
+    StartDate,
+    PlantType,
+    Kwp,
+    Price,
+    Lng,
+    Lat,
+    CurrencyUnit,
+    Sign,
+  });
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/insertGroupInfo`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error inserting group info:", error);
+    throw error;
+  }
+};
+
+
+// Get monitor user signature
+// Function to get Sign (authentication signature)
+export const getSign = async (
+  MemberID: string,
+  Password: string
+): Promise<ApiResponse> => {
+  const data = qs.stringify({
+    MemberID,
+    Password,
+  });
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getSign`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching sign:", error);
     throw error;
   }
 };

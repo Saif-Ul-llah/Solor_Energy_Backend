@@ -96,35 +96,35 @@ export const updateUserValidation = Joi.object({
     "string.guid": "User ID must be a valid UUID",
   }),
   
-  fullName: Joi.string().min(1).optional().messages({
+  fullName: Joi.string().min(1).optional().allow(null, "").messages({
     "string.base": "Full name must be a string",
     "string.empty": "Full name cannot be empty",
     "any.required": "Full name is required",
   }),
 
-  phoneNumber: Joi.string().min(1).optional().messages({
+  phoneNumber: Joi.string().min(1).optional().allow(null, "").messages({
     "string.base": "Phone number must be a string",
     "string.empty": "Phone number cannot be empty",
     "any.required": "Phone number is required",
   }),
 
-  imageUrl: Joi.string().uri().optional().messages({
+  imageUrl: Joi.string().uri().optional().allow(null, "").messages({
     "string.uri": "Image URL must be a valid URI",
     "string.base": "Image URL must be a string",
   }),
 
-  parentId: Joi.string().optional().messages({
+  parentId: Joi.string().optional().allow(null, "").messages({
     "string.base": "Parent ID must be a string",
     "string.empty": "Parent ID cannot be empty",
   }),
-  TFA_enabled: Joi.boolean().optional().messages({
+  TFA_enabled: Joi.boolean().optional().allow(null, "").messages({
     "boolean.base": "TFA_enabled must be a boolean",
   }),
-  address: Joi.string().optional().messages({
+  address: Joi.string().optional().allow(null, "").messages({
     "string.base": "Address must be a string",
     "string.empty": "Address cannot be empty",
   }),
- fcmToken: Joi.string().optional().messages({
+ fcmToken: Joi.string().optional().allow(null, "").messages({
     "string.base": "FCM Token must be a string",
     "string.empty": "FCM Token cannot be empty",
   }),
