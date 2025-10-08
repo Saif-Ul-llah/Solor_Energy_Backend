@@ -255,3 +255,20 @@ export const comparePass = async (
 ): Promise<boolean> => {
   return bcrypt.compare(password, hashedPassword);
 };
+
+export const logger = (message: string, ...args: any[]) => {
+  const now = new Date();
+  const formattedDate = now
+    .toLocaleString("en-GB", {
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    })
+    .replace(",", "");
+
+  console.log(`[${formattedDate}]`, message, ...args);
+};

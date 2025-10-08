@@ -63,7 +63,7 @@ class PlantRepo {
 
     for (const child of children) {
       // if child matches the role, add it
-      if (!role || child.role === role) {
+      if (!role || child.role === role || child.role === "CUSTOMER") {
         allChildren.push(child);
       }
 
@@ -79,14 +79,33 @@ class PlantRepo {
   }
 
   // Get My and nested plants
-  public static async getAllPlants(user: User ,userIdsList: string[]): Promise<Plant[]> {
+  public static async getAllPlants(
+    user: User,
+    userIdsList: string[]
+  ): Promise<Plant[]> {
     // Get Nested Installer's Ids
     const plants = await prisma.plant.findMany({
       where: {
-        installerId: { in: [user.id, ...userIdsList] },
+        customer: {
+          email: { in: userIdsList },
+        },
       },
+      // include: {
+      //   location: true,
+      //   customer: true,
+      //   installer: true,
+      //   plantImage: true,
+      // },
     });
     return plants;
+  }
+
+  // Check if plant exists by name
+  public static async isPlantExists(name: string): Promise<boolean> {
+    const plant = await prisma.plant.findUnique({
+      where: { name },
+    });
+    return !!plant;
   }
 }
 
