@@ -9,6 +9,8 @@ import {
   PlantInterface,
   sendMail,
   dotenv,
+  getUserData,
+  InvertersOfPlant,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -34,7 +36,13 @@ class PlantService {
       /* MemberID */ getCustomer.email,
       /* GroupName */ payload.name,
       /* StartDate */ new Date().toISOString().split("T")[0],
-      /* PlantType */ payload.plantType,
+      /* PlantType */ payload.plantType == "Grid"
+        ? "1"
+        : payload.plantType == "Grid_Meter"
+        ? "2"
+        : payload.plantType == "Hybrid"
+        ? "4"
+        : payload.plantType,
       /* Kwp */ payload.capacity.toString(),
       /* Price */ payload.tariff.toString(),
       /* Lng */ payload.longitude?.toString() || "0",
@@ -90,8 +98,8 @@ class PlantService {
   public static getAllPlants = async (
     user: User,
     status?: string,
-    page: number=1,
-    pageSize: number=10
+    page: number = 1,
+    pageSize: number = 10
   ) => {
     // 1️ Get all child installers recursively
     const userIdsList = await PlantRepo.getChildrenRecursively(
@@ -156,6 +164,7 @@ class PlantService {
         capacity: plant?.GoodsKWP || 0,
         address: plant?.address || "",
         currentPower: plant?.CurrPac || 0,
+        AutoID: plant?.AutoID || "0",
         status:
           plant?.Light === 1
             ? "ONLINE"
@@ -171,9 +180,30 @@ class PlantService {
     const validStatuses = ["OFFLINE", "STANDBY", "FAULT", "ONLINE"];
 
     if (status && validStatuses.includes(status)) {
-      return plantListWithDbInfo.filter(
+      let newData = plantListWithDbInfo.filter(
         (plant: any) => plant.status === status
       );
+      // Ensure valid page number (minimum 1)
+      const validPage = Math.max(page, 1);
+
+      // Calculate skip and take for slicing the array
+      const skip = (validPage - 1) * pageSize;
+      const take = pageSize;
+
+      // Get the total number of items in the array
+      const total = newData.length;
+
+      // Slice the array to get the paginated items
+      const paginatedResults = newData.slice(skip, skip + take);
+
+      // Return the response in the desired format
+      return {
+        plants: paginatedResults, // Paginated plant list
+        currentPage: validPage,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      };
     }
 
     // Ensure valid page number (minimum 1)
@@ -198,6 +228,66 @@ class PlantService {
       totalPages: Math.ceil(total / pageSize),
     };
     // return plantListWithDbInfo;
+  };
+
+  // Get Plant By Id
+  public static getPlantByIdService = async (id: string) => {
+    const plant: any = await PlantRepo.getPlantByIdRepo(id);
+    if (!plant) throw HttpError.notFound("Plant not found");
+
+    const filteredData = {
+      ...plant,
+      latitude: plant.location.latitude || "",
+      longitude: plant.location.longitude || "",
+      plantImage:
+        plant.plantImage.map((image: any) => image.file_url).filter(Boolean) ||
+        [],
+      customer: getUserData(plant.customer),
+      installer: getUserData(plant.installer),
+    };
+    delete filteredData.location;
+    delete filteredData.customerId;
+    delete filteredData.installerId;
+    delete filteredData.locationId;
+
+    return filteredData;
+  };
+
+  // Get Device List of Plant
+  public static getDeviceListOfPlantService = async (
+    plantId: string,
+    type: string,
+    email: string
+  ) => {
+    // const plant: any = await PlantRepo.getPlantByIdRepo(plantId);
+    // if (!plant) throw HttpError.notFound("Plant not found");
+    const InverterList: any = await InvertersOfPlant(email, plantId);
+    if (!InverterList && InverterList.AllInverterList.length == 0) {
+      throw HttpError.notFound("No Device found for this plant");
+    }
+    let filtered = InverterList.AllInverterList.map((device: any) => ({
+      currentPower: device?.CurrPac || 0,
+      AutoID: device?.AutoID || "0",
+      status:
+        device?.Light === 1
+          ? "ONLINE"
+          : device?.Light == 2
+          ? "FAULT"
+          : device?.Light == 3
+          ? "STANDBY"
+          : device?.Light == 4
+          ? "OFFLINE"
+          : "UNKNOWN",
+      GoodsID: device?.GoodsID || "",
+      ModelName: device?.ModelName || "",
+      GoodsName: device?.GoodsName || "",
+      todayYield: device?.EToday || 0,
+      totalYield: device?.ETotal || 0,
+      generationTime: device?.Htotal || "",
+      DataTime: device?.DataTime || "",
+    }));
+    return filtered;
+    // return plant;
   };
 }
 

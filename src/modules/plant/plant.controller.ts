@@ -43,12 +43,12 @@ class PlantController {
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
       const { status = "", page = 1, pageSize = 10 } = req.query;
-      
+
       const plants = await PlantServices.getAllPlants(
         user as User,
         status as string,
         Number(page),
-        Number(pageSize) 
+        Number(pageSize)
       );
       if (plants) {
         return sendResponse(
@@ -56,6 +56,46 @@ class PlantController {
           200,
           "Plants fetched successfully",
           plants,
+          "success"
+        );
+      }
+    }
+  );
+
+  public static getPlantById = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id } = req.query;
+      if (!id) return next(HttpError.badRequest("Plant ID is required"));
+      const plant = await PlantServices.getPlantByIdService(id as string);
+      if (plant) {
+        return sendResponse(
+          res,
+          200,
+          "Plant fetched successfully",
+          plant,
+          "success"
+        );
+      }
+    }
+  );
+
+  // Get Device List of Plant
+  public static getDeviceListOfPlant = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { AutoID, type = "INVERTER", email } = req.query;
+      if (!AutoID || !email)
+        return next(HttpError.badRequest("Plant ID or Email is required"));
+      const device = await PlantServices.getDeviceListOfPlantService(
+        AutoID as string,
+        type as string,
+        email as string
+      );
+      if (device) {
+        return sendResponse(
+          res,
+          200,
+          "Device List fetched successfully",
+          device,
           "success"
         );
       }
