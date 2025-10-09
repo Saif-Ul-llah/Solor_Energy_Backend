@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from "axios";
 import qs from "qs";
 import FormData from "form-data";
 import dotenv from "dotenv";
+import { logger } from "../../utils";
 dotenv.config();
 
 interface ApiResponse {
@@ -147,7 +148,6 @@ export const insertGroupInfo = async (
   CurrencyUnit: string,
   Sign: string
 ): Promise<ApiResponse> => {
-  
   const data = qs.stringify({
     MemberID,
     GroupName,
@@ -180,8 +180,8 @@ export const insertGroupInfo = async (
   }
 };
 
-
 // Get monitor user signature
+
 // Function to get Sign (authentication signature)
 export const getSign = async (
   MemberID: string,
@@ -207,6 +207,75 @@ export const getSign = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching sign:", error);
+    throw error;
+  }
+};
+
+// Get Inverter List of a Plant
+// Function to get group detail list
+export const inverterListOfPlant = async (
+  MemberID: string,
+  GroupAutoID: string,
+  Sign: string
+): Promise<ApiResponse> => {
+  const data = new FormData();
+  data.append("MemberID", MemberID);
+  data.append("GroupAutoID", GroupAutoID);
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getGroupDetailList`,
+    headers: {
+      ...data.getHeaders(),
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching group detail list:", error);
+    throw error;
+  }
+};
+
+// Get Inverter List of a Plant
+// Function to get group detail list (using multipart/form-data)
+export const InvertersOfPlant = async (
+  MemberID: string,
+  GroupAutoID: string
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    "progziel01",
+    "123456"
+    // MemberID,
+    // process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  // logger("Sign", Sign);
+  const data = new FormData();
+  data.append("MemberID", MemberID);
+  data.append("GroupAutoID", GroupAutoID);
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getGroupDetailList`,
+    headers: {
+      ...data.getHeaders(),
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching group detail list:", error);
     throw error;
   }
 };

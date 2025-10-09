@@ -107,6 +107,21 @@ class PlantRepo {
     });
     return !!plant;
   }
+
+  // Get Plant By Id
+  public static async getPlantByIdRepo(id: string): Promise<Plant | null> {
+    const plant  = await prisma.plant.findUnique({
+      where: { name:id },
+      include: {
+        location: true,
+        customer: true,
+        installer: true,
+        plantImage: true,
+      },
+    });
+    return plant;
+  }
+
 }
 
 export default PlantRepo;
