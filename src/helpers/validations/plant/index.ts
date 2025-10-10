@@ -86,3 +86,29 @@ export const plantValidation = Joi.object({
     "boolean.base": "Notify customer must be a boolean",
   }),
 });
+
+// Update plant validation
+
+export const updatePlantValidation = Joi.object({
+  plantId: Joi.string().guid().required().messages({
+    "string.base": "Plant ID must be a string",
+    "string.guid": "Plant ID must be a valid UUID",
+  }),
+  name: Joi.object().required().messages({
+    "object.base": "Plant data must be an object",
+    "any.required": "Plant data is required",
+  }),
+});
+
+
+
+
+/*MemberID:*///email
+/*GroupAutoID:*///AutoID
+/*GroupName:*/// Name
+/*PlantType:*/ //plant Type 
+/*Kwp:*/
+/*Price:*/
+/*Lng:*/
+/*Lat:*/
+/*CurrencyUnit:*/

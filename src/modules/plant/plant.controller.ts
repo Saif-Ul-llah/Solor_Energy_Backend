@@ -101,5 +101,23 @@ class PlantController {
       }
     }
   );
+
+  // Update Plant Details 
+  public static updatePlant = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { id } = req.query;
+      if (!id) return next(HttpError.badRequest("Plant ID is required"));
+      const plant = await PlantServices.updatePlantService(id as string, req.body);
+      if (plant) {
+        return sendResponse(
+          res,
+          200,
+          "Plant updated successfully",
+          plant,
+          "success"
+        );
+      }
+    }
+  );
 }
 export default PlantController;
