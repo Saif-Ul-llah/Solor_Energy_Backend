@@ -11,6 +11,7 @@ import {
   dotenv,
   getUserData,
   InvertersOfPlant,
+  ModifyPlant,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -165,6 +166,7 @@ class PlantService {
         address: plant?.address || "",
         currentPower: plant?.CurrPac || 0,
         AutoID: plant?.AutoID || "0",
+        CustomerEmail: plant?.customer.email || "",
         status:
           plant?.Light === 1
             ? "ONLINE"
@@ -237,6 +239,7 @@ class PlantService {
 
     const filteredData = {
       ...plant,
+      address: plant.address || "",
       latitude: plant.location.latitude || "",
       longitude: plant.location.longitude || "",
       plantImage:
@@ -245,6 +248,7 @@ class PlantService {
       customer: getUserData(plant.customer),
       installer: getUserData(plant.installer),
     };
+
     delete filteredData.location;
     delete filteredData.customerId;
     delete filteredData.installerId;
@@ -261,8 +265,12 @@ class PlantService {
   ) => {
     // const plant: any = await PlantRepo.getPlantByIdRepo(plantId);
     // if (!plant) throw HttpError.notFound("Plant not found");
-    const InverterList: any = await InvertersOfPlant(email, plantId);
-    if (!InverterList && InverterList.AllInverterList.length == 0) {
+    const InverterList: any = await InvertersOfPlant("progziel01", plantId);
+    if (
+      !InverterList ||
+      !InverterList.AllInverterList ||
+      InverterList.AllInverterList.length === 0
+    ) {
       throw HttpError.notFound("No Device found for this plant");
     }
     let filtered = InverterList.AllInverterList.map((device: any) => ({
@@ -285,10 +293,35 @@ class PlantService {
       totalYield: device?.ETotal || 0,
       generationTime: device?.Htotal || "",
       DataTime: device?.DataTime || "",
+      capacity: device?.Capacity || 0,
+      deviceType: device?.DeviceType || "GRID",
     }));
     return filtered;
     // return plant;
   };
+
+  // Modify Plant
+  public static updatePlantService = async (id: string, data: any) => {
+    // Modify on third party api
+    const result = await ModifyPlant(
+      /*GroupName:*/ data.name,
+      /*MemberID:*/ data.email,
+      /*PlantType:*/ data.PlantType,
+      /*Price:*/ data.Price,
+      /*CurrencyUnit:*/ data.CurrencyUnit,
+      /*Kwp:*/ data.Kwp,
+      /*GroupAutoID:*/ data.GroupAutoID,
+      /*Lng:*/ data.Lng,
+      /*Lat:*/ data.Lat
+    );
+    if (result.status === "success") {
+      // Modify on DB
+      // const plant = await PlantRepo.updatePlantRepo(id, data);
+      // return plant;
+    }
+    return {};
+  };
 }
 
 export default PlantService;
+

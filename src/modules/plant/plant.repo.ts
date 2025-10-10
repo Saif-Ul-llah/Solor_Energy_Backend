@@ -90,12 +90,12 @@ class PlantRepo {
           email: { in: userIdsList },
         },
       },
-      // include: {
-      //   location: true,
-      //   customer: true,
-      //   installer: true,
-      //   plantImage: true,
-      // },
+      include: {
+        // location: true,
+        customer: true,
+        // installer: true,
+        // plantImage: true,
+      },
     });
     return plants;
   }

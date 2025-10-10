@@ -64,8 +64,8 @@ export function getUserData(user: any) {
     phoneNumber: user.phoneNumber,
     parentId: user.parentId,
     IsActive: user.IsActive,
-    address: user.address,
-    imageUrl: user.imageUrl,
+    address: user.address || "",
+    imageUrl: user.imageUrl || "",
     TFA_enabled: user.TFA_enabled,
   };
   return abstract;

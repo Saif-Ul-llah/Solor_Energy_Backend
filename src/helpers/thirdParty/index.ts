@@ -279,3 +279,54 @@ export const InvertersOfPlant = async (
     throw error;
   }
 };
+
+// Modify Plant Details
+// Function to update group info
+export const ModifyPlant = async (
+  GroupName: string,
+  MemberID: string,
+  PlantType: string,
+  Price: string,
+  CurrencyUnit: string,
+  Kwp: string,
+  GroupAutoID: string,
+  Lng: string,
+  Lat: string
+): Promise<ApiResponse> => {
+const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+logger("Sign", Sign);
+
+  const data = new FormData();
+  data.append("GroupName", GroupName);
+  data.append("MemberID", MemberID);
+  data.append("PlantType", PlantType);
+  data.append("Price", Price);
+  data.append("CurrencyUnit", CurrencyUnit);
+  data.append("Kwp", Kwp);
+  data.append("Sign", Sign);
+  data.append("GroupAutoID", GroupAutoID);
+  data.append("Lng", Lng);
+  data.append("Lat", Lat);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/updateGroupInfo`,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      ...data.getHeaders(),
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error updating group info:", error);
+    throw error;
+  }
+};
