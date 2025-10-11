@@ -90,23 +90,49 @@ export const plantValidation = Joi.object({
 // Update plant validation
 
 export const updatePlantValidation = Joi.object({
-  plantId: Joi.string().guid().required().messages({
-    "string.base": "Plant ID must be a string",
-    "string.guid": "Plant ID must be a valid UUID",
-  }),
   name: Joi.object().required().messages({
     "object.base": "Plant data must be an object",
     "any.required": "Plant data is required",
   }),
+  AutoID: Joi.string().guid().required().messages({
+    "string.base": "Auto ID must be a string",
+    "string.guid": "Auto ID must be a valid UUID",
+  }),
+  plantType: Joi.string()
+    .valid("Grid", "Grid_Meter", "Hybrid")
+    .required()
+    .messages({
+      "string.base": "Plant type must be a string",
+      "any.only": "Plant type must be one of [Grid, Grid_Meter, Hybrid]",
+      "any.required": "Plant type is required",
+    }),
+  capacity: Joi.number().required().messages({
+    "number.base": "Capacity must be a number",
+    "any.required": "Capacity is required",
+  }),
+  tariff: Joi.number().required().messages({
+    "number.base": "Tariff must be a number",
+    "any.required": "Tariff is required",
+  }),
+  latitude: Joi.number().required().messages({
+    "number.base": "Latitude must be a number",
+    "any.required": "Latitude is required",
+  }),
+  longitude: Joi.number().required().messages({
+    "number.base": "Longitude must be a number",
+    "any.required": "Longitude is required",
+  }),
+  currency: Joi.string().min(1).required().messages({
+    "string.base": "Currency must be a string",
+    "string.empty": "Currency must be a string and not empty",
+    "any.required": "Currency is required",
+  }),
 });
 
-
-
-
-/*MemberID:*///email
-/*GroupAutoID:*///AutoID
-/*GroupName:*/// Name
-/*PlantType:*/ //plant Type 
+/*MemberID:*/ //email
+/*GroupAutoID:*/ //AutoID
+/*GroupName:*/ // Name
+/*PlantType:*/ //plant Type
 /*Kwp:*/
 /*Price:*/
 /*Lng:*/

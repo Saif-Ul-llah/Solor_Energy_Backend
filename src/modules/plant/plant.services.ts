@@ -53,7 +53,23 @@ class PlantService {
     );
     logger("createPlantResponse", createPlantResponse);
 
-    const plant = await PlantRepo.createPlant(payload);
+    const plantList = await getGroupList(
+      getCustomer.email,
+      getMonitorUserSignature
+    );
+
+    let getPlant = await plantList.AllGroupList.find(
+      (data: any) => data.GoodsTypeName == payload.name
+    );
+
+    logger("For AutoID :", plantList.AutoID);
+    // return plantList;
+
+    const plant = await PlantRepo.createPlant({
+      ...payload,
+      AutoID: getPlant.AutoID,
+    });
+
     return plant;
   };
 
@@ -301,27 +317,36 @@ class PlantService {
   };
 
   // Modify Plant
-  public static updatePlantService = async (id: string, data: any) => {
+  public static updatePlantService = async (data: any) => {
+    //Get plant and Customer of that plant
+    const getPlantByAutoId: any = await PlantRepo.getPlantByAutoIdRepo(
+      data.AutoID
+    );
     // Modify on third party api
     const result = await ModifyPlant(
       /*GroupName:*/ data.name,
-      /*MemberID:*/ data.email,
-      /*PlantType:*/ data.PlantType,
-      /*Price:*/ data.Price,
-      /*CurrencyUnit:*/ data.CurrencyUnit,
-      /*Kwp:*/ data.Kwp,
-      /*GroupAutoID:*/ data.GroupAutoID,
-      /*Lng:*/ data.Lng,
-      /*Lat:*/ data.Lat
+      /*MemberID:*/ getPlantByAutoId.customer.email,
+      /*PlantType:*/ data.plantType == "Grid"
+        ? "1"
+        : data.plantType == "Grid_Meter"
+        ? "2"
+        : data.plantType == "Hybrid"
+        ? "4"
+        : data.plantType,
+      /*Price:*/ data.tariff,
+      /*CurrencyUnit:*/ data.currency,
+      /*Kwp:*/ data.capacity,
+      /*GroupAutoID:*/ data.AutoID,
+      /*Lng:*/ data.longitude,
+      /*Lat:*/ data.latitude
     );
-    if (result.status === "success") {
+    if (result.status) {
       // Modify on DB
-      // const plant = await PlantRepo.updatePlantRepo(id, data);
-      // return plant;
+      const plant = await PlantRepo.updatePlantRepo(data);
+      return plant;
     }
-    return {};
+    return { message: "Failed to update plant" };
   };
 }
 
 export default PlantService;
-

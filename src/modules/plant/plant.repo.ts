@@ -39,6 +39,7 @@ class PlantRepo {
             })),
           }
         : undefined,
+      AutoId: payload.AutoID,
     };
 
     const plant = await prisma.plant.create({ data });
@@ -110,8 +111,8 @@ class PlantRepo {
 
   // Get Plant By Id
   public static async getPlantByIdRepo(id: string): Promise<Plant | null> {
-    const plant  = await prisma.plant.findUnique({
-      where: { name:id },
+    const plant = await prisma.plant.findUnique({
+      where: { name: id },
       include: {
         location: true,
         customer: true,
@@ -122,6 +123,36 @@ class PlantRepo {
     return plant;
   }
 
+  public static async getPlantByAutoIdRepo(id: string): Promise<Plant | null> {
+    const plant = await prisma.plant.findUnique({
+      where: { AutoId: id },
+      include: {
+        location: true,
+        customer: true,
+        installer: true,
+        plantImage: true,
+      },
+    });
+    return plant;
+  }
+
+  // Update Plant
+  public static async updatePlantRepo(data: any) {
+    let { latitude, longitude, ...rest } = data;
+    const plant = await prisma.plant.update({
+      where: { AutoId: data.AutoId },
+      data: {
+        ...rest,
+        location: {
+          update: {
+            latitude,
+            longitude,
+          },
+        },
+      },
+    });
+    return plant;
+  }
 }
 
 export default PlantRepo;

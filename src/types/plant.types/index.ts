@@ -18,4 +18,5 @@ export interface PlantInterface {
   plantProfile: string;
   customerId: string;
   installerId: string;
+  AutoID?: string;
 }
