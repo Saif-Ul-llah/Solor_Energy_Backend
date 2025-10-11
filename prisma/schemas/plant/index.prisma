@@ -25,6 +25,7 @@ model Plant {
   imagesNotes        String?
   plantProfile       String?
   plantImage         Media[]
+  AutoId             String?    @unique
 
   @@schema("public")
 }

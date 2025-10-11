@@ -8,10 +8,10 @@ import {
   HttpError,
   plantValidation,
   PlantInterface,
+  updatePlantValidation,
 } from "../../imports";
 
 import PlantServices from "./plant.services";
-import { stat } from "fs";
 
 class PlantController {
   public static createPlant = asyncHandler(
@@ -102,12 +102,16 @@ class PlantController {
     }
   );
 
-  // Update Plant Details 
+  // Update Plant Details
   public static updatePlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const { id } = req.query;
-      if (!id) return next(HttpError.badRequest("Plant ID is required"));
-      const plant = await PlantServices.updatePlantService(id as string, req.body);
+      const { error, value } = updatePlantValidation.validate({
+        ...req.body,
+      });
+      if (error) {
+        return next(HttpError.validationError(error.details[0].message));
+      }
+      const plant = await PlantServices.updatePlantService(value);
       if (plant) {
         return sendResponse(
           res,

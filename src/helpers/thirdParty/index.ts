@@ -105,6 +105,7 @@ export const getEndUserInfo = async (): Promise<ApiResponse> => {
   }
 };
 
+// Get plant List of a User
 export const getGroupList = async (
   MemberID: string,
   Sign: string,

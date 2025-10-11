@@ -6,10 +6,11 @@ import UploadController from "../../middlewares/fileUpload";
 const router = Router();
 
 router.post("/upload_files", upload.any(), UploadController.UploadFiles);
+
 router.post("/createPlant", checkToken, PlantController.createPlant);
 router.get("/getAllPlants", checkToken, PlantController.getAllPlants);
 router.get("/getPlantById", checkToken, PlantController.getPlantById);
 router.get("/getDeviceListOfPlant", checkToken, PlantController.getDeviceListOfPlant);
-router.patch("/updatePlant", checkToken, PlantController.updatePlant);
+router.put("/updatePlant", checkToken, PlantController.updatePlant);
 // router.delete("/deletePlant/:id", checkToken, PlantController.deletePlant);
 export default router;
