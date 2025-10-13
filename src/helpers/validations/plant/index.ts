@@ -88,15 +88,15 @@ export const plantValidation = Joi.object({
 });
 
 // Update plant validation
-
 export const updatePlantValidation = Joi.object({
-  name: Joi.object().required().messages({
-    "object.base": "Plant data must be an object",
-    "any.required": "Plant data is required",
+  // 🔸 Required Fields
+  name: Joi.string().required().messages({
+    "string.base": "Name must be a string",
+    "any.required": "Name is required",
   }),
-  AutoID: Joi.string().guid().required().messages({
+  AutoID: Joi.string().required().messages({
     "string.base": "Auto ID must be a string",
-    "string.guid": "Auto ID must be a valid UUID",
+    "any.required": "Auto ID is required",
   }),
   plantType: Joi.string()
     .valid("Grid", "Grid_Meter", "Hybrid")
@@ -124,17 +124,52 @@ export const updatePlantValidation = Joi.object({
   }),
   currency: Joi.string().min(1).required().messages({
     "string.base": "Currency must be a string",
-    "string.empty": "Currency must be a string and not empty",
+    "string.empty": "Currency must not be empty",
     "any.required": "Currency is required",
   }),
-});
 
-/*MemberID:*/ //email
-/*GroupAutoID:*/ //AutoID
-/*GroupName:*/ // Name
-/*PlantType:*/ //plant Type
-/*Kwp:*/
-/*Price:*/
-/*Lng:*/
-/*Lat:*/
-/*CurrencyUnit:*/
+  // 🔸 Optional Fields
+  region: Joi.string().optional().messages({
+    "string.base": "Region must be a string",
+  }),
+  timeZone: Joi.string().optional().messages({
+    "string.base": "Time zone must be a string",
+  }),
+  address: Joi.string().optional().messages({
+    "string.base": "Address must be a string",
+  }),
+  installationDate: Joi.date().optional().messages({
+    "date.base": "Installation date must be a valid date",
+  }),
+  gridConnectionType: Joi.string().optional().messages({
+    "string.base": "Grid connection type must be a string",
+  }),
+  gridConnectionDate: Joi.date().optional().messages({
+    "date.base": "Grid connection date must be a valid date",
+  }),
+  notes: Joi.string().optional().allow("").messages({
+    "string.base": "Notes must be a string",
+  }),
+  imagesNotes: Joi.string().optional().allow("").messages({
+    "string.base": "Images notes must be a string",
+  }),
+  plantProfile: Joi.string().optional().messages({
+    "string.base": "Plant profile must be a string",
+  }),
+  // customerId: Joi.string().guid().optional().messages({
+  //   "string.guid": "Customer ID must be a valid UUID",
+  // }),
+  // installerId: Joi.string().guid().optional().messages({
+  //   "string.guid": "Installer ID must be a valid UUID",
+  // }),
+  plantImage: Joi.array()
+    .items(
+      Joi.string().uri().messages({
+        "string.uri": "Each image URL must be valid",
+      })
+    )
+    .optional()
+    .messages({
+      "array.base": "Plant image must be an array of image URLs",
+    }),
+});

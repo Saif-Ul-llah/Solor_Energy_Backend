@@ -138,20 +138,73 @@ class PlantRepo {
 
   // Update Plant
   public static async updatePlantRepo(data: any) {
-    let { latitude, longitude, ...rest } = data;
-    const plant = await prisma.plant.update({
-      where: { AutoId: data.AutoId },
-      data: {
-        ...rest,
-        location: {
-          update: {
-            latitude,
-            longitude,
-          },
-        },
-      },
+    const {
+      AutoID,
+      latitude,
+      longitude,
+      plantImage,
+      customerId,
+      installerId,
+      ...rest
+    } = data;
+
+    // Ensure AutoId is provided
+    if (!AutoID) throw new Error("AutoId is required for updating plant");
+
+    // Fetch existing plant
+    const existingPlant = await prisma.plant.findUnique({
+      where: { AutoId: AutoID },
+      include: { location: true, plantImage: true },
     });
-    return plant;
+
+    if (!existingPlant) throw new Error("Plant not found");
+
+    // Build update payload
+    const updateData: any = {
+      ...rest,
+    };
+    // if (customerId) {
+    //   updateData.customer = { connect: { id: customerId } };
+    // }
+
+    // if (installerId) {
+    //   updateData.installer = { connect: { id: installerId } };
+    // }
+    // ✅ Update location only if provided
+    if (latitude !== undefined && longitude !== undefined) {
+      updateData.location = {
+        update: {
+          latitude,
+          longitude,
+        },
+      };
+    }
+
+    // ✅ Handle plantImage updates (optional)
+    if (plantImage && Array.isArray(plantImage)) {
+      // Remove old images and create new ones
+      updateData.plantImage = {
+        deleteMany: {}, // remove all old ones
+        create: plantImage.map((url: string) => ({
+          file_url: url,
+        })),
+      };
+    }
+
+    // ✅ Update timestamp fields safely
+    if (rest.installationDate)
+      updateData.installationDate = new Date(rest.installationDate);
+
+    if (rest.gridConnectionDate)
+      updateData.gridConnectionDate = new Date(rest.gridConnectionDate);
+
+    // ✅ Execute update
+    const updatedPlant = await prisma.plant.update({
+      where: { AutoId: AutoID },
+      data: updateData,
+    });
+
+    return updatedPlant;
   }
 }
 

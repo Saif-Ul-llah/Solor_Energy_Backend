@@ -322,6 +322,8 @@ class PlantService {
     const getPlantByAutoId: any = await PlantRepo.getPlantByAutoIdRepo(
       data.AutoID
     );
+    // logger("getPlantByAutoId", getPlantByAutoId);
+    if (!getPlantByAutoId) throw HttpError.notFound("Plant not found");
     // Modify on third party api
     const result = await ModifyPlant(
       /*GroupName:*/ data.name,

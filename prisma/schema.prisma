@@ -9,6 +9,27 @@ generator client {
   previewFeatures = ["multiSchema"]
 
 }
+model Device {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  customerId String
+  customer   User       @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  plantId    String
+  plant      Plant      @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
+  sn         String     @unique
+  deviceType       DeviceType
+
+  @@schema("public")
+}
+
+enum DeviceType {
+  BATTERY
+  INVERTER
+
+  @@schema("public")
+}
+
 model Location {
     id          Int           @id @default(autoincrement())
     latitude    Float
@@ -48,6 +69,7 @@ model Plant {
   plantProfile       String?
   plantImage         Media[]
   AutoId             String?    @unique
+  device             Device[]  @relation("plant")
 
   @@schema("public")
 }
@@ -93,6 +115,7 @@ model User {
     parentId String?
     parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
     children User[]  @relation("UserHierarchy")
+    device   Device[]   @relation("customer")
 
     @@schema("user")
 }

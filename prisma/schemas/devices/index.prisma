@@ -1,0 +1,20 @@
+model Device {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  customerId String
+  customer   User       @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  plantId    String
+  plant      Plant      @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
+  sn         String     @unique
+  deviceType       DeviceType
+
+  @@schema("public")
+}
+
+enum DeviceType {
+  BATTERY
+  INVERTER
+
+  @@schema("public")
+}
