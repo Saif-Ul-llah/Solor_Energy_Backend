@@ -26,6 +26,7 @@ model Plant {
   plantProfile       String?
   plantImage         Media[]
   AutoId             String?    @unique
+  device             Device[]  @relation("plant")
 
   @@schema("public")
 }
