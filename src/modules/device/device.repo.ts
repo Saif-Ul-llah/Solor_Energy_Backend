@@ -31,6 +31,14 @@ class DeviceRepo {
     });
     return plant;
   }
+
+  // Get Device By Id
+  public static async getDeviceByIdRepo(id: string) {
+    const device = await prisma.device.findUnique({
+      where: { id },
+    });
+    return device;
+  }
 }
 
 export default DeviceRepo;

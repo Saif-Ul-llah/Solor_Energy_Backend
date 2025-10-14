@@ -145,6 +145,12 @@ class DeviceService {
       totalPages: Math.ceil(total / pageSize),
     };
   };
+
+  // Get Device By Id
+  public static getDeviceByIdService = async (user: any, id: string) => {
+    const device = await DeviceRepo.getDeviceByIdRepo(id);
+    return device;
+  };
 }
 
 export default DeviceService;

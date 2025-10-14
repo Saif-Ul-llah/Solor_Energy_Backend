@@ -104,29 +104,19 @@ class AuthRepo {
     });
   };
 
-  public static updateUser = async (
-    userId: string,
-    fullName?: string,
-    phoneNumber?: string,
-    address?: string,
-    imageUrl?: string,
-    parentId?: string,
-    TFA_enabled?: boolean,
-    fcmToken?: string
-  ) => {
-    return prisma.user.update({
-      where: { id: userId },
-      data: {
-        fullName,
-        phoneNumber,
-        address,
-        imageUrl,
-        parentId,
-        TFA_enabled,
-        fcmToken,
-      },
-    });
-  };
+public static updateUser = async (data: any) => {
+  const { userId, ...rest } = data;
+
+  // Filter out undefined and null values
+  const cleanData = Object.fromEntries(
+    Object.entries(rest).filter(([_, value]) => value !== null && value !== undefined)
+  );
+
+  return prisma.user.update({
+    where: { id: userId },
+    data: cleanData,
+  });
+};
 
   // ================ User Management =================
   private static async getChildrenRecursively(

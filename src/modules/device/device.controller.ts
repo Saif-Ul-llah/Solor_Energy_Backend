@@ -12,6 +12,7 @@ import {
 import DeviceServices from "./device.services";
 
 class DeviceController {
+
   // public static createPlant = asyncHandler(
   //   async (req: Request, res: Response, next: NextFunction) => {
   //     let user = req.user;
@@ -107,5 +108,21 @@ class DeviceController {
       }
     }
   );
+
+  // Get device by Id 
+  public static getDeviceById = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { id } = req.query;
+      const device: any = await DeviceServices.getDeviceByIdService(
+        user,
+        id as string
+      );
+      if (device) {
+        return sendResponse(res, 200, "Device List", device, "success");
+      }
+    }
+  )
+
 }
 export default DeviceController;
