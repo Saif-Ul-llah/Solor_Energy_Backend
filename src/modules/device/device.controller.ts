@@ -1,3 +1,4 @@
+import { DeviceType } from "@prisma/client";
 import {
   asyncHandler,
   NextFunction,
@@ -55,6 +56,7 @@ class DeviceController {
           "success"
         );
       }
+      return sendResponse(res, 200, "Failed to add device", [], "failed");
     }
   );
 
@@ -80,6 +82,29 @@ class DeviceController {
         { data: [] },
         "success"
       );
+    }
+  );
+
+  // Get All Devices for home page
+  public static getAllDeviceList = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const {
+        deviceType = "BATTERY",
+        status,
+        page = 1,
+        pageSize = 10,
+      } = req.query;
+      const device: any = await DeviceServices.getAllDeviceListService(
+        user,
+        deviceType as DeviceType,
+        status as string,
+        Number(page),
+        Number(pageSize)
+      );
+      if (device) {
+        return sendResponse(res, 200, "Device List", device, "success");
+      }
     }
   );
 }

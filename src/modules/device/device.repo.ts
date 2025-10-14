@@ -23,7 +23,7 @@ class DeviceRepo {
 
   public static async getPlantByIdRepo(id: string) {
     const plant = await prisma.plant.findUnique({
-      where: { name: id },
+      where: { id },
       include: {
         customer: true,
         installer: true,
