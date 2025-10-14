@@ -48,7 +48,7 @@ class PlantRepo {
 
   public static async getChildrenRecursively(
     userId: string,
-    role?: Role
+    role?: Role|null|""
   ): Promise<String[]> {
     // always fetch all children regardless of role
     const children = await prisma.user.findMany({
@@ -94,6 +94,7 @@ class PlantRepo {
       include: {
         // location: true,
         customer: true,
+        device:true,
         // installer: true,
         // plantImage: true,
       },

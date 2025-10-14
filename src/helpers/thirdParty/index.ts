@@ -250,10 +250,10 @@ export const InvertersOfPlant = async (
   GroupAutoID: string
 ): Promise<ApiResponse> => {
   const Sign = await getSign(
-    "progziel01",
-    "123456"
-    // MemberID,
-    // process.env.MONITOR_ACCOUNT_PASSWORD as string
+    // "progziel01",
+    // "123456"
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
 
   // logger("Sign", Sign);

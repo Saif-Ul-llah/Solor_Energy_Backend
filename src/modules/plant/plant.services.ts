@@ -279,9 +279,11 @@ class PlantService {
     type: string,
     email: string
   ) => {
+    // logger("12351515", plantId, type, email);
     // const plant: any = await PlantRepo.getPlantByIdRepo(plantId);
     // if (!plant) throw HttpError.notFound("Plant not found");
-    const InverterList: any = await InvertersOfPlant("progziel01", plantId);
+    const InverterList: any = await InvertersOfPlant(email, plantId);
+    // logger("InverterList", InverterList);
     if (
       !InverterList ||
       !InverterList.AllInverterList ||
@@ -312,6 +314,7 @@ class PlantService {
       capacity: device?.Capacity || 0,
       deviceType: device?.DeviceType || "GRID",
     }));
+    // logger("filtered", filtered);
     return filtered;
     // return plant;
   };
