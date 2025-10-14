@@ -75,7 +75,7 @@ class AuthServices {
         html: template,
       });
 
-      return { message: "TFA enabled, OTP sent to email"};
+      return { message: "TFA enabled, OTP sent to email" };
     }
     const data = { id: user.id, role: user.role };
     const accessToken = generateAccessToken(data);
@@ -192,7 +192,7 @@ class AuthServices {
     } = payload;
     const user = await AuthRepo.findById(userId);
     if (!user) throw HttpError.notFound("User not found");
-    return await AuthRepo.updateUser(
+    return await AuthRepo.updateUser({
       userId,
       fullName,
       phoneNumber,
@@ -200,8 +200,8 @@ class AuthServices {
       imageUrl,
       parentId,
       TFA_enabled,
-      fcmToken
-    );
+      fcmToken,
+    });
   };
 
   // ================ User Management =================
