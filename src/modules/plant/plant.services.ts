@@ -279,17 +279,13 @@ class PlantService {
     type: string,
     email: string
   ) => {
-    // logger("12351515", plantId, type, email);
-    // const plant: any = await PlantRepo.getPlantByIdRepo(plantId);
-    // if (!plant) throw HttpError.notFound("Plant not found");
     const InverterList: any = await InvertersOfPlant(email, plantId);
-    // logger("InverterList", InverterList);
     if (
       !InverterList ||
       !InverterList.AllInverterList ||
       InverterList.AllInverterList.length === 0
     ) {
-      throw HttpError.notFound("No Device found for this plant");
+      return [];
     }
     let filtered = InverterList.AllInverterList.map((device: any) => ({
       currentPower: device?.CurrPac || 0,
@@ -313,10 +309,10 @@ class PlantService {
       DataTime: device?.DataTime || "",
       capacity: device?.Capacity || 0,
       deviceType: device?.DeviceType || "GRID",
+      customerEmail: email,
     }));
-    // logger("filtered", filtered);
+    
     return filtered;
-    // return plant;
   };
 
   // Modify Plant

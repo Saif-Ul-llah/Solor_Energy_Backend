@@ -7,6 +7,8 @@ import {
   insertInverterInfo,
   getEndUserInfo,
   getGroupList,
+  getDeviceBySN,
+  deviceDetailFilter,
 } from "../../imports";
 import DeviceRepo from "./device.repo";
 import PlantRepo from "../plant/plant.repo";
@@ -90,8 +92,7 @@ class DeviceService {
         )
       )
     );
-    // const device = await DeviceRepo.getAllDeviceListRepo();
-    // return device;
+
     let flatDevicesList = devicesList.flat();
 
     // return flatDevicesList;
@@ -147,9 +148,13 @@ class DeviceService {
   };
 
   // Get Device By Id
-  public static getDeviceByIdService = async (user: any, id: string) => {
-    const device = await DeviceRepo.getDeviceByIdRepo(id);
-    return device;
+  public static getDeviceBySnService = async (user: any, sn: string) => {
+    const device :any= await DeviceRepo.getDeviceByIdRepo(sn);
+    if (!device) throw new HttpError("Device not found", "not found", 404);
+    // Get Device From third party
+    const deviceDetails = await getDeviceBySN(device.sn, device.customer.email);
+
+    return deviceDetailFilter({...device, ...deviceDetails});
   };
 }
 
