@@ -110,13 +110,13 @@ class DeviceController {
   );
 
   // Get device by Id 
-  public static getDeviceById = asyncHandler(
+  public static getDeviceBySn = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
-      const { id } = req.query;
-      const device: any = await DeviceServices.getDeviceByIdService(
+      const { sn } = req.query;
+      const device: any = await DeviceServices.getDeviceBySnService(
         user,
-        id as string
+        sn as string
       );
       if (device) {
         return sendResponse(res, 200, "Device List", device, "success");

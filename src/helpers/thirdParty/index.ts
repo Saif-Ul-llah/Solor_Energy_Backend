@@ -294,11 +294,11 @@ export const ModifyPlant = async (
   Lng: string,
   Lat: string
 ): Promise<ApiResponse> => {
-const Sign = await getSign(
+  const Sign = await getSign(
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-logger("Sign", Sign);
+  logger("Sign", Sign);
 
   const data = new FormData();
   data.append("GroupName", GroupName);
@@ -332,20 +332,18 @@ logger("Sign", Sign);
   }
 };
 
-
-// Add device in to Plant 
+// Add device in to Plant
 // Function to insert inverter info
 export const insertInverterInfo = async (
   MemberID: string,
   GroupAutoID: string,
-  GoodsID: string,
+  GoodsID: string
 ): Promise<ApiResponse> => {
-
-const Sign = await getSign(
+  const Sign = await getSign(
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-logger("Sign", Sign);
+  // logger("Sign", Sign);
 
   const data = new FormData();
   data.append("MemberID", MemberID);
@@ -369,6 +367,42 @@ logger("Sign", Sign);
     return response.data;
   } catch (error) {
     console.error("Error inserting inverter info:", error);
+    throw error;
+  }
+};
+
+// Get Device By Sn
+// Function to get inverter detail
+export const getDeviceBySN = async (
+  GoodsID: string,
+  MemberID: string
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  const data = new FormData();
+  data.append("GoodsID", GoodsID);
+  data.append("MemberID", MemberID);
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getInverterDetail`,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      ...data.getHeaders(),
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching inverter detail:", error);
     throw error;
   }
 };

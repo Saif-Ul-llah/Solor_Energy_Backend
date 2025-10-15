@@ -75,7 +75,7 @@ class AuthServices {
         html: template,
       });
 
-      return { message: "TFA enabled, OTP sent to email" };
+      return { status: 401, message: "TFA enabled, OTP sent to email" };
     }
     const data = { id: user.id, role: user.role };
     const accessToken = generateAccessToken(data);
@@ -119,11 +119,13 @@ class AuthServices {
     if (!record) throw HttpError.badRequest("Invalid or expired OTP");
     // if (TFA) {
     const data = { id: user.id, role: user.role };
+    let abstract = getUserData(user);
+
     const accessToken = generateAccessToken(data);
     const refreshToken = generateRefreshToken(data);
     return {
       message: "OTP verified successfully test",
-      data: { accessToken, refreshToken, role: user.role },
+      data: { accessToken, refreshToken, ...abstract },
     };
     // }
     // return { message: "OTP verified successfully", data: [] };

@@ -33,9 +33,15 @@ class DeviceRepo {
   }
 
   // Get Device By Id
-  public static async getDeviceByIdRepo(id: string) {
+  public static async getDeviceByIdRepo(sn: string) {
     const device = await prisma.device.findUnique({
-      where: { id },
+      where: { sn },
+      include: {
+        customer: true,
+        plant: {
+          include: { installer: true,location: true },
+        },
+      },
     });
     return device;
   }
