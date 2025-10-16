@@ -12,7 +12,6 @@ import {
 import DeviceServices from "./device.services";
 
 class DeviceController {
-
   // public static createPlant = asyncHandler(
   //   async (req: Request, res: Response, next: NextFunction) => {
   //     let user = req.user;
@@ -109,11 +108,12 @@ class DeviceController {
     }
   );
 
-  // Get device by Id 
+  // Get device by Id
   public static getDeviceBySn = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
       const { sn } = req.query;
+
       const device: any = await DeviceServices.getDeviceBySnService(
         user,
         sn as string
@@ -122,7 +122,24 @@ class DeviceController {
         return sendResponse(res, 200, "Device List", device, "success");
       }
     }
-  )
+  );
 
+  // Get Flow Diagram
+  public static getFlowDiagram = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn } = req.query;
+      if (!sn)
+        return next(HttpError.missingParameters("Serial Number is required! "));
+      const device: any = await DeviceServices.getFlowDiagramService(
+        user,
+        sn as string
+      );
+      if (device) {
+        return sendResponse(res, 200, "Device List", device, "success");
+      }
+    }
+  );
+  
 }
 export default DeviceController;

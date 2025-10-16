@@ -348,6 +348,16 @@ class PlantService {
     }
     return { message: "Failed to update plant" };
   };
+
+// Get Data For Flow Diagram 
+public static getPlantFlowDiagramService = async (plantId: string) => {
+  // Get device list of plant
+  const deviceList = await PlantRepo.getDevicesForFlowDiagram(
+    plantId
+  )
+  return deviceList
+}
+
 }
 
 export default PlantService;

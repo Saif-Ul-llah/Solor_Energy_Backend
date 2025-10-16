@@ -9,6 +9,7 @@ import {
   getGroupList,
   getDeviceBySN,
   deviceDetailFilter,
+  getDataForGraph,
 } from "../../imports";
 import DeviceRepo from "./device.repo";
 import PlantRepo from "../plant/plant.repo";
@@ -40,7 +41,8 @@ class DeviceService {
       plant.AutoId || "",
       sn
     );
-    logger("bind", bind, plant.customer.email, plant.AutoId || "", sn);
+    // const deviceDetails = await getDeviceBySN(sn, plant.customer.email);
+    // logger("bind", bind, plant.customer.email, plant.AutoId || "", sn);
     if (bind.status) {
       const customerId = plant.customerId;
       const add = await DeviceRepo.addDeviceRepo(
@@ -49,7 +51,11 @@ class DeviceService {
         plantId,
         customerId
       );
-      return add;
+      return {
+        ...add,
+        customerEmail: plant.customer.email,
+        // GoodsID: deviceDetails.GoodsID,
+      };
     }
     return null;
   };
@@ -149,12 +155,34 @@ class DeviceService {
 
   // Get Device By Id
   public static getDeviceBySnService = async (user: any, sn: string) => {
-    const device :any= await DeviceRepo.getDeviceByIdRepo(sn);
+    const device: any = await DeviceRepo.getDeviceByIdRepo(sn);
     if (!device) throw new HttpError("Device not found", "not found", 404);
     // Get Device From third party
     const deviceDetails = await getDeviceBySN(device.sn, device.customer.email);
 
-    return deviceDetailFilter({...device, ...deviceDetails});
+    return deviceDetailFilter({ ...device, ...deviceDetails });
+  };
+
+  // Get Flow Diagram By Sn
+  public static getFlowDiagramService = async (user: any, sn: string) => {
+    const device: any = await DeviceRepo.getDeviceByIdRepo(sn);
+    if (!device) throw new HttpError("Device not found", "not found", 404);
+    // Get Device From third party
+    const deviceDetails = await getDataForGraph(
+      device.sn,
+      device.customer.email
+    );
+    // logger("deviceDetails", deviceDetails);
+    const energyFlow = {
+      PV: deviceDetails.ACDCInfo.Pdc[0] || 0, // First value of Pdc for Solar input power
+      Grid: deviceDetails.gridCurrpac[1] || 0, // Grid power (currpac array)
+      Battery: deviceDetails.fromPbat || 0, // Power discharging from the battery
+      Generator: deviceDetails.genCurrpac[1] || 0, // Generator power (currpac array)
+      LoadConsumed: deviceDetails.loadCurrpac[1] || 0, // Load power consumption (currpac array)
+    };
+
+    // Return filtered and mapped data
+    return energyFlow;
   };
 }
 

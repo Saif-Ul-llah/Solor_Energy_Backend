@@ -123,5 +123,26 @@ class PlantController {
       }
     }
   );
+
+  // Get Plant Flow Diagram data 
+public static getPlantFlowDiagram = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { plantId  } = req.query;
+    if (!plantId) return next(HttpError.badRequest("Plant ID is required"));
+    const device :any= await PlantServices.getPlantFlowDiagramService(
+      plantId as string
+    );
+    if (device) {
+      return sendResponse(
+        res,
+        200,
+        "Device List fetched successfully",
+        device,
+        "success"
+      );
+    }
+  }
+)
+
 }
 export default PlantController;

@@ -104,19 +104,21 @@ class AuthRepo {
     });
   };
 
-public static updateUser = async (data: any) => {
-  const { userId, ...rest } = data;
+  public static updateUser = async (data: any) => {
+    const { userId, ...rest } = data;
 
-  // Filter out undefined and null values
-  const cleanData = Object.fromEntries(
-    Object.entries(rest).filter(([_, value]) => value !== null && value !== undefined)
-  );
+    // Filter out undefined and null values
+    const cleanData = Object.fromEntries(
+      Object.entries(rest).filter(
+        ([_, value]) => value !== null && value !== undefined
+      )
+    );
 
-  return prisma.user.update({
-    where: { id: userId },
-    data: cleanData,
-  });
-};
+    return prisma.user.update({
+      where: { id: userId },
+      data: cleanData,
+    });
+  };
 
   // ================ User Management =================
   private static async getChildrenRecursively(
@@ -156,6 +158,79 @@ public static updateUser = async (data: any) => {
   // Public function to get all descendants of a user
   public static async userList(role: Role | null, user: User): Promise<User[]> {
     return this.getChildrenRecursively(user.id, role ?? undefined);
+  }
+  private static async getChildrenRecursivelyAllLIST(
+    userId: string,
+    role?: Role
+  ): Promise<any[]> {
+    // Fetch all direct children (no pagination here)
+    const children = await prisma.user.findMany({
+      where: { parentId: userId },
+      select: {
+        id: true,
+        email: true,
+        fullName: true,
+        role: true,
+        imageUrl: true,
+        IsActive: true,
+        parent: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+            imageUrl: true,
+          },
+        },
+      },
+    });
+
+    let allChildren: any[] = [];
+
+    for (const child of children) {
+      // Include only matching roles
+      if (!role || child.role === role) {
+        allChildren.push(child);
+      }
+
+      // Recursively get descendants (no pagination)
+      const childDescendants = await this.getChildrenRecursivelyAllLIST(
+        child.id,
+        role
+      );
+
+      allChildren = [...allChildren, ...childDescendants];
+    }
+
+    return allChildren;
+  }
+
+  public static async userListFlow(
+    role: Role | null,
+    userId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ): Promise<any> {
+    // Get all descendants (unpaginated)
+    const allChildren = await this.getChildrenRecursivelyAllLIST(
+      userId,
+      role ?? undefined
+    );
+
+    // Pagination applied here globally
+    const total = allChildren.length;
+    const totalPages = Math.ceil(total / pageSize);
+    const validPage = Math.max(page, 1);
+    const start = (validPage - 1) * pageSize;
+    const paginatedChildren = allChildren.slice(start, start + pageSize);
+
+    return {
+      users: paginatedChildren,
+      currentPage: validPage,
+      pageSize,
+      total,
+      totalPages,
+    };
   }
 }
 
