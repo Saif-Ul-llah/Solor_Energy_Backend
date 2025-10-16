@@ -9,5 +9,6 @@ router.post("/addDevice", checkToken, DeviceController.addDevice);
 router.get("/checkDevice", checkToken, DeviceController.checkDevice);
 router.get("/getAllDeviceList", checkToken, DeviceController.getAllDeviceList);
 router.get("/getDeviceBySn", checkToken, DeviceController.getDeviceBySn);
+router.get("/getDeviceFlowDiagram", checkToken, DeviceController.getFlowDiagram);
 
 export default router;

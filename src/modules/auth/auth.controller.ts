@@ -164,13 +164,12 @@ class AuthController {
   /*=========================== Update User =========================== */
   public static updateUser = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      
       const { error, value } = updateUserValidation.validate({
         ...req.body,
       });
 
       logger(value);
-      
+
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
@@ -194,6 +193,29 @@ class AuthController {
       const user = req.user;
       let { role = null } = req.query;
       const users = await AuthServices.userListService(role as Role, user);
+      return sendResponse(
+        res,
+        200,
+        "User list fetched successfully",
+        users,
+        "success"
+      );
+    }
+  );
+
+  public static getAllUsers = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      let { role = null, userId, page = 1, pageSize = 10 } = req.query;
+      if (!userId) {
+        return next(HttpError.validationError("User ID is required"));
+      }
+      if (role == "All") role = null;
+      const users = await AuthServices.userListFlowService(
+        role as Role,
+        userId as string,
+        Number(page),
+        Number(pageSize)
+      );
       return sendResponse(
         res,
         200,

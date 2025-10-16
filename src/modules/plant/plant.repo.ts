@@ -207,6 +207,14 @@ class PlantRepo {
 
     return updatedPlant;
   }
+
+  // Get Device List of a plant by plant id
+  public static async getDevicesForFlowDiagram(plantId: string) {
+    const deviceList = await prisma.device.findMany({
+      where: { plantId: plantId },
+    });
+    return deviceList;
+  }
 }
 
 export default PlantRepo;

@@ -298,7 +298,7 @@ export const ModifyPlant = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-  logger("Sign", Sign);
+  // logger("Sign", Sign);
 
   const data = new FormData();
   data.append("GroupName", GroupName);
@@ -386,7 +386,6 @@ export const getDeviceBySN = async (
   data.append("GoodsID", GoodsID);
   data.append("MemberID", MemberID);
   data.append("Sign", Sign);
-
   const config = {
     method: "post" as const,
     maxBodyLength: Infinity,
@@ -403,6 +402,42 @@ export const getDeviceBySN = async (
     return response.data;
   } catch (error) {
     console.error("Error fetching inverter detail:", error);
+    throw error;
+  }
+};
+
+// Function to get hybrid detail info
+export const getDataForGraph = async (
+  GoodsID: string,
+  MemberID: string
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    "progziel01",
+    "123456"
+    // MemberID,
+    // process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  const data = new FormData();
+  data.append("GoodsID", GoodsID);
+  data.append("MemberID", "progziel01");
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/hybridDetailInfo`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching hybrid detail info:", error);
     throw error;
   }
 };

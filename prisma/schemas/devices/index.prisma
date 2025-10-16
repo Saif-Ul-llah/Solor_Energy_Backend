@@ -7,7 +7,8 @@ model Device {
   plantId    String
   plant      Plant      @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
   sn         String     @unique
-  deviceType       DeviceType
+  deviceType DeviceType
+  AutoID     String     @unique
 
   @@schema("public")
 }

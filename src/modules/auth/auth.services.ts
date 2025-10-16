@@ -211,6 +211,16 @@ class AuthServices {
     const users = await AuthRepo.userList(role, user);
     return users;
   };
+
+  public static userListFlowService = async (
+    role: Role,
+    userId: string,
+    page: number = 1,
+    pageSize: number = 10
+  ) => {
+    const users = await AuthRepo.userListFlow(role, userId, page, pageSize);
+    return users;
+  };
 }
 
 export default AuthServices;

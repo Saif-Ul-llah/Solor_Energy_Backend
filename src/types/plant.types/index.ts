@@ -21,44 +21,24 @@ export interface PlantInterface {
   AutoID?: string;
 }
 
-export interface deviceDetailsInterface {
-  deviceName: string;
-  plantName: string;
-  plantType: string;
-  plantLat : number;
-  plantLong : number;
-  plantRegion : string;
-  customerName: string;
-  customerPhone: string;
-  customerEmail: string;
-  installerName: string;
-  installerPhone: string;
-  installerEmail: string;
-  deviceType: string;
-  sn: string;
-  plantId: string;
-  customerId: string;
-}
-
-
-export const deviceDetailFilter = (details:any)=>{
+export const deviceDetailFilter = (details:any)=>{  
   return{
-    deviceName: details.GoodsName,
-    plantName: details.plant.name,
-    plantType: details.plant.plantType,
-    plantLat : details.plant.location.latitude,
-    plantLong : details.plant.location.longitude,
-    plantRegion : details.plant.region,
-    customerName: details.customer.fullName,
-    customerPhone: details.customer.phoneNumber,
-    customerEmail: details.customer.email,
-    installerName: details.plant.installer.fullName,
-    installerPhone: details.plant.installer.phoneNumber,
-    installerEmail: details.plant.installer.email,
-    deviceType: details.deviceType,
-    sn: details.sn,
-    plantId: details.plantId,
-    customerId: details.customerId,
+    deviceName: details?.GoodsName,
+    plantName: details?.plant?.name,
+    plantType: details?.plant.plantType,
+    plantLat : details?.plant.location.latitude,
+    plantLong : details?.plant.location.longitude,
+    plantRegion : details?.plant.region,
+    customerName: details?.customer.fullName,
+    customerPhone: details?.customer.phoneNumber,
+    customerEmail: details?.customer.email,
+    installerName: details?.plant.installer.fullName,
+    installerPhone: details?.plant.installer.phoneNumber,
+    installerEmail: details?.plant.installer.email,
+    deviceType: details?.deviceType,
+    sn: details?.sn,
+    plantId: details?.plantId,
+    customerId: details?.customerId,
     currentPower: details?.CurrPac || 0,
       AutoID: details?.AutoID || "0",
       status:
