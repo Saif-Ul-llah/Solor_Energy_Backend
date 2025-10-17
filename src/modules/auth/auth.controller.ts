@@ -1,4 +1,4 @@
-import { Role } from "@prisma/client";
+import { Role, User } from "@prisma/client";
 import {
   asyncHandler,
   NextFunction,
@@ -205,7 +205,13 @@ class AuthController {
 
   public static getAllUsers = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      let { role = null, userId, page = 1, pageSize = 10 } = req.query;
+      let {
+        role = null,
+        userId,
+        page = 1,
+        pageSize = 10,
+        search = "",
+      } = req.query;
       if (!userId) {
         return next(HttpError.validationError("User ID is required"));
       }
@@ -214,7 +220,9 @@ class AuthController {
         role as Role,
         userId as string,
         Number(page),
-        Number(pageSize)
+        Number(pageSize),
+        search as string,
+        req.user as User
       );
       return sendResponse(
         res,

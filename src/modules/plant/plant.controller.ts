@@ -41,14 +41,15 @@ class PlantController {
 
   public static getAllPlants = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const user = req.user;
-      const { status = "", page = 1, pageSize = 10 } = req.query;
+      // const user = req.user;
+      const { status = "", page = 1, pageSize = 10, userId ,search=""} = req.query;
 
       const plants = await PlantServices.getAllPlants(
-        user as User,
+        userId as string,
         status as string,
         Number(page),
-        Number(pageSize)
+        Number(pageSize),
+        search as string
       );
       if (plants) {
         return sendResponse(

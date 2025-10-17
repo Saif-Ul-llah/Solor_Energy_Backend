@@ -1,5 +1,5 @@
 import { Plant, Role, User } from "@prisma/client";
-import { PlantInterface, prisma } from "../../imports";
+import { HttpError, PlantInterface, prisma } from "../../imports";
 
 class PlantRepo {
   public static async createPlant(payload: PlantInterface) {
@@ -48,7 +48,7 @@ class PlantRepo {
 
   public static async getChildrenRecursively(
     userId: string,
-    role?: Role|null|""
+    role?: Role | null | ""
   ): Promise<String[]> {
     // always fetch all children regardless of role
     const children = await prisma.user.findMany({
@@ -81,7 +81,7 @@ class PlantRepo {
 
   // Get My and nested plants
   public static async getAllPlants(
-    user: User,
+    userId: string,
     userIdsList: string[]
   ): Promise<Plant[]> {
     // Get Nested Installer's Ids
@@ -94,7 +94,7 @@ class PlantRepo {
       include: {
         // location: true,
         customer: true,
-        device:true,
+        device: true,
         // installer: true,
         // plantImage: true,
       },
@@ -213,7 +213,12 @@ class PlantRepo {
     const deviceList = await prisma.device.findMany({
       where: { plantId: plantId },
     });
-    return deviceList;
+    if (!deviceList || deviceList.length === 0) return [];
+    return {
+      id: plantId,
+      deviceType: "PLANT",
+      children: deviceList,
+    };
   }
 }
 
