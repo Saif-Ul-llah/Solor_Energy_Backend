@@ -62,15 +62,16 @@ class DeviceService {
 
   // Get All devices for home page
   public static getAllDeviceListService = async (
-    user: User,
+    userId: string,
     deviceType: DeviceType,
     status: string,
     page: number,
-    pageSize: number
+    pageSize: number,
+    search: string
   ) => {
     //======================================= Get user list from recursive function =======================================
     // 1️ Get all child installers recursively
-    const userIdsList = await PlantRepo.getChildrenRecursively(user.id, "");
+    const userIdsList = await PlantRepo.getChildrenRecursively(userId, "");
     //======================================= Get There customers list =======================================
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
@@ -84,7 +85,7 @@ class DeviceService {
     //======================================= Get there plants list with their devices =======================================
     // 5 Get Our DB Plants lists
     let plantsWithDevices = await PlantRepo.getAllPlants(
-      user,
+      "",
       validMonitorUsers.map((u: any) => u.MemberID)
     );
 
@@ -100,6 +101,14 @@ class DeviceService {
     );
 
     let flatDevicesList = devicesList.flat();
+    let ForCount = devicesList.flat();
+    // console.log(flatDevicesList);
+
+    if (search) {
+      flatDevicesList = flatDevicesList.filter((device: any) =>
+        device.GoodsName.toLowerCase().includes(search.toLowerCase())
+      );
+    }
 
     // return flatDevicesList;
     const validStatuses = ["OFFLINE", "STANDBY", "FAULT", "ONLINE"];
@@ -128,6 +137,10 @@ class DeviceService {
         pageSize,
         total,
         totalPages: Math.ceil(total / pageSize),
+        online:ForCount.filter((device: any) => device.status === "ONLINE").length,
+        offline:ForCount.filter((device: any) => device.status === "OFFLINE").length,
+        fault:ForCount.filter((device: any) => device.status === "FAULT").length,
+        standby:ForCount.filter((device: any) => device.status === "STANDBY").length,
       };
     }
 
@@ -150,6 +163,10 @@ class DeviceService {
       pageSize,
       total,
       totalPages: Math.ceil(total / pageSize),
+       online:ForCount.filter((device: any) => device.status === "ONLINE").length,
+        offline:ForCount.filter((device: any) => device.status === "OFFLINE").length,
+        fault:ForCount.filter((device: any) => device.status === "FAULT").length,
+        standby:ForCount.filter((device: any) => device.status === "STANDBY").length,
     };
   };
 
@@ -179,6 +196,7 @@ class DeviceService {
       Battery: deviceDetails.fromPbat || 0, // Power discharging from the battery
       Generator: deviceDetails.genCurrpac[1] || 0, // Generator power (currpac array)
       LoadConsumed: deviceDetails.loadCurrpac[1] || 0, // Load power consumption (currpac array)
+      deviceType: device.deviceType,
     };
 
     // Return filtered and mapped data

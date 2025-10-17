@@ -12,31 +12,7 @@ import {
 import DeviceServices from "./device.services";
 
 class DeviceController {
-  // public static createPlant = asyncHandler(
-  //   async (req: Request, res: Response, next: NextFunction) => {
-  //     let user = req.user;
-  //     const { error, value } = plantValidation.validate({
-  //       ...req.body,
-  //     });
-  //     if (error) {
-  //       return next(HttpError.validationError(error.details[0].message));
-  //     }
-  //     const plant = await PlantServices.createPlant(
-  //       value as PlantInterface,
-  //       user as User
-  //     );
-  //     if (plant) {
-  //       return sendResponse(
-  //         res,
-  //         201,
-  //         "Plant created successfully",
-  //         plant,
-  //         "success"
-  //       );
-  //     }
-  //   }
-  // );
-
+  // Add New Device
   public static addDevice = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { deviceType, sn, plantId } = req.body;
@@ -59,7 +35,7 @@ class DeviceController {
       return sendResponse(res, 200, "Failed to add device", [], "failed");
     }
   );
-
+  // Get Device By Sn
   public static checkDevice = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { sn } = req.query;
@@ -84,30 +60,33 @@ class DeviceController {
       );
     }
   );
-
   // Get All Devices for home page
   public static getAllDeviceList = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const user = req.user;
+      // const user = req.user;
       const {
         deviceType = "BATTERY",
         status,
         page = 1,
         pageSize = 10,
+        userId,
+        search ="",
       } = req.query;
+      if (!userId)
+        return next(HttpError.missingParameters("User Id is required! "));
       const device: any = await DeviceServices.getAllDeviceListService(
-        user,
+        userId as string,
         deviceType as DeviceType,
         status as string,
         Number(page),
-        Number(pageSize)
+        Number(pageSize),
+        search as string
       );
       if (device) {
         return sendResponse(res, 200, "Device List", device, "success");
       }
     }
   );
-
   // Get device by Id
   public static getDeviceBySn = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -123,7 +102,24 @@ class DeviceController {
       }
     }
   );
+  // Get Device Details
+  public static getDeviceDetail = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn } = req.query;
+      if (!sn)
+        return next(HttpError.missingParameters("Serial Number is required! "));
+      const device: any = await DeviceServices.getFlowDiagramService(
+        user,
+        sn as string
+      );
 
+      if (device) {
+        return sendResponse(res, 200, "Device data", device, "success");
+      }
+      return sendResponse(res, 200, "Device data", [], "success");
+    }
+  );
   // Get Flow Diagram
   public static getFlowDiagram = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
@@ -135,9 +131,22 @@ class DeviceController {
         user,
         sn as string
       );
+      let type = device.deviceType;
+      delete device.deviceType;
+
       if (device) {
-        return sendResponse(res, 200, "Device List", device, "success");
+        let data = {
+          id: sn,
+          deviceType: type,
+          children: Object.entries(device).map(([key, value]) => ({
+            value: value,
+            // [key]:value,
+            deviceType: key,
+          })),
+        };
+        return sendResponse(res, 200, "Flow Diagram data", data, "success");
       }
+      return sendResponse(res, 200, "Flow Diagram data", [], "success");
     }
   );
   

@@ -113,30 +113,30 @@ class PlantService {
   // };
 
   public static getAllPlants = async (
-    user: User,
+    userId: string,
     status?: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    search?: string
   ) => {
     // 1️ Get all child installers recursively
     const userIdsList = await PlantRepo.getChildrenRecursively(
-      user.id,
+      userId,
       "INSTALLER"
     );
-    // logger("userIdsList",userIdsList);
+
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
     memberIds.push("progziel01");
 
     // 3️ Fetch all monitoring users once
     const monitorUsers = await getEndUserInfo();
-    // logger("monitorUsers",monitorUsers);
 
     // 4 Filter only users present in both lists
     const validMonitorUsers = monitorUsers.filter((u: any) =>
       memberIds.includes(u.MemberID)
     );
-    // logger(validMonitorUsers);
+
     // 5 Fetch all plant lists concurrently
     const groupPromises = validMonitorUsers.map((user: any) =>
       getGroupList(user.MemberID, user.Sign)
@@ -155,7 +155,7 @@ class PlantService {
 
     // 7 Our DB Plants lists
     let plants = await PlantRepo.getAllPlants(
-      user,
+      userId,
       validMonitorUsers.map((u: any) => u.MemberID)
     );
 
@@ -167,11 +167,7 @@ class PlantService {
         return matchingPlant ? { ...plant, ...matchingPlant } : null;
       })
       .filter((plant: any) => plant !== null);
-
-    // logger("getCommonPlants", getCommonPlants);
-
-    // Sort And Filter the Plants
-    const plantListWithDbInfo = getCommonPlants.map((plant: any) => {
+    const list = getCommonPlants.map((plant: any) => {
       return {
         id: plant?.id,
         plantProfile: plant?.plantProfile || "",
@@ -195,6 +191,16 @@ class PlantService {
             : "UNKNOWN",
       };
     });
+    // Sort And Filter the Plants
+    let plantListWithDbInfo = list;
+
+    if (search && search.trim() !== "") {
+      plantListWithDbInfo = plantListWithDbInfo.filter(
+        (plant: any) =>
+          plant.name && plant.name.toLowerCase().includes(search.toLowerCase())
+      );
+    }
+
     const validStatuses = ["OFFLINE", "STANDBY", "FAULT", "ONLINE"];
 
     if (status && validStatuses.includes(status)) {
@@ -221,6 +227,10 @@ class PlantService {
         pageSize,
         total,
         totalPages: Math.ceil(total / pageSize),
+        online: list.filter((plant: any) => plant.status === "ONLINE").length,
+        offline: list.filter((plant: any) => plant.status === "OFFLINE").length,
+        standby: list.filter((plant: any) => plant.status === "STANDBY").length,
+        fault: list.filter((plant: any) => plant.status === "FAULT").length,
       };
     }
 
@@ -244,6 +254,10 @@ class PlantService {
       pageSize,
       total,
       totalPages: Math.ceil(total / pageSize),
+      online: list.filter((plant: any) => plant.status === "ONLINE").length,
+      offline: list.filter((plant: any) => plant.status === "OFFLINE").length,
+      standby: list.filter((plant: any) => plant.status === "STANDBY").length,
+      fault: list.filter((plant: any) => plant.status === "FAULT").length,
     };
     // return plantListWithDbInfo;
   };
@@ -311,7 +325,7 @@ class PlantService {
       deviceType: device?.DeviceType || "GRID",
       customerEmail: email,
     }));
-    
+
     return filtered;
   };
 
@@ -349,15 +363,12 @@ class PlantService {
     return { message: "Failed to update plant" };
   };
 
-// Get Data For Flow Diagram 
-public static getPlantFlowDiagramService = async (plantId: string) => {
-  // Get device list of plant
-  const deviceList = await PlantRepo.getDevicesForFlowDiagram(
-    plantId
-  )
-  return deviceList
-}
-
+  // Get Data For Flow Diagram
+  public static getPlantFlowDiagramService = async (plantId: string) => {
+    // Get device list of plant
+    const deviceList = await PlantRepo.getDevicesForFlowDiagram(plantId);
+    return deviceList;
+  };
 }
 
 export default PlantService;

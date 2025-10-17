@@ -216,9 +216,11 @@ class AuthServices {
     role: Role,
     userId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    search: string,
+    user: User
   ) => {
-    const users = await AuthRepo.userListFlow(role, userId, page, pageSize);
+    const users = await AuthRepo.userListFlow(role, userId, page, pageSize,search,user);
     return users;
   };
 }

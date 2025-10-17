@@ -209,14 +209,23 @@ class AuthRepo {
     role: Role | null,
     userId: string,
     page: number = 1,
-    pageSize: number = 10
+    pageSize: number = 10,
+    search: string,
+    user: User
   ): Promise<any> {
+
+    let forCount = await this.getChildrenRecursivelyAllLIST(userId, undefined);
+
     // Get all descendants (unpaginated)
-    const allChildren = await this.getChildrenRecursivelyAllLIST(
+    let allChildren = await this.getChildrenRecursivelyAllLIST(
       userId,
       role ?? undefined
     );
-
+    if (search) {
+      allChildren = allChildren.filter((user: any) =>
+        user.fullName.toLowerCase().includes(search.toLowerCase())
+      );
+    }
     // Pagination applied here globally
     const total = allChildren.length;
     const totalPages = Math.ceil(total / pageSize);
@@ -230,6 +239,11 @@ class AuthRepo {
       pageSize,
       total,
       totalPages,
+     
+      ...(user.role === "ADMIN" ?{subAdmin:forCount.filter((user: any) => user.role === "SUB_ADMIN").length}:{}),
+      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" ?{ distributor:forCount.filter((user: any) => user.role === "DISTRIBUTOR").length}:{}),
+      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" || user.role === "DISTRIBUTOR" ?{ installer:forCount.filter((user: any) => user.role === "INSTALLER").length}:{}),
+      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" || user.role === "DISTRIBUTOR" || user.role === "INSTALLER" ?{ customer:forCount.filter((user: any) => user.role === "CUSTOMER").length}:{}),
     };
   }
 }
