@@ -157,7 +157,15 @@ class AuthRepo {
 
   // Public function to get all descendants of a user
   public static async userList(role: Role | null, user: User): Promise<User[]> {
-    return this.getChildrenRecursively(user.id, role ?? undefined);
+    let list:any = await this.getChildrenRecursively(user.id, role ?? undefined);
+    if (role === user.role)
+      list.push({
+        id: user.id as string,
+        email: user.email as string,
+        fullName: user.fullName as string,
+        role: user.role as Role,
+      });
+    return list;
   }
   private static async getChildrenRecursivelyAllLIST(
     userId: string,
@@ -213,7 +221,6 @@ class AuthRepo {
     search: string,
     user: User
   ): Promise<any> {
-
     let forCount = await this.getChildrenRecursivelyAllLIST(userId, undefined);
 
     // Get all descendants (unpaginated)
@@ -239,11 +246,37 @@ class AuthRepo {
       pageSize,
       total,
       totalPages,
-     
-      ...(user.role === "ADMIN" ?{subAdmin:forCount.filter((user: any) => user.role === "SUB_ADMIN").length}:{}),
-      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" ?{ distributor:forCount.filter((user: any) => user.role === "DISTRIBUTOR").length}:{}),
-      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" || user.role === "DISTRIBUTOR" ?{ installer:forCount.filter((user: any) => user.role === "INSTALLER").length}:{}),
-      ...(user.role === "ADMIN"  || user.role === "SUB_ADMIN" || user.role === "DISTRIBUTOR" || user.role === "INSTALLER" ?{ customer:forCount.filter((user: any) => user.role === "CUSTOMER").length}:{}),
+
+      ...(user.role === "ADMIN"
+        ? {
+            subAdmin: forCount.filter((user: any) => user.role === "SUB_ADMIN")
+              .length,
+          }
+        : {}),
+      ...(user.role === "ADMIN" || user.role === "SUB_ADMIN"
+        ? {
+            distributor: forCount.filter(
+              (user: any) => user.role === "DISTRIBUTOR"
+            ).length,
+          }
+        : {}),
+      ...(user.role === "ADMIN" ||
+      user.role === "SUB_ADMIN" ||
+      user.role === "DISTRIBUTOR"
+        ? {
+            installer: forCount.filter((user: any) => user.role === "INSTALLER")
+              .length,
+          }
+        : {}),
+      ...(user.role === "ADMIN" ||
+      user.role === "SUB_ADMIN" ||
+      user.role === "DISTRIBUTOR" ||
+      user.role === "INSTALLER"
+        ? {
+            customer: forCount.filter((user: any) => user.role === "CUSTOMER")
+              .length,
+          }
+        : {}),
     };
   }
 }
