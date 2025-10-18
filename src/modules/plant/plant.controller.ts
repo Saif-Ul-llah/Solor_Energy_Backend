@@ -42,7 +42,13 @@ class PlantController {
   public static getAllPlants = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       // const user = req.user;
-      const { status = "", page = 1, pageSize = 10, userId ,search=""} = req.query;
+      const {
+        status = "",
+        page = 1,
+        pageSize = 10,
+        userId,
+        search = "",
+      } = req.query;
 
       const plants = await PlantServices.getAllPlants(
         userId as string,
@@ -84,6 +90,14 @@ class PlantController {
   public static getDeviceListOfPlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { AutoID, type = "INVERTER", email } = req.query;
+      if (type == "BATTERY")
+        return sendResponse(
+          res,
+          200,
+          "Device List fetched successfully",
+          [],
+          "success"
+        );
       if (!AutoID || !email)
         return next(HttpError.badRequest("Plant ID or Email is required"));
       const device = await PlantServices.getDeviceListOfPlantService(
@@ -125,25 +139,24 @@ class PlantController {
     }
   );
 
-  // Get Plant Flow Diagram data 
-public static getPlantFlowDiagram = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
-    const { plantId  } = req.query;
-    if (!plantId) return next(HttpError.badRequest("Plant ID is required"));
-    const device :any= await PlantServices.getPlantFlowDiagramService(
-      plantId as string
-    );
-    if (device) {
-      return sendResponse(
-        res,
-        200,
-        "Device List fetched successfully",
-        device,
-        "success"
+  // Get Plant Flow Diagram data
+  public static getPlantFlowDiagram = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { plantId } = req.query;
+      if (!plantId) return next(HttpError.badRequest("Plant ID is required"));
+      const device: any = await PlantServices.getPlantFlowDiagramService(
+        plantId as string
       );
+      if (device) {
+        return sendResponse(
+          res,
+          200,
+          "Device List fetched successfully",
+          device,
+          "success"
+        );
+      }
     }
-  }
-)
-
+  );
 }
 export default PlantController;
