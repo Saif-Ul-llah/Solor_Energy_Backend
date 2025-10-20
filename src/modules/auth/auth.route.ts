@@ -17,6 +17,5 @@ router.get("/user_list" , checkToken, AuthController.userList);
 router.get("/getUserById" , checkToken, AuthController.getUserById);
 router.put("/update_user" , checkToken, AuthController.updateUser);
 router.get("/getAllUsers" , checkToken, AuthController.getAllUsers);
-// router.delete("/delete_user/:id" , checkToken, AuthController.deleteUser);
-
+router.get("/activityLog" , checkToken, AuthController.getActivityLog);
 export default router;

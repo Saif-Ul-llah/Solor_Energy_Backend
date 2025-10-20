@@ -12,6 +12,7 @@ import {
   getUserData,
   InvertersOfPlant,
   ModifyPlant,
+  // getBatteryDeviceData,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -127,7 +128,7 @@ class PlantService {
 
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
-    memberIds.push("progziel01");
+    // memberIds.push("progziel01");
 
     // 3️ Fetch all monitoring users once
     const monitorUsers = await getEndUserInfo();
@@ -226,6 +227,7 @@ class PlantService {
         currentPage: validPage,
         pageSize,
         total,
+        recordsCount: list.length,
         totalPages: Math.ceil(total / pageSize),
         online: list.filter((plant: any) => plant.status === "ONLINE").length,
         offline: list.filter((plant: any) => plant.status === "OFFLINE").length,
@@ -253,6 +255,7 @@ class PlantService {
       currentPage: validPage,
       pageSize,
       total,
+      recordsCount: list.length,
       totalPages: Math.ceil(total / pageSize),
       online: list.filter((plant: any) => plant.status === "ONLINE").length,
       offline: list.filter((plant: any) => plant.status === "OFFLINE").length,
@@ -287,11 +290,9 @@ class PlantService {
     return filteredData;
   };
 
-  // Get Device List of Plant
-  public static getDeviceListOfPlantService = async (
-    plantId: string,
-    type: string,
-    email: string
+  private static getInvertersOfPlant = async (
+    email: string,
+    plantId: string
   ) => {
     const InverterList: any = await InvertersOfPlant(email, plantId);
     if (
@@ -327,6 +328,37 @@ class PlantService {
     }));
 
     return filtered;
+  };
+
+  private static getBatteriesOfPlant = async (
+    email: string,
+    plantId: string
+  ) => {
+    const BatteryList: any = await PlantRepo.BatteriesOfPlant(email, plantId);
+    // const deviceList = Promise.all(
+    //   BatteryList.map(async (device: any) => {
+    //     const sn = "BZ2010302306020133";
+    //     const date = "2024-06-21";
+    //     const deviceData = await getBatteryDeviceData(sn, date);
+    //     return deviceData;
+    //   })
+    // );
+    // const filtered = (await deviceList).map((device: any) =>
+
+    // )
+
+    return BatteryList;
+  };
+
+  // Get Device List of Plant
+  public static getDeviceListOfPlantService = async (
+    plantId: string,
+    type: string,
+    email: string
+  ) => {
+    return type === "INVERTER"
+      ? await this.getInvertersOfPlant(email, plantId)
+      : await this.getBatteriesOfPlant(email, plantId);
   };
 
   // Modify Plant

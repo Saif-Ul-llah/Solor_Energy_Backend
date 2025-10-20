@@ -1,5 +1,5 @@
 import { Plant, Role, User } from "@prisma/client";
-import { HttpError, PlantInterface, prisma } from "../../imports";
+import { HttpError, logger, PlantInterface, prisma } from "../../imports";
 
 class PlantRepo {
   public static async createPlant(payload: PlantInterface) {
@@ -219,6 +219,18 @@ class PlantRepo {
       deviceType: "PLANT",
       children: deviceList,
     };
+  }
+
+  // Get batteries List of a plant by plant id
+  public static async BatteriesOfPlant(email: string, plantId: string) {
+    const batteryList = await prisma.plant.findMany({
+      where: { AutoId: plantId, device: { some: { deviceType: "BATTERY" } } },
+      select: {
+        device: true,
+      },
+    });
+    if (!batteryList || batteryList.length === 0) return [];
+    return batteryList;
   }
 }
 

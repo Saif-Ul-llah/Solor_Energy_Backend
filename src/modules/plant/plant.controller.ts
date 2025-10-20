@@ -90,14 +90,7 @@ class PlantController {
   public static getDeviceListOfPlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { AutoID, type = "INVERTER", email } = req.query;
-      if (type == "BATTERY")
-        return sendResponse(
-          res,
-          200,
-          "Device List fetched successfully",
-          [],
-          "success"
-        );
+
       if (!AutoID || !email)
         return next(HttpError.badRequest("Plant ID or Email is required"));
       const device = await PlantServices.getDeviceListOfPlantService(

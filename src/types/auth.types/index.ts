@@ -56,17 +56,27 @@ export interface UserInterface {
 }
 
 export function getUserData(user: any) {
-  const abstract: UserInterface = {
+  const abstract: any = {
     id: user.id,
     email: user.email,
     role: user.role,
     fullName: user.fullName,
     phoneNumber: user.phoneNumber,
-    parentId: user.parentId,
     IsActive: user.IsActive,
     address: user.address || "",
     imageUrl: user.imageUrl || "",
     TFA_enabled: user.TFA_enabled,
+    // parent: user.parent ? getUserData(user.parent) : null,
+    parentId: user.parentId,
+    underName: user.parent ? user.parent.fullName : null,
+    underRole: user.parent ? user.parent.role : null,
   };
   return abstract;
+}
+
+
+export interface LogsInterface {
+ userId: string;
+ action: string;
+description: string;
 }

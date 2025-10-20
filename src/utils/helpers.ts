@@ -2,7 +2,7 @@ import * as jwt from "jsonwebtoken";
 import * as bcrypt from "bcrypt";
 import path from "path";
 import fs, { stat } from "fs";
-import { appConfig, Response, dotenv, SendOtpOptions } from "../imports";
+import { appConfig, Response, dotenv, SendOtpOptions, prisma, LogsInterface } from "../imports";
 dotenv.config();
 
 interface ApiResponse {
@@ -271,4 +271,8 @@ export const logger = (message: string, ...args: any[]) => {
     .replace(",", "");
 
   console.log(`[${formattedDate}]`, message, ...args);
+};
+
+export const createLogs = async (payload: LogsInterface): Promise<any> => {
+  return await prisma.activityLog.create({ data: payload });
 };

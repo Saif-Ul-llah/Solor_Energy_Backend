@@ -233,5 +233,28 @@ class AuthController {
       );
     }
   );
+
+  public static getActivityLog = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { userId, page, pageSize, search, date } = req.query;
+      if (!userId) {
+        return next(HttpError.validationError("User ID is required"));
+      }
+      const activityLog = await AuthServices.getActivityLogService({
+        userId,
+        page: Number(page),
+        pageSize: Number(pageSize),
+        search,
+        date,
+      });
+      return sendResponse(
+        res,
+        200,
+        "Activity Log fetched successfully",
+        activityLog,
+        "success"
+      );
+    }
+  );
 }
 export default AuthController;
