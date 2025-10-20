@@ -1,5 +1,10 @@
 import { Role, User } from "@prisma/client";
-import { prisma, registerInterface } from "../../imports";
+import {
+  logger,
+  LogsInterface,
+  prisma,
+  registerInterface,
+} from "../../imports";
 
 class AuthRepo {
   public static registerRepo = async (payload: registerInterface) => {
@@ -95,6 +100,7 @@ class AuthRepo {
   public static findById = async (userId: string) => {
     return prisma.user.findUnique({
       where: { id: userId },
+      include: { parent: true },
     });
   };
 
@@ -157,7 +163,10 @@ class AuthRepo {
 
   // Public function to get all descendants of a user
   public static async userList(role: Role | null, user: User): Promise<User[]> {
-    let list:any = await this.getChildrenRecursively(user.id, role ?? undefined);
+    let list: any = await this.getChildrenRecursively(
+      user.id,
+      role ?? undefined
+    );
     if (role === user.role)
       list.push({
         id: user.id as string,
@@ -246,7 +255,7 @@ class AuthRepo {
       pageSize,
       total,
       totalPages,
-
+      recordsCount: forCount.length,
       ...(user.role === "ADMIN"
         ? {
             subAdmin: forCount.filter((user: any) => user.role === "SUB_ADMIN")
@@ -279,6 +288,91 @@ class AuthRepo {
         : {}),
     };
   }
+
+public static async getActivityLogRepo(payload: any): Promise<any> {
+  const { page, pageSize } = payload;
+  const validPage = Math.max(page, 1);
+  const skip = (validPage - 1) * pageSize;
+
+  const where: any = {
+    userId: payload.userId,
+  };
+
+  // ✅ Add date range filter if payload.date is present
+  if (payload.date) {
+    const startOfDay = new Date(payload.date); // e.g. 2025-10-20T00:00:00.000Z
+    const endOfDay = new Date(payload.date);
+    endOfDay.setDate(endOfDay.getDate() + 1); // e.g. 2025-10-21T00:00:00.000Z
+
+    where.createdAt = {
+      gte: startOfDay,
+      lt: endOfDay,
+    };
+  }
+
+  // ✅ Add search filter if payload.search is present
+  if (payload.search) {
+    where.user = {
+      fullName: {
+        contains: payload.search,
+        mode: "insensitive",
+      },
+    };
+  }
+
+  // ✅ Fetch paginated activity logs
+  const activityLogs = await prisma.activityLog.findMany({
+    skip: skip || 0,
+    take: pageSize,
+    where,
+    select: {
+      id: true,
+      action: true,
+      description: true,
+      createdAt: true,
+      user: {
+        select: {
+          id: true,
+          email: true,
+          fullName: true,
+          role: true,
+          imageUrl: true,
+        },
+      },
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  // ✅ Total count for pagination
+  const total = await prisma.activityLog.count({ where });
+
+  if (activityLogs.length > 0) {
+    const result = activityLogs.map((log: any) => ({
+      id: log.id,
+      action: log.action,
+      description: log.description,
+      createdAt: log.createdAt,
+      userId: log.user.id,
+      email: log.user.email,
+      fullName: log.user.fullName,
+      role: log.user.role,
+      imageUrl: log.user.imageUrl,
+    }));
+
+    return {
+      logs: result,
+      currentPage: page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  return [];
+}
+
 }
 
 export default AuthRepo;

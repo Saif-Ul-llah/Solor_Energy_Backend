@@ -1,4 +1,5 @@
 import axios, { AxiosResponse } from "axios";
+import crypto from "crypto";
 import qs from "qs";
 import FormData from "form-data";
 import dotenv from "dotenv";
@@ -339,6 +340,7 @@ export const insertInverterInfo = async (
   GroupAutoID: string,
   GoodsID: string
 ): Promise<ApiResponse> => {
+  logger("\n\n\ncheck they are hilting on type battery\n\n");
   const Sign = await getSign(
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
@@ -441,3 +443,36 @@ export const getDataForGraph = async (
     throw error;
   }
 };
+
+// ✅ Config
+
+// function generateSign(appKey: string, privateKey: string, timestamp: string, sn: string, date: string) {
+//   // ⚠️ UZ OpenAPI usually requires path + query string in the raw text
+//   const path = `/boot/want/ots/search/${sn}/${date}`;
+//   const query = `pageNo=1&pageSize=10`; // include actual query if present
+//   const raw = `${appKey}${path}?${query}${timestamp}${privateKey}`;
+
+//   // console.log("Signing raw string:", raw); // Debug log
+
+//   return crypto.createHash("md5").update(raw).digest("hex").toLowerCase();
+// }
+
+// export async function getBatteryDeviceData(sn: string, date: string, pageNo = 1, pageSize = 10) {
+//   const timestamp = Date.now().toString();
+//   const sign = generateSign(APP_KEY, PRIVATE_KEY, timestamp, sn, date);
+
+//   const headers = {
+//     "Content-Type": "application/json",
+//     "X-Uz-Sign": sign,
+//   };
+
+//   const url = `${BASE_URL}/boot/want/ots/search/${sn}/${date}?pageNo=${pageNo}&pageSize=${pageSize}`;
+
+//   try {
+//     const response = await axios.get(url, { headers });
+//     console.log(response.data);
+//     return response.data;
+//   } catch (error: any) {
+//     console.error("Error fetching battery data:", error.response?.data || error.message);
+//   }
+// }

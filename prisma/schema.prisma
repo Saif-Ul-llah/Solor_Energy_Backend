@@ -18,7 +18,8 @@ model Device {
   plantId    String
   plant      Plant      @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
   sn         String     @unique
-  deviceType       DeviceType
+  deviceType DeviceType
+
 
   @@schema("public")
 }
@@ -116,6 +117,7 @@ model User {
     parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
     children User[]  @relation("UserHierarchy")
     device   Device[]   @relation("customer")
+    activity ActivityLog[]
 
     @@schema("user")
 }
@@ -149,3 +151,13 @@ enum VerificationStatus {
     @@schema("user")
 }
 
+model ActivityLog {
+    id          String   @id @default(uuid())
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    action    String
+    description String?
+    createdAt   DateTime @default(now())
+
+    @@schema("user")
+}

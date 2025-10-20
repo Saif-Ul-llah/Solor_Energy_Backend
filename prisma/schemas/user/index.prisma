@@ -22,6 +22,7 @@ model User {
     parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
     children User[]  @relation("UserHierarchy")
     device   Device[]   @relation("customer")
+    activity ActivityLog[]
 
     @@schema("user")
 }
@@ -51,6 +52,17 @@ enum Role {
 enum VerificationStatus {
     VERIFIED
     NOT_VERIFIED
+
+    @@schema("user")
+}
+
+model ActivityLog {
+    id          String   @id @default(uuid())
+    userId      String
+    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    action    String
+    description String?
+    createdAt   DateTime @default(now())
 
     @@schema("user")
 }

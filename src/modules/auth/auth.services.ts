@@ -14,6 +14,7 @@ import {
 } from "../../imports";
 import AuthRepo from "./auth.repo";
 import {
+  createLogs,
   generateAccessToken,
   generateRefreshToken,
   getEmailVerificationHtml,
@@ -83,7 +84,11 @@ class AuthServices {
 
     await AuthRepo.updateRefreshToken(user.id, refreshToken);
     let abstract = getUserData(user);
-
+    await createLogs({
+      userId: user.id,
+      action: "Login",
+      description: "User logged in",
+    });
     return { accessToken, refreshToken, ...abstract };
   };
 
@@ -164,6 +169,7 @@ class AuthServices {
 
   public static getUserByIdService = async (userId: string) => {
     const user = await AuthRepo.findById(userId);
+    // logger("user", user);
     if (!user) throw HttpError.notFound("User not found");
     return getUserData(user);
   };
@@ -220,8 +226,20 @@ class AuthServices {
     search: string,
     user: User
   ) => {
-    const users = await AuthRepo.userListFlow(role, userId, page, pageSize,search,user);
+    const users = await AuthRepo.userListFlow(
+      role,
+      userId,
+      page,
+      pageSize,
+      search,
+      user
+    );
     return users;
+  };
+
+  public static getActivityLogService = async (payload: any) => {
+    const activityLog = await AuthRepo.getActivityLogRepo(payload);
+    return activityLog;
   };
 }
 

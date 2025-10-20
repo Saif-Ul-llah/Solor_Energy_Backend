@@ -36,14 +36,12 @@ class DeviceService {
     const device = await DeviceRepo.checkDeviceRepo(sn);
     if (device) throw new HttpError("Device already exists", "conflict", 409);
     // bind device to plant on cloud platform
-    const bind: any = await insertInverterInfo(
-      plant.customer.email,
-      plant.AutoId || "",
-      sn
-    );
+    const bind: any =
+      deviceType !== "BATTERY" &&
+      (await insertInverterInfo(plant.customer.email, plant.AutoId || "", sn));
     // const deviceDetails = await getDeviceBySN(sn, plant.customer.email);
     // logger("bind", bind, plant.customer.email, plant.AutoId || "", sn);
-    if (bind.status) {
+    if (bind.status || deviceType === "BATTERY") {
       const customerId = plant.customerId;
       const add = await DeviceRepo.addDeviceRepo(
         deviceType,
@@ -136,11 +134,16 @@ class DeviceService {
         currentPage: validPage,
         pageSize,
         total,
+        recordsCount: ForCount.length,
         totalPages: Math.ceil(total / pageSize),
-        online:ForCount.filter((device: any) => device.status === "ONLINE").length,
-        offline:ForCount.filter((device: any) => device.status === "OFFLINE").length,
-        fault:ForCount.filter((device: any) => device.status === "FAULT").length,
-        standby:ForCount.filter((device: any) => device.status === "STANDBY").length,
+        online: ForCount.filter((device: any) => device.status === "ONLINE")
+          .length,
+        offline: ForCount.filter((device: any) => device.status === "OFFLINE")
+          .length,
+        fault: ForCount.filter((device: any) => device.status === "FAULT")
+          .length,
+        standby: ForCount.filter((device: any) => device.status === "STANDBY")
+          .length,
       };
     }
 
@@ -162,11 +165,15 @@ class DeviceService {
       currentPage: validPage,
       pageSize,
       total,
+      recordsCount: ForCount.length,
       totalPages: Math.ceil(total / pageSize),
-       online:ForCount.filter((device: any) => device.status === "ONLINE").length,
-        offline:ForCount.filter((device: any) => device.status === "OFFLINE").length,
-        fault:ForCount.filter((device: any) => device.status === "FAULT").length,
-        standby:ForCount.filter((device: any) => device.status === "STANDBY").length,
+      online: ForCount.filter((device: any) => device.status === "ONLINE")
+        .length,
+      offline: ForCount.filter((device: any) => device.status === "OFFLINE")
+        .length,
+      fault: ForCount.filter((device: any) => device.status === "FAULT").length,
+      standby: ForCount.filter((device: any) => device.status === "STANDBY")
+        .length,
     };
   };
 
