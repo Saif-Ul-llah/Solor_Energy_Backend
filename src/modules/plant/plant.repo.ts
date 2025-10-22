@@ -85,6 +85,7 @@ class PlantRepo {
     userIdsList: string[]
   ): Promise<Plant[]> {
     // Get Nested Installer's Ids
+    // logger("userIdsList", userIdsList);
     const plants = await prisma.plant.findMany({
       where: {
         customer: {

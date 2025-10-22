@@ -127,7 +127,7 @@ class AuthRepo {
   };
 
   // ================ User Management =================
-  private static async getChildrenRecursively(
+  public static async getChildrenRecursively(
     userId: string,
     role?: Role
   ): Promise<User[]> {

@@ -76,7 +76,7 @@ class DeviceController {
         return next(HttpError.missingParameters("User Id is required! "));
       const device: any = await DeviceServices.getAllDeviceListService(
         userId as string,
-        deviceType as DeviceType,
+        "INVERTER" as DeviceType,
         status as string,
         Number(page),
         Number(pageSize),

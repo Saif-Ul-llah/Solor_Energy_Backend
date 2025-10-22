@@ -20,6 +20,7 @@ import {
   getEmailVerificationHtml,
 } from "../../utils/helpers";
 import { Role, User } from "@prisma/client";
+import PlantRepo from "../plant/plant.repo";
 
 dotenv.config();
 class AuthServices {
@@ -221,6 +222,30 @@ class AuthServices {
   public static getActivityLogService = async (payload: any) => {
     const activityLog = await AuthRepo.getActivityLogRepo(payload);
     return activityLog;
+  };
+
+  public static getDashboardCountService = async (payload: any) => {
+    // total user
+    let users = await AuthRepo.getChildrenRecursively(payload.userId);
+    let ids: any = users
+      .map((u) => u.role == "CUSTOMER" && u.email)
+      .filter(Boolean);
+
+    // total plant
+    let plantList = await PlantRepo.getAllPlants("", ids);
+
+    // total capacity
+    let plantsCapacity = plantList
+      .map((p) => p.capacity)
+      .reduce((a, b) => a + b, 0);
+    // total device
+    let deviceCount = plantList.map((p: any) => p.device).length;
+    return {
+      usersCount: users.length || 0,
+      totalCapacity: plantsCapacity || 0,
+      totalDevice: deviceCount || 0,
+      totalPlant: plantList.length || 0,
+    };
   };
 }
 
