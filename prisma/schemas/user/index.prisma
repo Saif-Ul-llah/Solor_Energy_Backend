@@ -11,18 +11,19 @@ model User {
     fullName     String
     address      String?
     fcmToken     String?
-    imageUrl    String?
+    imageUrl     String?
     TFA_enabled  Boolean           @default(false)
     verification UserVerification?
     customer     Plant[]           @relation("customer")
     installer    Plant[]           @relation("installer")
-    language    String    
-        
-    parentId String?
-    parent   User?   @relation("UserHierarchy", fields: [parentId], references: [id])
-    children User[]  @relation("UserHierarchy")
-    device   Device[]   @relation("customer")
-    activity ActivityLog[]
+    language     String
+
+    parentId      String?
+    parent        User?          @relation("UserHierarchy", fields: [parentId], references: [id])
+    children      User[]         @relation("UserHierarchy")
+    device        Device[]       @relation("customer")
+    activity      ActivityLog[]
+    notifications Notification[]
 
     @@schema("user")
 }
@@ -60,9 +61,20 @@ model ActivityLog {
     id          String   @id @default(uuid())
     userId      String
     user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-    action    String
+    action      String
     description String?
     createdAt   DateTime @default(now())
+
+    @@schema("user")
+}
+
+model Notification {
+    id        String   @id @default(uuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title     String
+    message   String
+    createdAt DateTime @default(now())
 
     @@schema("user")
 }
