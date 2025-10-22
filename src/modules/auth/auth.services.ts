@@ -188,28 +188,9 @@ class AuthServices {
   };
 
   public static updateUserService = async (payload: any) => {
-    const {
-      userId,
-      fullName,
-      phoneNumber,
-      address,
-      imageUrl,
-      parentId,
-      TFA_enabled,
-      fcmToken,
-    } = payload;
-    const user = await AuthRepo.findById(userId);
+    const user = await AuthRepo.findById(payload.userId);
     if (!user) throw HttpError.notFound("User not found");
-    return await AuthRepo.updateUser({
-      userId,
-      fullName,
-      phoneNumber,
-      address,
-      imageUrl,
-      parentId,
-      TFA_enabled,
-      fcmToken,
-    });
+    return await AuthRepo.updateUser(payload);
   };
 
   // ================ User Management =================

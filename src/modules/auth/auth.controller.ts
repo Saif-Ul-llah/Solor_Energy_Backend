@@ -168,7 +168,7 @@ class AuthController {
         ...req.body,
       });
 
-      logger(value);
+      logger("data",value);
 
       if (error) {
         return next(HttpError.validationError(error.details[0].message));

@@ -128,4 +128,7 @@ export const updateUserValidation = Joi.object({
     "string.base": "FCM Token must be a string",
     "string.empty": "FCM Token cannot be empty",
   }),
+  IsActive: Joi.boolean().optional().allow(null, "").messages({
+    "boolean.base": "isActive must be a boolean",
+  })
 });
