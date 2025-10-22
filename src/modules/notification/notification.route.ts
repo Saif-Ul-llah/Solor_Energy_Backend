@@ -4,7 +4,7 @@ import NotificationController from "./notification.controller";
 
 const router = Router();
 
-// router.post("/createPlant", checkToken, NotificationController.createPlant);
 router.get("/getPlantsAlerts", checkToken, NotificationController.getPlantsAlerts);
-
+router.post("/sendNotification", checkToken, NotificationController.sendNotification);
+router.get("/notificationList", checkToken, NotificationController.getNotificationList);
 export default router;

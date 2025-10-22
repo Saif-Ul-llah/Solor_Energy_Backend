@@ -2,10 +2,11 @@ import { User } from "@prisma/client";
 import { HttpError, logger, dotenv, plantsAlertById } from "../../imports";
 import NotificationRepo from "./notification.repo";
 import PlantServices from "./../plant/plant.services";
+import { sendPushNotification } from "../../utils/notification";
+import AuthRepo from "../auth/auth.repo";
 dotenv.config();
 
 class NotificationService {
-
   public static async getPlantsAlerts(user: User): Promise<any> {
     // get Plant list of a user
     const plantsList: any = await PlantServices.getAllPlants(
@@ -39,8 +40,39 @@ class NotificationService {
       .filter(Boolean);
 
     return { totalErrorNumSum, flatAlerts };
-
+  }
+  public static async sendPushNotificationService(
+    title: string,
+    body: string,
+    userId: string
+  ) {
+    // fetch fcmToken from db
+    const fcmToken = await AuthRepo.getFcmTokenByUserId(userId);
+    logger("FCM Token:", fcmToken);
+    // send notification
+    await sendPushNotification(fcmToken, title, body);
+    await NotificationRepo.createNotificationRepo({
+      title,
+      message: body,
+      userId,
+    });
+    return;
+  }
+  public static async getNotificationListService(
+    page: number,
+    pageSize: number,
+    userId: string
+  ) {
+    // get user list under user id
+    let userIds: any = await AuthRepo.getChildrenRecursively(userId);
+    userIds = userIds.map((user: any) => user.id);
+    userIds.push(userId); // include self userId
+    const notifications = await NotificationRepo.getNotificationListRepo(
+      page,
+      pageSize,
+      userIds
+    );
+    return notifications;
   }
 }
-
 export default NotificationService;

@@ -289,90 +289,98 @@ class AuthRepo {
     };
   }
 
-public static async getActivityLogRepo(payload: any): Promise<any> {
-  const { page, pageSize } = payload;
-  const validPage = Math.max(page, 1);
-  const skip = (validPage - 1) * pageSize;
+  public static async getActivityLogRepo(payload: any): Promise<any> {
+    const { page, pageSize } = payload;
+    const validPage = Math.max(page, 1);
+    const skip = (validPage - 1) * pageSize;
 
-  const where: any = {
-    userId: payload.userId,
-  };
-
-  // ✅ Add date range filter if payload.date is present
-  if (payload.date) {
-    const startOfDay = new Date(payload.date); // e.g. 2025-10-20T00:00:00.000Z
-    const endOfDay = new Date(payload.date);
-    endOfDay.setDate(endOfDay.getDate() + 1); // e.g. 2025-10-21T00:00:00.000Z
-
-    where.createdAt = {
-      gte: startOfDay,
-      lt: endOfDay,
+    const where: any = {
+      userId: payload.userId,
     };
-  }
 
-  // ✅ Add search filter if payload.search is present
-  if (payload.search) {
-    where.user = {
-      fullName: {
-        contains: payload.search,
-        mode: "insensitive",
-      },
-    };
-  }
+    // ✅ Add date range filter if payload.date is present
+    if (payload.date) {
+      const startOfDay = new Date(payload.date); // e.g. 2025-10-20T00:00:00.000Z
+      const endOfDay = new Date(payload.date);
+      endOfDay.setDate(endOfDay.getDate() + 1); // e.g. 2025-10-21T00:00:00.000Z
 
-  // ✅ Fetch paginated activity logs
-  const activityLogs = await prisma.activityLog.findMany({
-    skip: skip || 0,
-    take: pageSize,
-    where,
-    select: {
-      id: true,
-      action: true,
-      description: true,
-      createdAt: true,
-      user: {
-        select: {
-          id: true,
-          email: true,
-          fullName: true,
-          role: true,
-          imageUrl: true,
+      where.createdAt = {
+        gte: startOfDay,
+        lt: endOfDay,
+      };
+    }
+
+    // ✅ Add search filter if payload.search is present
+    if (payload.search) {
+      where.user = {
+        fullName: {
+          contains: payload.search,
+          mode: "insensitive",
+        },
+      };
+    }
+
+    // ✅ Fetch paginated activity logs
+    const activityLogs = await prisma.activityLog.findMany({
+      skip: skip || 0,
+      take: pageSize,
+      where,
+      select: {
+        id: true,
+        action: true,
+        description: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            fullName: true,
+            role: true,
+            imageUrl: true,
+          },
         },
       },
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  });
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
 
-  // ✅ Total count for pagination
-  const total = await prisma.activityLog.count({ where });
+    // ✅ Total count for pagination
+    const total = await prisma.activityLog.count({ where });
 
-  if (activityLogs.length > 0) {
-    const result = activityLogs.map((log: any) => ({
-      id: log.id,
-      action: log.action,
-      description: log.description,
-      createdAt: log.createdAt,
-      userId: log.user.id,
-      email: log.user.email,
-      fullName: log.user.fullName,
-      role: log.user.role,
-      imageUrl: log.user.imageUrl,
-    }));
+    if (activityLogs.length > 0) {
+      const result = activityLogs.map((log: any) => ({
+        id: log.id,
+        action: log.action,
+        description: log.description,
+        createdAt: log.createdAt,
+        userId: log.user.id,
+        email: log.user.email,
+        fullName: log.user.fullName,
+        role: log.user.role,
+        imageUrl: log.user.imageUrl,
+      }));
 
-    return {
-      logs: result,
-      currentPage: page,
-      pageSize,
-      total,
-      totalPages: Math.ceil(total / pageSize),
-    };
+      return {
+        logs: result,
+        currentPage: page,
+        pageSize,
+        total,
+        totalPages: Math.ceil(total / pageSize),
+      };
+    }
+
+    return [];
   }
 
-  return [];
-}
-
+  public static async getFcmTokenByUserId(userId: string): Promise<string> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { fcmToken: true },
+    });
+    return user?.fcmToken || "";
+  }
+  
 }
 
 export default AuthRepo;
