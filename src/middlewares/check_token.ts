@@ -28,7 +28,10 @@ const checkToken = asyncHandler(
       throw HttpError.invalidTokens();
     } else if (user.isDisable) {
       throw HttpError.notFound("User not found");
+    }else if(!dbUser.IsActive){
+      throw HttpError.notFound("User not found");
     }
+
     req.user = dbUser;
     next();
   }

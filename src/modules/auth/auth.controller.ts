@@ -168,7 +168,7 @@ class AuthController {
         ...req.body,
       });
 
-      logger("data",value);
+      logger("data", value);
 
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
@@ -252,6 +252,23 @@ class AuthController {
         200,
         "Activity Log fetched successfully",
         activityLog,
+        "success"
+      );
+    }
+  );
+
+  public static getDashboardCount = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+ 
+      const stats = await AuthServices.getDashboardCountService({
+        userId,
+      });
+      return sendResponse(
+        res,
+        200,
+        "Dashboard Count fetched successfully",
+        stats,
         "success"
       );
     }

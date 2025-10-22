@@ -12,6 +12,7 @@ import {
   getUserData,
   InvertersOfPlant,
   ModifyPlant,
+  getBatteryDeviceData,
   // getBatteryDeviceData,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
