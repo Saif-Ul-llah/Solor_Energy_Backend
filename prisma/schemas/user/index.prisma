@@ -18,6 +18,14 @@ model User {
     installer    Plant[]           @relation("installer")
     language     String
 
+    allowPlantCreation  Boolean @default(true)
+    allowUserCreation   Boolean @default(true)
+    allowDeviceCreation Boolean @default(true)
+
+    allowDeviceAlerts   Boolean @default(true)
+    allowFirmwareAlerts Boolean @default(true)
+    allowLoginAlerts    Boolean @default(true)
+
     parentId      String?
     parent        User?          @relation("UserHierarchy", fields: [parentId], references: [id])
     children      User[]         @relation("UserHierarchy")

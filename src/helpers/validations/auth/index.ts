@@ -75,6 +75,10 @@ export const registerValidation = Joi.object({
 
 // reset password validation schema
 export const resetPasswordValidation = Joi.object({
+  userId: Joi.string().guid().required().messages({
+    "string.base": "User ID must be a string",
+    "string.guid": "User ID must be a valid UUID",
+  }),
   newPassword: Joi.string().min(6).required().messages({
     "string.min": "Password must be at least 6 characters long",
     "any.required": "Password is required",
@@ -130,5 +134,14 @@ export const updateUserValidation = Joi.object({
   }),
   IsActive: Joi.boolean().optional().allow(null, "").messages({
     "boolean.base": "isActive must be a boolean",
-  })
+  }),
+  allowPlantCreation: Joi.boolean().optional().messages({
+    "boolean.base": "allowPlantCreation must be a boolean",
+  }),
+  allowUserCreation: Joi.boolean().optional().messages({
+    "boolean.base": "allowUserCreation must be a boolean",
+  }),
+  allowDeviceCreation: Joi.boolean().optional().messages({
+    "boolean.base": "allowDeviceCreation must be a boolean",
+  }),
 });

@@ -7,4 +7,7 @@ const router = Router();
 router.get("/getPlantsAlerts", checkToken, NotificationController.getPlantsAlerts);
 router.post("/sendNotification", checkToken, NotificationController.sendNotification);
 router.get("/notificationList", checkToken, NotificationController.getNotificationList);
+router.get("/notificationPreference", checkToken, NotificationController.getNotificationPreference);
+router.post("/updateNotificationPreference", checkToken, NotificationController.updateNotificationPreference);
+
 export default router;

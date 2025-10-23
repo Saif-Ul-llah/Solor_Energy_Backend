@@ -24,13 +24,15 @@ class AuthController {
       const { error, value } = registerValidation.validate({
         ...req.body,
       });
+      let reqUser = req.user ;
 
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
 
       const user = await AuthServices.registerService(
-        value as registerInterface
+        value as registerInterface,
+        reqUser,
       );
 
       return sendResponse(
@@ -96,8 +98,10 @@ class AuthController {
   public static resetPassword = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
+      const { userId } = req.body;
       const { error, value } = resetPasswordValidation.validate({
         ...req.body,
+        userId: userId || user.id,
         email: user.email,
       });
       if (error) {
@@ -260,7 +264,7 @@ class AuthController {
   public static getDashboardCount = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const userId = req.user.id;
- 
+
       const stats = await AuthServices.getDashboardCountService({
         userId,
       });

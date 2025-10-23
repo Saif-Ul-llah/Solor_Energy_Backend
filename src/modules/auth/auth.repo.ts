@@ -7,6 +7,7 @@ import {
 } from "../../imports";
 
 class AuthRepo {
+  /**==============================  Register New User  ============================== */
   public static registerRepo = async (payload: registerInterface) => {
     const { parentId, ...rest } = payload;
     if (payload.role === "ADMIN") {
@@ -39,11 +40,13 @@ class AuthRepo {
     return user;
   };
 
+  /**==============================  Find User By Email  ============================== */
   public static checkEmailExists = async (email: string) => {
     const user = await prisma.user.findUnique({ where: { email } });
     return user;
   };
 
+  /**==============================  Find User By Email  ============================== */
   public static findByEmail = async (email: string) => {
     return prisma.user.findUnique({
       where: { email },
@@ -51,6 +54,7 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Update Refresh Token  ============================== */
   public static updateRefreshToken = async (
     userId: string,
     refreshToken: string
@@ -62,6 +66,7 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Save Reset Otp  ============================== */
   public static saveResetOtp = async (
     userId: string,
     otp: number,
@@ -74,12 +79,14 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Verify Otp  ============================== */
   public static verifyOtp = async (userId: string, otp: number) => {
     return prisma.userVerification.findFirst({
       where: { userId, resetOtp: otp, resetOtpExpiresAt: { gt: new Date() } },
     });
   };
 
+  /**==============================  Reset Password  ============================== */
   public static resetPassword = async (userId: string, newPassword: string) => {
     return prisma.user.update({
       where: { id: userId },
@@ -87,6 +94,7 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Changed Password   ============================== */
   public static changePassword = async (
     userId: string,
     newPassword: string
@@ -97,6 +105,7 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Get User By Id   ============================== */
   public static findById = async (userId: string) => {
     return prisma.user.findUnique({
       where: { id: userId },
@@ -104,19 +113,21 @@ class AuthRepo {
     });
   };
 
+  /**==============================  Refresh Token  ============================== */
   public static findByRefreshToken = async (refreshToken: string) => {
     return prisma.user.findFirst({
       where: { verification: { refreshToken } },
     });
   };
 
+  /**==============================  Update User  ============================== */
   public static updateUser = async (data: any) => {
     const { userId, ...rest } = data;
 
     // Filter out undefined and null values
     const cleanData = Object.fromEntries(
       Object.entries(rest).filter(
-        ([_, value]) => value !== null && value !== undefined
+        ([_, value]) => value !== null && value !== undefined && value !== ""
       )
     );
 
@@ -126,7 +137,11 @@ class AuthRepo {
     });
   };
 
-  // ================ User Management =================
+  /*===========================================================================================
+                                User Management 
+  ===========================================================================================*/
+
+  /*===========================  Get Children Recursively   =========================== */
   public static async getChildrenRecursively(
     userId: string,
     role?: Role
@@ -161,7 +176,7 @@ class AuthRepo {
     return allChildren;
   }
 
-  // Public function to get all descendants of a user
+  /*===========================  Get User List   =========================== */
   public static async userList(role: Role | null, user: User): Promise<User[]> {
     let list: any = await this.getChildrenRecursively(
       user.id,
@@ -176,6 +191,8 @@ class AuthRepo {
       });
     return list;
   }
+
+  /*=========================== Recursively Get User List with Pagination   =========================== */
   private static async getChildrenRecursivelyAllLIST(
     userId: string,
     role?: Role
@@ -222,6 +239,7 @@ class AuthRepo {
     return allChildren;
   }
 
+  /*===========================  Get User List with Pagination   =========================== */
   public static async userListFlow(
     role: Role | null,
     userId: string,
@@ -289,6 +307,7 @@ class AuthRepo {
     };
   }
 
+  /*===========================  Get Activity Log   =========================== */
   public static async getActivityLogRepo(payload: any): Promise<any> {
     const { page, pageSize } = payload;
     const validPage = Math.max(page, 1);
@@ -373,6 +392,7 @@ class AuthRepo {
     return [];
   }
 
+  /*===========================  Get FCM Token By User ID   =========================== */
   public static async getFcmTokenByUserId(userId: string): Promise<string> {
     const user = await prisma.user.findUnique({
       where: { id: userId },

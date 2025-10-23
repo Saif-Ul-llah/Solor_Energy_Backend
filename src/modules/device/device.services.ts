@@ -27,8 +27,12 @@ class DeviceService {
   public static addDeviceService = async (
     deviceType: DeviceType,
     sn: string,
-    plantId: string
+    plantId: string,
+    user: User
   ) => {
+    if (user && user.allowDeviceCreation === false) {
+      throw HttpError.forbidden("You don't have permission to create device");
+    }
     //check plant exists
     const plant = await DeviceRepo.getPlantByIdRepo(plantId);
     if (!plant) throw new HttpError("Plant does not exist", "not-found", 404);
