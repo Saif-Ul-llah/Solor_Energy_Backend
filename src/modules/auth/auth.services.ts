@@ -118,7 +118,11 @@ class AuthServices {
     });
     console.log("OTP is :", otp);
     await sendMail({ email, subject: "Password Reset OTP", html: template });
-
+ await createLogs({
+      userId: user.id,
+      action: "Forgot Password",
+      description: "Requested password reset OTP",
+    });
     return [];
   };
 
@@ -226,7 +230,9 @@ class AuthServices {
     page: number = 1,
     pageSize: number = 10,
     search: string,
-    user: User
+    user: User,
+    lat?: number,
+    long?: number
   ) => {
     const users = await AuthRepo.userListFlow(
       role,
@@ -234,7 +240,9 @@ class AuthServices {
       page,
       pageSize,
       search,
-      user
+      user,
+      lat,
+      long,
     );
     return users;
   };

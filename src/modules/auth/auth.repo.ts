@@ -207,6 +207,12 @@ class AuthRepo {
         role: true,
         imageUrl: true,
         IsActive: true,
+        location: {
+          select: {
+            latitude: true,
+            longitude: true,
+          },
+        },
         parent: {
           select: {
             id: true,
@@ -214,6 +220,13 @@ class AuthRepo {
             fullName: true,
             role: true,
             imageUrl: true,
+            IsActive: true,
+            location: {
+              select: {
+                latitude: true,
+                longitude: true,
+              },
+            },
           },
         },
       },
@@ -246,7 +259,9 @@ class AuthRepo {
     page: number = 1,
     pageSize: number = 10,
     search: string,
-    user: User
+    user: User,
+    lat?: number,
+    long?: number
   ): Promise<any> {
     let forCount = await this.getChildrenRecursivelyAllLIST(userId, undefined);
 
@@ -255,6 +270,38 @@ class AuthRepo {
       userId,
       role ?? undefined
     );
+
+    if(lat && long){
+      // Haversine formula to calculate distance between two lat/long points
+      const toRad = (value: number) => (value * Math.PI) / 180;
+      const R = 6371; // Radius of the earth in km
+      const dLat = toRad(lat - allChildren[0].location.latitude);
+      const dLon = toRad(long - allChildren[0].location.longitude);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(toRad(allChildren[0].location.latitude)) *
+          Math.cos(toRad(lat)) *
+          Math.sin(dLon / 2) *
+          Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const distance = R * c; // Distance in km
+      allChildren = allChildren.filter((user: any) => {
+        const userLat = user.location.latitude;
+        const userLong = user.location.longitude;
+        const dLatUser = toRad(lat - userLat);
+        const dLonUser = toRad(long - userLong);
+        const aUser =
+          Math.sin(dLatUser / 2) * Math.sin(dLatUser / 2) +
+          Math.cos(toRad(userLat)) *
+            Math.cos(toRad(lat)) *
+            Math.sin(dLonUser / 2) *
+            Math.sin(dLonUser / 2);
+        const cUser = 2 * Math.atan2(Math.sqrt(aUser), Math.sqrt(1 - aUser));
+        const distanceUser = R * cUser; // Distance in km
+        return distanceUser <= distance;
+      });
+    }
+    
     if (search) {
       allChildren = allChildren.filter((user: any) =>
         user.fullName.toLowerCase().includes(search.toLowerCase())
@@ -400,7 +447,6 @@ class AuthRepo {
     });
     return user?.fcmToken || "";
   }
-  
 }
 
 export default AuthRepo;

@@ -13,6 +13,7 @@ import {
   InvertersOfPlant,
   ModifyPlant,
   getBatteryDeviceData,
+  createLogs,
   // getBatteryDeviceData,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
@@ -74,7 +75,11 @@ class PlantService {
       ...payload,
       AutoID: getPlant.AutoID,
     });
-
+    await createLogs({
+      userId: user.id,
+      action: "Add New Plant",
+      description: `Plant: ${payload.name} created by ${user.email}`,
+    });
     return plant;
   };
 
