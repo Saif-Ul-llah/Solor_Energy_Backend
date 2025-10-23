@@ -24,7 +24,7 @@ class AuthController {
       const { error, value } = registerValidation.validate({
         ...req.body,
       });
-      let reqUser = req.user ;
+      let reqUser = req.user;
 
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
@@ -32,7 +32,7 @@ class AuthController {
 
       const user = await AuthServices.registerService(
         value as registerInterface,
-        reqUser,
+        reqUser
       );
 
       return sendResponse(
@@ -215,6 +215,8 @@ class AuthController {
         page = 1,
         pageSize = 10,
         search = "",
+        lat,
+        long,
       } = req.query;
       if (!userId) {
         return next(HttpError.validationError("User ID is required"));
@@ -226,7 +228,9 @@ class AuthController {
         Number(page),
         Number(pageSize),
         search as string,
-        req.user as User
+        req.user as User,
+        Number(lat),
+        Number(long)
       );
       return sendResponse(
         res,

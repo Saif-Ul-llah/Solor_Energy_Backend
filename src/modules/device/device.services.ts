@@ -10,6 +10,7 @@ import {
   getDeviceBySN,
   deviceDetailFilter,
   getDataForGraph,
+  createLogs,
 } from "../../imports";
 import DeviceRepo from "./device.repo";
 import PlantRepo from "../plant/plant.repo";
@@ -53,6 +54,11 @@ class DeviceService {
         plantId,
         customerId
       );
+       await createLogs({
+            userId: user.id,
+            action: "Add New Device",
+            description: "Device SN: " + sn + " added to Plant: " + plant.name + " by " + user.email,
+          });
       return {
         ...add,
         customerEmail: plant.customer.email,
