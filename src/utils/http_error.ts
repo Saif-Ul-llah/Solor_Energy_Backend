@@ -80,6 +80,9 @@ class HttpError extends Error {
   static internalServerError(message: string) {
     return new HttpError(message, "internal-server-error", 400);
   }
+  static forbidden(message: string) {
+    return new HttpError(message, "forbidden", 403);
+  }
 }
 
 export { HttpError };

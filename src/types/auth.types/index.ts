@@ -25,6 +25,7 @@ export interface loginInterface {
 export interface resetPassInterface {
   newPassword: string;
   email: string;
+  userId: string;
 }
 
 export interface SendOtpOptions {
@@ -70,13 +71,15 @@ export function getUserData(user: any) {
     parentId: user.parentId,
     underName: user.parent ? user.parent.fullName : null,
     underRole: user.parent ? user.parent.role : null,
+    allowDeviceCreation: user.allowDeviceCreation,
+    allowUserCreation: user.allowUserCreation,
+    allowPlantCreation: user.allowPlantCreation,
   };
   return abstract;
 }
 
-
 export interface LogsInterface {
- userId: string;
- action: string;
-description: string;
+  userId: string;
+  action: string;
+  description: string;
 }

@@ -21,6 +21,9 @@ dotenv.config();
 
 class PlantService {
   public static createPlant = async (payload: PlantInterface, user: User) => {
+    if (user && user.allowPlantCreation === false) {
+      throw HttpError.forbidden("You don't have permission to create plant");
+    }
     const checkPlantExists = await PlantRepo.isPlantExists(payload.name);
     if (checkPlantExists)
       throw HttpError.badRequest("Plant with this name already exists");

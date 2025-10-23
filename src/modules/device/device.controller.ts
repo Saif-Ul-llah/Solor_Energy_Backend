@@ -16,12 +16,14 @@ class DeviceController {
   public static addDevice = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const { deviceType, sn, plantId } = req.body;
+      let user = req.user;
       if (!deviceType || !sn || !plantId)
         return next(HttpError.missingParameters("All fields are required! "));
       const device = await DeviceServices.addDeviceService(
         deviceType,
         sn,
-        plantId
+        plantId,
+        user
       );
       if (device) {
         return sendResponse(

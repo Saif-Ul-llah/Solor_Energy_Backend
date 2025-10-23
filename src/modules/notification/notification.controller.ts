@@ -15,15 +15,16 @@ class NotificationController {
   public static getPlantsAlerts = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       let user = req.user;
-      const alerts = await NotificationServices.getPlantsAlerts(user);
+      let search = req.query.search as string | undefined;
+      const alerts = await NotificationServices.getPlantsAlerts(user, search);
       return sendResponse(res, 200, "Plants alerts", alerts, "success");
     }
   );
 
   public static sendNotification = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const userId = req.user.id;
-      const { title, body } = req.body;
+      // const userId = req.user.id;
+      const { title, body, userId } = req.body;
       if (!title || !body) {
       }
       await NotificationServices.sendPushNotificationService(
@@ -56,6 +57,43 @@ class NotificationController {
       }
 
       return sendResponse(res, 200, "Notification list", [], "success");
+    }
+  );
+
+  public static getNotificationPreference = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.query.userId;
+      const preferences: any =
+        await NotificationServices.getNotificationPreferenceService(
+          userId as string
+        );
+      return sendResponse(
+        res,
+        200,
+        "Notification preferences",
+        preferences,
+        "success"
+      );
+    }
+  );
+  public static updateNotificationPreference = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const { allowDeviceAlerts, allowFirmwareAlerts, allowLoginAlerts } =
+        req.body;
+      const updatedPreferences =
+        await NotificationServices.updateNotificationPreferenceService(userId, {
+          allowDeviceAlerts,
+          allowFirmwareAlerts,
+          allowLoginAlerts,
+        });
+      return sendResponse(
+        res,
+        200,
+        "Notification preferences updated",
+        updatedPreferences,
+        "success"
+      );
     }
   );
 }

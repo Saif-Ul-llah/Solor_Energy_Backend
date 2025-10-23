@@ -7,7 +7,10 @@ import AuthRepo from "../auth/auth.repo";
 dotenv.config();
 
 class NotificationService {
-  public static async getPlantsAlerts(user: User): Promise<any> {
+  public static async getPlantsAlerts(
+    user: User,
+    search: string | undefined
+  ): Promise<any> {
     // get Plant list of a user
     const plantsList: any = await PlantServices.getAllPlants(
       user.id,
@@ -18,29 +21,54 @@ class NotificationService {
 
     const alerts = await Promise.all(
       plantsList.plants.map(async (plant: any) => {
-        const plantAlert = await plantsAlertById(
+        let plantAlert = await plantsAlertById(
           // plant.AutoID,
           // plant.CustomerEmail
           "240260",
           "progziel01"
         );
+        if (
+          plantAlert &&
+          plantAlert.infoerror &&
+          plantAlert.infoerror.length > 0
+        ) {
+          plantAlert.infoerror = plantAlert.infoerror.map((alert: any) => ({
+            ...alert,
+            plantName: plant.name,
+            plantId: plant.id,
+            plantProfile: plant.plantProfile,
+          }));
+          return plantAlert;
+        }
         return plantAlert;
       })
     );
-
+    if (search && alerts.length > 0) {
+      // filter alerts based on search term in plantName or infoerror messages
+      return alerts.filter((alert) =>
+        alert.infoerror.some(
+          (a: any) =>
+            a.plantName.toLowerCase().includes(search.toLowerCase()) ||
+            a.ModelName.toLowerCase().includes(search.toLowerCase())
+        )
+      );
+    }
     // Calculate sum of total_error_num
-    const totalErrorNumSum = alerts.reduce(
+    const total_error_num = alerts.reduce(
       (sum, alert) => sum + alert.total_error_num,
       0
     );
 
     // Calculate sum of all infoerror lengths (total number of errors)
-    const flatAlerts = alerts
+    const infoerror = alerts
       .flatMap((alert) => alert.infoerror)
       .filter(Boolean);
+    return { total_error_num, infoerror };
 
-    return { totalErrorNumSum, flatAlerts };
+    // const alerts = await plantsAlertById("240260", "progziel01");
+    // return alerts;
   }
+
   public static async sendPushNotificationService(
     title: string,
     body: string,
@@ -58,6 +86,7 @@ class NotificationService {
     });
     return;
   }
+
   public static async getNotificationListService(
     page: number,
     pageSize: number,
@@ -73,6 +102,28 @@ class NotificationService {
       userIds
     );
     return notifications;
+  }
+
+  public static async getNotificationPreferenceService(userId: string) {
+    const preferences = await NotificationRepo.getNotificationPreferenceRepo(
+      userId
+    );
+    return preferences;
+  }
+  public static async updateNotificationPreferenceService(
+    userId: string,
+    preferences: {
+      allowDeviceAlerts: boolean;
+      allowFirmwareAlerts: boolean;
+      allowLoginAlerts: boolean;
+    }
+  ) {
+    const updatedPreferences =
+      await NotificationRepo.updateNotificationPreferenceRepo(
+        userId,
+        preferences
+      );
+    return updatedPreferences;
   }
 }
 export default NotificationService;
