@@ -173,3 +173,29 @@ export const updatePlantValidation = Joi.object({
       "array.base": "Plant image must be an array of image URLs",
     }),
 });
+
+// Firmware Upload Validation
+export const validateFirmwareUpload = Joi.object({
+  name: Joi.string().min(1).required().messages({
+    "string.base": "Firmware name must be a string",
+    "string.empty": "Firmware name must not be empty",
+    "any.required": "Firmware name is required",
+  }),
+  version: Joi.string().min(1).required().messages({
+    "string.base": "Firmware version must be a string",
+    "string.empty": "Firmware version must not be empty",
+    "any.required": "Firmware version is required",
+  }),
+  deviceType: Joi.string().min(1).required().messages({
+    "string.base": "Device type must be a string",
+    "string.empty": "Device type must not be empty",
+    "any.required": "Device type is required",  
+  }),
+  url: Joi.string().uri().required().messages({
+    "string.base": "Firmware URL must be a string",
+    "string.uri": "Firmware URL must be a valid URI",
+    "any.required": "Firmware URL is required",
+  }),
+  
+}); 
+

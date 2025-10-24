@@ -32,6 +32,7 @@ model User {
     device        Device[]       @relation("customer")
     activity      ActivityLog[]
     notifications Notification[]
+    firmware      Firmware[]
 
     @@schema("user")
 }

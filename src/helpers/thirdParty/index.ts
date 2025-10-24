@@ -416,7 +416,7 @@ export const getDataForGraph = async (
 ): Promise<ApiResponse> => {
   const Sign = await getSign(
     "progziel01",
-    "123456"
+    "Solar@1234"
     // MemberID,
     // process.env.MONITOR_ACCOUNT_PASSWORD as string
   );

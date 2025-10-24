@@ -10,5 +10,6 @@ router.get("/getAllDeviceList", checkToken, DeviceController.getAllDeviceList);
 router.get("/getDeviceBySn", checkToken, DeviceController.getDeviceBySn);
 router.get("/getDeviceDetails", checkToken, DeviceController.getDeviceDetail);
 router.get("/getDeviceFlowDiagram", checkToken, DeviceController.getFlowDiagram);
+router.post("/uploadFirmware", checkToken, DeviceController.uploadFirmware);
 
 export default router;

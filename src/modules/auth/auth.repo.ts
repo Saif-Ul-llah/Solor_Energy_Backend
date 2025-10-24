@@ -195,11 +195,31 @@ class AuthRepo {
   /*=========================== Recursively Get User List with Pagination   =========================== */
   private static async getChildrenRecursivelyAllLIST(
     userId: string,
-    role?: Role
+    role?: Role,
+    latitude?: number,
+    longitude?: number
   ): Promise<any[]> {
+    const latRange = 0.1;
+    const lonRange = 0.1;
     // Fetch all direct children (no pagination here)
     const children = await prisma.user.findMany({
-      where: { parentId: userId },
+      where: {
+        parentId: userId,
+        location: {
+          ...(latitude && longitude
+            ? {
+                latitude: {
+                  gte: latitude - latRange,
+                  lte: latitude + latRange,
+                },
+                longitude: {
+                  gte: longitude - lonRange,
+                  lte: longitude + lonRange,
+                },
+              }
+            : {}),
+        },
+      },
       select: {
         id: true,
         email: true,
@@ -219,14 +239,6 @@ class AuthRepo {
             email: true,
             fullName: true,
             role: true,
-            imageUrl: true,
-            IsActive: true,
-            location: {
-              select: {
-                latitude: true,
-                longitude: true,
-              },
-            },
           },
         },
       },
@@ -253,29 +265,29 @@ class AuthRepo {
   }
 
   /*===========================  Get User List with Pagination   =========================== */
-  public static async userListFlow(
-    role: Role | null,
-    userId: string,
-    page: number = 1,
-    pageSize: number = 10,
-    search: string,
-    user: User,
-    lat?: number,
-    long?: number,
-    IsActive?: boolean
-  ): Promise<any> {
+  public static async userListFlow(payload: any): Promise<any> {
+    const {
+      role,
+      userId,
+      page,
+      pageSize,
+      search,
+      user,
+      latitude,
+      longitude,
+      IsActive,
+    } = payload;
     let forCount = await this.getChildrenRecursivelyAllLIST(userId, undefined);
 
     // Get all descendants (unpaginated)
     let allChildren = await this.getChildrenRecursivelyAllLIST(
       userId,
-      role ?? undefined
+      role ?? undefined,
+      latitude,
+      longitude
     );
 
-    if(lat && long){
-
-    }
-
+    // logger("allChildren", "info", allChildren);
     if (IsActive !== undefined) {
       allChildren = allChildren.filter(
         (user: any) => user.IsActive === IsActive
@@ -336,87 +348,85 @@ class AuthRepo {
 
   /*===========================  Get Activity Log   =========================== */
   public static async getActivityLogRepo(payload: any): Promise<any> {
-    const { page, pageSize } = payload;
-    const validPage = Math.max(page, 1);
-    const skip = (validPage - 1) * pageSize;
+    const {
+      page = 1,
+      pageSize = 10,
+      date,
+      startDate,
+      endDate,
+      search,
+      role,
+      userId,
+    } = payload;
+    const skip = (Math.max(page, 1) - 1) * pageSize;
+    let child = await this.getChildrenRecursivelyAllLIST(userId);
+    let ids = child.map((c) => c.id);
+    ids = [...ids, userId];
 
-    const where: any = {
-      userId: payload.userId,
-    };
+    const where: any = { userId: { in: ids } };
 
-    // ✅ Add date range filter if payload.date is present
-    if (payload.date) {
-      const startOfDay = new Date(payload.date); // e.g. 2025-10-20T00:00:00.000Z
-      const endOfDay = new Date(payload.date);
-      endOfDay.setDate(endOfDay.getDate() + 1); // e.g. 2025-10-21T00:00:00.000Z
-
-      where.createdAt = {
-        gte: startOfDay,
-        lt: endOfDay,
-      };
+    // 🕓 Handle date filtering
+    if (date || (startDate && endDate)) {
+      const start = new Date(startDate || date);
+      const end = new Date(endDate || date);
+      end.setDate(end.getDate() + 1); // include end date
+      where.createdAt = { gte: start, lt: end };
     }
 
-    // ✅ Add search filter if payload.search is present
-    if (payload.search) {
+    // 🔍 Handle user search and role filters
+    if (search || role) {
       where.user = {
-        fullName: {
-          contains: payload.search,
-          mode: "insensitive",
-        },
+        ...(search && { fullName: { contains: search, mode: "insensitive" } }),
+        ...(role && { role }),
       };
     }
 
-    // ✅ Fetch paginated activity logs
-    const activityLogs = await prisma.activityLog.findMany({
-      skip: skip || 0,
-      take: pageSize,
-      where,
-      select: {
-        id: true,
-        action: true,
-        description: true,
-        createdAt: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            fullName: true,
-            role: true,
-            imageUrl: true,
+    // 📦 Fetch data and count in parallel for better performance
+    const [activityLogs, total] = await Promise.all([
+      prisma.activityLog.findMany({
+        skip,
+        take: pageSize,
+        where,
+        select: {
+          id: true,
+          action: true,
+          description: true,
+          createdAt: true,
+          user: {
+            select: {
+              id: true,
+              email: true,
+              fullName: true,
+              role: true,
+              imageUrl: true,
+            },
           },
         },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+        orderBy: { createdAt: "desc" },
+      }),
+      prisma.activityLog.count({ where }),
+    ]);
 
-    // ✅ Total count for pagination
-    const total = await prisma.activityLog.count({ where });
+    // 🧭 Return formatted result
+    const logs = activityLogs.map((log) => ({
+      id: log.id,
+      action: log.action,
+      description: log.description,
+      createdAt: log.createdAt,
+      userId: log.user.id,
+      email: log.user.email,
+      fullName: log.user.fullName,
+      role: log.user.role,
+      imageUrl: log.user.imageUrl,
+    }));
 
-    if (activityLogs.length > 0) {
-      const result = activityLogs.map((log: any) => ({
-        id: log.id,
-        action: log.action,
-        description: log.description,
-        createdAt: log.createdAt,
-        userId: log.user.id,
-        email: log.user.email,
-        fullName: log.user.fullName,
-        role: log.user.role,
-        imageUrl: log.user.imageUrl,
-      }));
-
-      return {
-        logs: result,
-        currentPage: page,
-        pageSize,
-        total,
-        totalPages: Math.ceil(total / pageSize),
-      };
-    }
-
-    return [];
+    return {
+      logs,
+      currentPage: page,
+      pageSize,
+      total,
+      totalPages: Math.ceil(total / pageSize),
+    };
   }
 
   /*===========================  Get FCM Token By User ID   =========================== */

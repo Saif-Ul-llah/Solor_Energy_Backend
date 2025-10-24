@@ -217,23 +217,23 @@ class AuthController {
         search = "",
         latitude,
         longitude,
-        IsActive
+        IsActive,
       } = req.query;
       if (!userId) {
         return next(HttpError.validationError("User ID is required"));
       }
       if (role == "All") role = null;
-      const users = await AuthServices.userListFlowService(
-        role as Role,
-        userId as string,
-        Number(page),
-        Number(pageSize),
-        search as string,
-        req.user as User,
-        Number(latitude),
-        Number(longitude),
-        Boolean(IsActive)
-      );
+      const users = await AuthServices.userListFlowService({
+        role: role as Role,
+        userId: userId as string,
+        page: Number(page),
+        pageSize: Number(pageSize),
+        search: search as string,
+        user: req.user as User,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        IsActive,
+      });
       return sendResponse(
         res,
         200,
@@ -246,16 +246,18 @@ class AuthController {
 
   public static getActivityLog = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const { userId, page, pageSize, search, date } = req.query;
-      if (!userId) {
-        return next(HttpError.validationError("User ID is required"));
-      }
+      const { page, pageSize, search, date, startDate, endDate, role } =
+        req.query;
+      let user = req.user;
       const activityLog = await AuthServices.getActivityLogService({
-        userId,
+        userId: user.id,
         page: Number(page),
         pageSize: Number(pageSize),
         search,
         date,
+        startDate,
+        endDate,
+        role,
       });
       return sendResponse(
         res,
