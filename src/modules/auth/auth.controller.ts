@@ -215,8 +215,9 @@ class AuthController {
         page = 1,
         pageSize = 10,
         search = "",
-        lat,
-        long,
+        latitude,
+        longitude,
+        IsActive
       } = req.query;
       if (!userId) {
         return next(HttpError.validationError("User ID is required"));
@@ -229,8 +230,9 @@ class AuthController {
         Number(pageSize),
         search as string,
         req.user as User,
-        Number(lat),
-        Number(long)
+        Number(latitude),
+        Number(longitude),
+        Boolean(IsActive)
       );
       return sendResponse(
         res,

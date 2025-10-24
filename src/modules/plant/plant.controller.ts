@@ -48,6 +48,10 @@ class PlantController {
         pageSize = 10,
         userId,
         search = "",
+        startCapacity = 0,
+        endCapacity = 0,
+        latitude = 0,
+        longitude = 0,
       } = req.query;
 
       const plants = await PlantServices.getAllPlants(
@@ -55,7 +59,11 @@ class PlantController {
         status as string,
         Number(page),
         Number(pageSize),
-        search as string
+        search as string,
+        Number(startCapacity),
+        Number(endCapacity),
+        Number(latitude),
+        Number(longitude)
       );
       if (plants) {
         return sendResponse(

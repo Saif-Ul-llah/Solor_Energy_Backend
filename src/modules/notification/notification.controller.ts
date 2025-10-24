@@ -63,6 +63,9 @@ class NotificationController {
   public static getNotificationPreference = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const userId = req.query.userId;
+      if (!userId) {
+        throw new HttpError("User ID is required", "missing-parameters", 400);
+      }
       const preferences: any =
         await NotificationServices.getNotificationPreferenceService(
           userId as string
@@ -78,9 +81,12 @@ class NotificationController {
   );
   public static updateNotificationPreference = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
-      const userId = req.user.id;
-      const { allowDeviceAlerts, allowFirmwareAlerts, allowLoginAlerts } =
+      // const userId = req.user.id;
+      const { allowDeviceAlerts, allowFirmwareAlerts, allowLoginAlerts ,userId} =
         req.body;
+        if (!userId) {
+          throw new HttpError("User ID is required", "missing-parameters", 400);
+        }
       const updatedPreferences =
         await NotificationServices.updateNotificationPreferenceService(userId, {
           allowDeviceAlerts,
