@@ -219,6 +219,12 @@ class DeviceService {
     // Return filtered and mapped data
     return energyFlow;
   };
+
+  // Upload Firmware
+  public static uploadFirmwareService = async (data: any) => {
+    const upload = await DeviceRepo.uploadFirmwareRepo(data);
+    return upload;
+  }
 }
 
 export default DeviceService;

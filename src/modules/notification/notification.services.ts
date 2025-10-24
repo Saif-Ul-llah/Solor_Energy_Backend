@@ -22,10 +22,10 @@ class NotificationService {
     const alerts: any = await Promise.all(
       plantsList.plants.map(async (plant: any) => {
         let plantAlert = await plantsAlertById(
-          // plant.AutoID,
-          // plant.CustomerEmail
-          "240260",
-          "progziel01"
+          plant.AutoID,
+          plant.CustomerEmail
+          // "240260",
+          // "progziel01"
         );
         if (
           plantAlert &&

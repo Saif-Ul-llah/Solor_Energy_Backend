@@ -20,7 +20,6 @@ model Device {
   sn         String     @unique
   deviceType DeviceType
 
-
   @@schema("public")
 }
 
@@ -29,6 +28,19 @@ enum DeviceType {
   INVERTER
 
   @@schema("public")
+}
+
+model Firmware {
+  id          Int        @id @default(autoincrement())
+  name        String
+  version     String     @unique
+  deviceType  DeviceType
+  url         String
+  releaseDate DateTime   @default(now())
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@schema("user")
 }
 
 model Location {
@@ -127,6 +139,7 @@ model User {
     device        Device[]       @relation("customer")
     activity      ActivityLog[]
     notifications Notification[]
+    firmware      Firmware[]
 
     @@schema("user")
 }

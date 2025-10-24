@@ -7,6 +7,7 @@ import {
   sendResponse,
   HttpError,
   logger,
+  validateFirmwareUpload,
 } from "../../imports";
 
 import DeviceServices from "./device.services";
@@ -72,7 +73,7 @@ class DeviceController {
         page = 1,
         pageSize = 10,
         userId,
-        search ="",
+        search = "",
       } = req.query;
       if (!userId)
         return next(HttpError.missingParameters("User Id is required! "));
@@ -151,6 +152,20 @@ class DeviceController {
       return sendResponse(res, 200, "Flow Diagram data", [], "success");
     }
   );
-  
+
+  // Upload Firmware
+  public static uploadFirmware = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const { error, value } = validateFirmwareUpload.validate(req.body);
+      if (error) {
+        return next(HttpError.badRequest(error.details[0].message));
+      }
+      const device: any = await DeviceServices.uploadFirmwareService({...value,userId});
+      if (device) {
+        return sendResponse(res, 200, "Firmware uploaded", device, "success");
+      }
+    }
+  );
 }
 export default DeviceController;

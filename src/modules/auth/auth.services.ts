@@ -118,7 +118,7 @@ class AuthServices {
     });
     console.log("OTP is :", otp);
     await sendMail({ email, subject: "Password Reset OTP", html: template });
- await createLogs({
+    await createLogs({
       userId: user.id,
       action: "Forgot Password",
       description: "Requested password reset OTP",
@@ -216,43 +216,20 @@ class AuthServices {
   /*===========================================================================================
                                 User Management 
   ===========================================================================================*/
-  
+
   /**==============================  User List   ============================== */
   public static userListService = async (role: Role, user: User) => {
-    const users = await AuthRepo.userList(role, user);
-    return users;
+    return await AuthRepo.userList(role, user);
   };
 
   /**==============================  User List with Pagination   ============================== */
-  public static userListFlowService = async (
-    role: Role,
-    userId: string,
-    page: number = 1,
-    pageSize: number = 10,
-    search: string,
-    user: User,
-    latitude?: number,
-    longitude?: number,
-    IsActive?: boolean
-  ) => {
-    const users = await AuthRepo.userListFlow(
-      role,
-      userId,
-      page,
-      pageSize,
-      search,
-      user,
-      latitude,
-      longitude,
-      IsActive
-    );
-    return users;
+  public static userListFlowService = async (payload: any) => {
+    return await AuthRepo.userListFlow(payload);
   };
 
   /**==============================  Get Activity Log   ============================== */
   public static getActivityLogService = async (payload: any) => {
-    const activityLog = await AuthRepo.getActivityLogRepo(payload);
-    return activityLog;
+    return await AuthRepo.getActivityLogRepo(payload);
   };
 
   /**==============================  Get Dashboard Count   ============================== */

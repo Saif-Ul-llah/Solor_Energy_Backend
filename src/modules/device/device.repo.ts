@@ -45,6 +45,13 @@ class DeviceRepo {
     });
     return device;
   }
+  // Upload Firmware Repo
+  public static async uploadFirmwareRepo(data: any) {
+    const firmware = await prisma.firmware.create({
+      data,
+    });
+    return firmware;
+  }
 }
 
 export default DeviceRepo;
