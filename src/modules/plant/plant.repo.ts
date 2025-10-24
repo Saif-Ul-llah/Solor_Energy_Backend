@@ -82,22 +82,43 @@ class PlantRepo {
   // Get My and nested plants
   public static async getAllPlants(
     userId: string,
-    userIdsList: string[]
+    userIdsList: string[],
+    startCapacity?: number,
+    endCapacity?: number,
+    latitude?: number,
+    longitude?: number
   ): Promise<Plant[]> {
     // Get Nested Installer's Ids
     // logger("userIdsList", userIdsList);
+    const latRange = 0.1;
+    const lonRange = 0.1;
+
     const plants = await prisma.plant.findMany({
       where: {
         customer: {
           email: { in: userIdsList },
         },
+        ...(startCapacity && { capacity: { gte: startCapacity } }),
+        ...(endCapacity && { capacity: { lte: endCapacity } }),
+        location: {
+          ...(latitude && longitude
+            ? {
+                latitude: {
+                  gte: latitude - latRange,
+                  lte: latitude + latRange,
+                },
+                longitude: {
+                  gte: longitude - lonRange,
+                  lte: longitude + lonRange,
+                },
+              }
+            : {}),
+        },
       },
       include: {
-        // location: true,
         customer: true,
         device: true,
-        // installer: true,
-        // plantImage: true,
+        location: true,
       },
     });
     return plants;

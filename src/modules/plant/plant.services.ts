@@ -14,7 +14,6 @@ import {
   ModifyPlant,
   getBatteryDeviceData,
   createLogs,
-  // getBatteryDeviceData,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -127,7 +126,11 @@ class PlantService {
     status?: string,
     page: number = 1,
     pageSize: number = 10,
-    search?: string
+    search?: string,
+    startCapacity: number = 0,
+    endCapacity: number = 0,
+    latitude: number = 0,
+    longitude: number = 0
   ) => {
     // 1️ Get all child installers recursively
     const userIdsList = await PlantRepo.getChildrenRecursively(
@@ -166,7 +169,11 @@ class PlantService {
     // 7 Our DB Plants lists
     let plants = await PlantRepo.getAllPlants(
       userId,
-      validMonitorUsers.map((u: any) => u.MemberID)
+      validMonitorUsers.map((u: any) => u.MemberID),
+      startCapacity,
+      endCapacity,
+      latitude,
+      longitude
     );
 
     const getCommonPlants: any = plantList
@@ -367,7 +374,8 @@ class PlantService {
   ) => {
     return type === "INVERTER"
       ? await this.getInvertersOfPlant(email, plantId)
-      : await this.getBatteriesOfPlant(email, plantId);
+      : [];
+    // : await this.getBatteriesOfPlant(email, plantId);
   };
 
   // Modify Plant

@@ -92,6 +92,11 @@ class NotificationRepo {
     const updatedPreferences = await prisma.user.update({
       where: { id: userId },
       data: preferences,
+      select: {
+        allowDeviceAlerts: true,
+        allowFirmwareAlerts: true,
+        allowLoginAlerts: true,
+      }
     });
     return updatedPreferences;
   }

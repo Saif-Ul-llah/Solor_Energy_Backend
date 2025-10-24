@@ -231,8 +231,9 @@ class AuthServices {
     pageSize: number = 10,
     search: string,
     user: User,
-    lat?: number,
-    long?: number
+    latitude?: number,
+    longitude?: number,
+    IsActive?: boolean
   ) => {
     const users = await AuthRepo.userListFlow(
       role,
@@ -241,8 +242,9 @@ class AuthServices {
       pageSize,
       search,
       user,
-      lat,
-      long,
+      latitude,
+      longitude,
+      IsActive
     );
     return users;
   };
