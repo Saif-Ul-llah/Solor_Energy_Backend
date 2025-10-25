@@ -159,5 +159,22 @@ class PlantController {
       }
     }
   );
+  // Delete Plant
+  public static deletePlant = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { AutoId ,CustomerEmail} = req.query;
+      if (!AutoId) return next(HttpError.badRequest("Auto ID is required"));
+      const plant = await PlantServices.deletePlantService(AutoId as string, CustomerEmail as string);
+      if (plant) {
+        return sendResponse(
+          res,
+          200,
+          "Plant deleted successfully",
+          plant,
+          "success"
+        );
+      }
+    }
+  );
 }
 export default PlantController;

@@ -54,11 +54,17 @@ class DeviceService {
         plantId,
         customerId
       );
-       await createLogs({
-            userId: user.id,
-            action: "Add New Device",
-            description: "Device SN: " + sn + " added to Plant: " + plant.name + " by " + user.email,
-          });
+      await createLogs({
+        userId: user.id,
+        action: "Add New Device",
+        description:
+          "Device SN: " +
+          sn +
+          " added to Plant: " +
+          plant.name +
+          " by " +
+          user.email,
+      });
       return {
         ...add,
         customerEmail: plant.customer.email,
@@ -206,14 +212,24 @@ class DeviceService {
       device.sn,
       device.customer.email
     );
-    // logger("deviceDetails", deviceDetails);
+    logger("deviceDetails", deviceDetails);
+    if (!deviceDetails.status)
+      return {
+        PV: 0,
+        Grid: 0,
+        Battery: 0,
+        Generator: 0,
+        LoadConsumed: 0,
+        deviceType: device?.deviceType,
+      };
+
     const energyFlow = {
-      PV: deviceDetails.ACDCInfo.Pdc[0] || 0, // First value of Pdc for Solar input power
-      Grid: deviceDetails.gridCurrpac[1] || 0, // Grid power (currpac array)
-      Battery: deviceDetails.fromPbat || 0, // Power discharging from the battery
-      Generator: deviceDetails.genCurrpac[1] || 0, // Generator power (currpac array)
-      LoadConsumed: deviceDetails.loadCurrpac[1] || 0, // Load power consumption (currpac array)
-      deviceType: device.deviceType,
+      PV: deviceDetails?.ACDCInfo?.Pdc[0] || 0, // First value of Pdc for Solar input power
+      Grid: deviceDetails?.gridCurrpac[1] || 0, // Grid power (currpac array)
+      Battery: deviceDetails?.fromPbat || 0, // Power discharging from the battery
+      Generator: deviceDetails?.genCurrpac[1] || 0, // Generator power (currpac array)
+      LoadConsumed: deviceDetails?.loadCurrpac[1] || 0, // Load power consumption (currpac array)
+      deviceType: device?.deviceType,
     };
 
     // Return filtered and mapped data
@@ -224,7 +240,22 @@ class DeviceService {
   public static uploadFirmwareService = async (data: any) => {
     const upload = await DeviceRepo.uploadFirmwareRepo(data);
     return upload;
-  }
+  };
+
+  // Get Firmware List
+  public static getFirmwareListService = async (userId: string) => {
+    const firmwareList = await DeviceRepo.getFirmwareListRepo(userId);
+    return firmwareList;
+  };
+
+  // delete device
+  public static deleteDeviceService = async (userId: string, sn: string) => {
+    const checkDevice = await DeviceRepo.checkDeviceRepo(sn);
+    if (!checkDevice) throw new HttpError("Device not found", "not found", 404);
+    
+    const device = await DeviceRepo.deleteDeviceRepo(userId, sn);
+    return device;
+  };
 }
 
 export default DeviceService;

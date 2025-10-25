@@ -285,5 +285,24 @@ class AuthController {
       );
     }
   );
+
+  public static deleteUserById = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { userId } = req.query;
+      if (!userId) return next(HttpError.badRequest("User ID is required"));
+      const user = await AuthServices.updateUserService({
+        userId,
+        IsActive: false,
+      });
+      return sendResponse(
+        res,
+        200,
+        "User deleted successfully",
+        user,
+        "success"
+      );
+    }
+  );
+  
 }
 export default AuthController;

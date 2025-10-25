@@ -5,6 +5,10 @@ class DeviceRepo {
   public static async checkDeviceRepo(sn: string) {
     const device = await prisma.device.findUnique({
       where: { sn },
+      include:{
+        customer: true,
+        plant: true,
+      },
     });
     return device;
   }
@@ -39,7 +43,7 @@ class DeviceRepo {
       include: {
         customer: true,
         plant: {
-          include: { installer: true,location: true },
+          include: { installer: true, location: true },
         },
       },
     });
@@ -52,6 +56,55 @@ class DeviceRepo {
     });
     return firmware;
   }
+
+  // Get Firmware List Repo
+  public static async getFirmwareListRepo(userId: string) {
+    const firmwareList = await prisma.firmware.findMany({
+      where: { userId },
+      orderBy: { releaseDate: "desc" },
+      select: {
+        id: true,
+        name: true,
+        version: true,
+        releaseDate: true,
+        releaseNote: true,
+        deviceType: true,
+        url: true,
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            imageUrl: true,
+            role: true,
+          },
+        },
+      },
+    });
+    if (!firmwareList || firmwareList.length === 0) return [];
+
+    return firmwareList.map((firmware) => ({
+      id: firmware.id,
+      name: firmware.name,
+      version: firmware.version,
+      releaseDate: firmware.releaseDate,
+      releaseNote: firmware.releaseNote,
+      deviceType: firmware.deviceType,
+      url: firmware.url,
+      fullName: firmware.user.fullName,
+      imageUrl: firmware.user.imageUrl,
+      role: firmware.user.role,
+      userId: firmware.user.id,
+    }));
+  }
+
+// Delete Device Repo
+public static async deleteDeviceRepo(userId: string, sn: string) {
+  const device = await prisma.device.delete({
+    where: { sn },
+  });
+  return device;
+}
+
 }
 
 export default DeviceRepo;

@@ -254,6 +254,14 @@ class PlantRepo {
     if (!batteryList || batteryList.length === 0) return [];
     return batteryList;
   }
+
+  // Delete Plant
+  public static async deletePlantRepo(AutoID: string, CustomerEmail: string) {
+    const plant = await prisma.plant.delete({
+      where: { AutoId: AutoID },
+    });
+    return plant;
+  }
 }
 
 export default PlantRepo;
