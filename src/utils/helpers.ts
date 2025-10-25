@@ -234,7 +234,7 @@ const REFRESH_SECRET =
   (process.env.REFRESH_TOKEN_SECRET as string) || "scarron";
 
 export const generateAccessToken = (payload: object) => {
-  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: "30d" });
+  return jwt.sign(payload, ACCESS_SECRET, { expiresIn: "2m" });
 };
 
 export const generateRefreshToken = (payload: object) => {
