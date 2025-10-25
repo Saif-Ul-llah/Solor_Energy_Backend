@@ -12,6 +12,8 @@ router.post("/verify-otp", AuthController.verifyOTP);
 router.post("/reset-password", checkToken, AuthController.resetPassword);
 router.post("/change-password", checkToken, AuthController.changePassword);
 router.post("/refreshToken", AuthController.refreshToken);
+router.post("/logout-all-devices", checkToken, AuthController.logoutAllDevices);
+router.get("/get-active-sessions", checkToken, AuthController.getActiveSessions);
 
 // ======================== User Management ========================
 router.get("/user_list", checkToken, AuthController.userList);

@@ -56,7 +56,7 @@ class AuthController {
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
-      const result = await AuthServices.loginService(value);
+      const result = await AuthServices.loginService(value, req);
       return sendResponse(res, 200, "Login successful", result, "success");
     }
   );
@@ -299,6 +299,36 @@ class AuthController {
         200,
         "User deleted successfully",
         user,
+        "success"
+      );
+    }
+  );
+
+  /**==============================  Logout All Devices  ============================== */
+  public static logoutAllDevices = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = (req as any).user.id; // populated by checkToken
+      const result = await AuthServices.logoutAllDevicesService(userId);
+      return sendResponse(
+        res,
+        200,
+        result.message,
+        [],
+        "success"
+      );
+    }
+  );
+
+  /**==============================  Get Active Sessions  ============================== */
+  public static getActiveSessions = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = (req as any).user.id; // populated by checkToken
+      const result = await AuthServices.getActiveSessionsService(userId);
+      return sendResponse(
+        res,
+        200,
+        result.message,
+        result,
         "success"
       );
     }

@@ -23,6 +23,37 @@ import { Role, User } from "@prisma/client";
 import PlantRepo from "../plant/plant.repo";
 
 dotenv.config();
+
+// Helper function to extract device information from request headers
+const getDeviceInfo = (req: any) => {
+  const userAgent = req?.headers?.['user-agent'] || 'Unknown Browser';
+  const ip = req?.ip || req?.connection?.remoteAddress || 'Unknown IP';
+  
+  // Parse user agent to get browser and OS info
+  let browser = 'Unknown Browser';
+  let os = 'Unknown OS';
+  
+  if (userAgent.includes('Chrome')) browser = 'Chrome';
+  else if (userAgent.includes('Firefox')) browser = 'Firefox';
+  else if (userAgent.includes('Safari')) browser = 'Safari';
+  else if (userAgent.includes('Edge')) browser = 'Edge';
+  
+  if (userAgent.includes('Windows')) os = 'Windows';
+  else if (userAgent.includes('Mac')) os = 'macOS';
+  else if (userAgent.includes('Linux')) os = 'Linux';
+  else if (userAgent.includes('Android')) os = 'Android';
+  else if (userAgent.includes('iOS')) os = 'iOS';
+  
+  return {
+    browser,
+    os,
+    userAgent,
+    ip,
+    deviceInfo: `${browser} on ${os}`,
+    location: 'Unknown Location' // Could be enhanced with IP geolocation
+  };
+};
+
 class AuthServices {
   /**==============================  Register New User  ============================== */
   public static registerService = async (
@@ -60,7 +91,7 @@ class AuthServices {
   };
 
   /**==============================  Login User  ============================== */
-  public static loginService = async (payload: loginInterface) => {
+  public static loginService = async (payload: loginInterface, req?: any) => {
     const user = await AuthRepo.findByEmail(payload.email);
     if (!user || !user.password) throw HttpError.notFound("User not found");
 
@@ -93,10 +124,21 @@ class AuthServices {
 
     await AuthRepo.updateRefreshToken(user.id, refreshToken);
     let abstract = getUserData(user);
+    
+    // Extract device information from request
+    const deviceInfo = req ? getDeviceInfo(req) : {
+      deviceInfo: 'Unknown Device',
+      browser: 'Unknown Browser',
+      os: 'Unknown OS',
+      userAgent: 'Unknown User Agent',
+      ip: 'Unknown IP',
+      location: 'Unknown Location'
+    };
+    
     await createLogs({
       userId: user.id,
       action: "Login",
-      description: "User logged in",
+      description: `User logged in from ${deviceInfo.deviceInfo} (${deviceInfo.ip}) - ${deviceInfo.userAgent}`,
     });
     return { accessToken, refreshToken, ...abstract };
   };
@@ -254,6 +296,31 @@ class AuthServices {
       totalCapacity: plantsCapacity || 0,
       totalDevice: deviceCount || 0,
       totalPlant: plantList.length || 0,
+    };
+  };
+
+  /**==============================  Logout All Devices  ============================== */
+  public static logoutAllDevicesService = async (userId: string) => {
+    await AuthRepo.logoutAllDevices(userId);
+    
+    // Create activity log
+    await createLogs({
+      userId,
+      action: "Logout All Devices",
+      description: "User logged out from all devices",
+    });
+
+    return { message: "Successfully logged out from all devices" };
+  };
+
+  /**==============================  Get Active Sessions  ============================== */
+  public static getActiveSessionsService = async (userId: string) => {
+    const sessions = await AuthRepo.getActiveSessions(userId);
+    
+    return {
+      sessions,
+      totalSessions: sessions.length,
+      message: "Active sessions retrieved successfully"
     };
   };
 }
