@@ -415,15 +415,15 @@ export const getDataForGraph = async (
   MemberID: string
 ): Promise<ApiResponse> => {
   const Sign = await getSign(
-    "progziel01",
-    "Solar@1234"
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
     // MemberID,
     // process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
 
   const data = new FormData();
   data.append("GoodsID", GoodsID);
-  data.append("MemberID", "progziel01");
+  data.append("MemberID", MemberID);
   data.append("Sign", Sign);
 
   const config = {
@@ -515,3 +515,39 @@ export async function getBatteryDeviceData(
     );
   }
 }
+
+
+// Function to delete group info
+export const deletePlantThirdParty = async (
+  MemberID: string,
+  GroupAutoID: string,
+): Promise<ApiResponse> => {
+  
+  const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+  const data = new FormData();
+  data.append("MemberID", MemberID);
+  data.append("GroupAutoID", GroupAutoID);
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/deleteGroupInfo`,
+    headers: {
+      "Content-Type": "multipart/form-data",
+      ...data.getHeaders(),
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error deleting group info:", error);
+    throw error;
+  }
+};

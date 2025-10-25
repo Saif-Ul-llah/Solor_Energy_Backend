@@ -161,11 +161,47 @@ class DeviceController {
       if (error) {
         return next(HttpError.badRequest(error.details[0].message));
       }
-      const device: any = await DeviceServices.uploadFirmwareService({...value,userId});
+      const device: any = await DeviceServices.uploadFirmwareService({
+        ...value,
+        userId,
+      });
       if (device) {
         return sendResponse(res, 200, "Firmware uploaded", device, "success");
       }
     }
   );
+
+  // Get Firmware List
+  public static getFirmwareList = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const firmwareList: any = await DeviceServices.getFirmwareListService(
+        userId
+      );
+      if (firmwareList) {
+        return sendResponse(res, 200, "Firmware List", firmwareList, "success");
+      }
+      return sendResponse(res, 200, "No Firmware Found", [], "success");
+    }
+  );
+
+  // Delete device
+  public static deleteDevice = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const { sn } = req.query;
+      if (!sn)
+        return next(HttpError.missingParameters("Serial Number is required! "));
+      const device: any = await DeviceServices.deleteDeviceService(
+        userId,
+        sn as string
+      );
+      if (device) {
+        return sendResponse(res, 200, "Device deleted", device, "success");
+      }
+    }
+  );
+
+  
 }
 export default DeviceController;

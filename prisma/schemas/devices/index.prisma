@@ -26,6 +26,7 @@ model Firmware {
   deviceType  DeviceType
   url         String
   releaseDate DateTime   @default(now())
+  releaseNote String?
   userId      String
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 

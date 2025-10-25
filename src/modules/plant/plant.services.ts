@@ -14,6 +14,7 @@ import {
   ModifyPlant,
   getBatteryDeviceData,
   createLogs,
+  deletePlantThirdParty,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -81,45 +82,6 @@ class PlantService {
     });
     return plant;
   };
-
-  // public static getAllPlants = async (user: User) => {
-  //   let plantList: any = [];
-  //   let userIdsList: any = await PlantRepo.getChildrenRecursively(
-  //     user.id,
-  //     "INSTALLER"
-  //   );
-
-  //   let MemberIds: string[] = userIdsList.map((child: any) => child.email);
-  //   MemberIds.push("progziel01");
-  //   console.log(MemberIds);
-
-  //   let MonitorUsers = await getEndUserInfo();
-  //   let monitorUserEmail = MonitorUsers.map((data: any) => data.MemberID);
-  //   console.log(monitorUserEmail);
-
-  //   const commonUsers: string[] = MemberIds.filter((email) =>
-  //     monitorUserEmail.includes(email)
-  //   );
-  //   console.log("Common Users:", commonUsers);
-  //   const MemberIdAndSignature = MonitorUsers.filter((data: any) =>
-  //     commonUsers.includes(data.MemberID)
-  //   );
-  //   console.log("Signature", MemberIdAndSignature);
-
-  //   for (let i = 0; i < MemberIdAndSignature.length; i++) {
-  //     let usersPlantList: any = await getGroupList(
-  //       MemberIdAndSignature[i].MemberID,
-  //       MemberIdAndSignature[i].Sign
-  //     );
-  //     console.log("\n\n usersPlantList", usersPlantList);
-
-  //     if (usersPlantList && usersPlantList.AllGroupList.length > 0) {
-  //       plantList = [...plantList, ...usersPlantList.AllGroupList];
-  //     }
-  //   }
-
-  //   return plantList;
-  // };
 
   public static getAllPlants = async (
     userId: string,
@@ -417,6 +379,18 @@ class PlantService {
     // Get device list of plant
     const deviceList = await PlantRepo.getDevicesForFlowDiagram(plantId);
     return deviceList;
+  };
+  // Delete Plant
+  public static deletePlantService = async (
+    AutoID: string,
+    CustomerEmail: string
+  ) => {
+    let del = await deletePlantThirdParty(CustomerEmail, AutoID);
+    if (del.status) {
+      const plant = await PlantRepo.deletePlantRepo(AutoID, CustomerEmail);
+      return plant;
+    }
+    return { message: "Failed to delete plant" };
   };
 }
 

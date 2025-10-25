@@ -196,6 +196,8 @@ export const validateFirmwareUpload = Joi.object({
     "string.uri": "Firmware URL must be a valid URI",
     "any.required": "Firmware URL is required",
   }),
-  
+  releaseNote: Joi.string().optional().allow(null, "").messages({
+    "string.base": "Release note must be a string",
+  }),
 }); 
 
