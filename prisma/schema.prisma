@@ -151,7 +151,7 @@ model UserVerification {
     resetOtp          Int?
     resetOtpExpiresAt DateTime?
     isEmailVerified   VerificationStatus @default(NOT_VERIFIED)
-    refreshToken      String?
+    refreshToken      String[]
     user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
 
     @@schema("user")

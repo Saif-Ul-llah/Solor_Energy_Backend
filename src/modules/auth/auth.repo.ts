@@ -61,8 +61,8 @@ class AuthRepo {
   ) => {
     return prisma.userVerification.upsert({
       where: { userId },
-      update: { refreshToken },
-      create: { userId, refreshToken },
+      update: { refreshToken: { push: refreshToken } },
+      create: { userId, refreshToken: [refreshToken] },
     });
   };
 
@@ -116,7 +116,7 @@ class AuthRepo {
   /**==============================  Refresh Token  ============================== */
   public static findByRefreshToken = async (refreshToken: string) => {
     return prisma.user.findFirst({
-      where: { verification: { refreshToken } },
+      where: { verification: { refreshToken: { has: refreshToken } } },
     });
   };
 
@@ -436,6 +436,78 @@ class AuthRepo {
       select: { fcmToken: true },
     });
     return user?.fcmToken || "";
+  }
+
+  /*===========================  Logout All Devices   =========================== */
+  public static async logoutAllDevices(userId: string) {
+    // Clear the refresh token for the user
+    return prisma.userVerification.update({
+      where: { userId },
+      data: { refreshToken: [] },
+    });
+  }
+
+  /*===========================  Get Active Sessions   =========================== */
+  public static async getActiveSessions(userId: string) {
+    const userVerification = await prisma.userVerification.findUnique({
+      where: { userId },
+      select: { refreshToken: true },
+    });
+
+    if (!userVerification || !userVerification.refreshToken.length) {
+      return [];
+    }
+
+    // Get user's recent login activity from activity logs
+    const recentLogins = await prisma.activityLog.findMany({
+      where: {
+        userId,
+        action: "Login",
+      },
+      orderBy: { createdAt: "desc" },
+      take: userVerification.refreshToken.length,
+    });
+
+    // Create session objects with device information parsed from activity logs
+    const sessions = userVerification.refreshToken.map((_, index) => {
+      const login = recentLogins[index] || recentLogins[recentLogins.length - 1];
+      
+      // Parse device information from login description
+      let deviceInfo = "Unknown Device";
+      let location = "Unknown Location";
+      let userAgent = "Unknown Browser";
+      
+      if (login?.description) {
+        // Extract device info from description like "User logged in from Chrome on Windows (192.168.1.1) - Mozilla/5.0..."
+        const description = login.description;
+        const deviceMatch = description.match(/from (.+?) \(/);
+        if (deviceMatch) {
+          deviceInfo = deviceMatch[1];
+        }
+        
+        // Extract IP from description
+        const ipMatch = description.match(/\(([^)]+)\)/);
+        if (ipMatch) {
+          location = ipMatch[1]; // Using IP as location for now
+        }
+        
+        // Extract user agent from description (after the dash)
+        const userAgentMatch = description.match(/ - (.+)$/);
+        if (userAgentMatch) {
+          userAgent = userAgentMatch[1];
+        }
+      }
+      
+      return {
+        sessionId: `session_${index + 1}`,
+        deviceInfo,
+        location,
+        lastActive: login?.createdAt || new Date(),
+        userAgent,
+      };
+    });
+
+    return sessions;
   }
 }
 

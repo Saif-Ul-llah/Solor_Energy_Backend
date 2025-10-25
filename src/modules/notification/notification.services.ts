@@ -46,20 +46,20 @@ class NotificationService {
 // logger("Alerts:", alerts);
 
 let totalCriticalNum = alerts.flatMap((a: any) => a.infoerror)
-  .filter((e: any) => e.status == "1").length;
+  .filter((e: any) => e?.status == "1").length;
 
 let totalResolvedNum = alerts.flatMap(( a: any)=> a.infoerror)
-  .filter(( e: any) => e.status != "1").length;
+  .filter(( e: any) => e?.status != "1").length;
 
   let total_error_num = alerts.reduce(
-    (sum: number, alert: any) => sum + alert.total_error_num,
+    (sum: number, alert: any) => sum + alert?.total_error_num,
     0
   );
 
     if (search && alerts.length > 0) {
       // filter alerts based on search term in plantName or infoerror messages
       const data = alerts.filter((alert: any) =>
-        alert.infoerror.some(
+        alert?.infoerror.some(
           (a: any) =>
             a.plantName.toLowerCase().includes(search.toLowerCase()) ||
             a.ModelName.toLowerCase().includes(search.toLowerCase())
@@ -74,7 +74,7 @@ let totalResolvedNum = alerts.flatMap(( a: any)=> a.infoerror)
     }
     // Calculate sum of all infoerror lengths (total number of errors)
     const infoerror = alerts
-      .flatMap((alert: any) => alert.infoerror)
+      .flatMap((alert: any) => alert?.infoerror)
       .filter(Boolean);
 
     return {
