@@ -551,3 +551,270 @@ export const deletePlantThirdParty = async (
     throw error;
   }
 };
+
+/** ==================== MODBUS REGISTER READING ==================== */
+
+/** Helper functions for value decoding */
+const mul = (k: number) => (v: number | string | null) =>
+  v == null ? null : Math.round(Number(v) * k);
+
+const div = (k: number) => (v: number | string | null) =>
+  v == null ? null : Number(v) / k;
+
+const fHz = div(100); // 0.01 Hz → Hz
+const fV = div(10); // 0.1 V → V
+
+/** Modbus Register Map Interface */
+interface ModbusRegisterMap {
+  reg: string;
+  section: string;
+  field: string;
+  decode?: (v: number | string | null) => number | string | null;
+  unit?: string;
+  rw?: "R" | "RW";
+}
+
+/** 
+ * MODBUS REGISTER MAP 
+ * Maps register addresses to their corresponding fields with decoding functions
+ */
+export const MODBUS_REGISTER_MAP: ModbusRegisterMap[] = [
+  // Runtime Data (usually always available when inverter is online)
+  { reg: "0001", section: "Runtime Data", field: "PV1 Voltage", decode: fV, unit: "V", rw: "R" },
+  { reg: "0002", section: "Runtime Data", field: "PV1 Current", decode: div(10), unit: "A", rw: "R" },
+  { reg: "0003", section: "Runtime Data", field: "PV1 Power", unit: "W", rw: "R" },
+  { reg: "0005", section: "Runtime Data", field: "PV2 Voltage", decode: fV, unit: "V", rw: "R" },
+  { reg: "0006", section: "Runtime Data", field: "PV2 Current", decode: div(10), unit: "A", rw: "R" },
+  { reg: "0007", section: "Runtime Data", field: "PV2 Power", unit: "W", rw: "R" },
+  { reg: "000F", section: "Runtime Data", field: "Grid Voltage", decode: fV, unit: "V", rw: "R" },
+  { reg: "0010", section: "Runtime Data", field: "Grid Current", decode: div(10), unit: "A", rw: "R" },
+  { reg: "0011", section: "Runtime Data", field: "Grid Frequency", decode: fHz, unit: "Hz", rw: "R" },
+  { reg: "0013", section: "Runtime Data", field: "Grid Power", unit: "W", rw: "R" },
+  { reg: "001B", section: "Runtime Data", field: "Battery Voltage", decode: fV, unit: "V", rw: "R" },
+  { reg: "001C", section: "Runtime Data", field: "Battery Current", decode: div(10), unit: "A", rw: "R" },
+  { reg: "001D", section: "Runtime Data", field: "Battery Power", unit: "W", rw: "R" },
+  { reg: "001E", section: "Runtime Data", field: "Battery SOC", unit: "%", rw: "R" },
+  { reg: "0025", section: "Runtime Data", field: "Load Power", unit: "W", rw: "R" },
+  { reg: "003D", section: "Runtime Data", field: "Inverter Temperature", decode: div(10), unit: "°C", rw: "R" },
+  { reg: "0054", section: "Runtime Data", field: "Total Energy (Today)", decode: div(100), unit: "kWh", rw: "R" },
+  { reg: "0056", section: "Runtime Data", field: "Total Energy (Lifetime)", decode: div(10), unit: "kWh", rw: "R" },
+  
+  // Battery Settings
+  { reg: "2110", section: "Battery Setting", field: "Battery type", unit: "enum", rw: "RW" },
+  { reg: "21B6", section: "Battery Setting", field: "Battery capacity", unit: "Ah", rw: "RW" },
+  { reg: "21B4", section: "Battery Setting", field: "Batt charge efficiency", unit: "%", rw: "RW" },
+  { reg: "21BD", section: "Battery Setting", field: "Tempco", unit: "mV/°C", rw: "RW" },
+
+  // Network Settings
+  { reg: "3060", section: "Network Setting", field: "SSID", unit: "string", rw: "RW" },
+  { reg: "3070", section: "Network Setting", field: "Wi-Fi password", unit: "string", rw: "RW" },
+
+  // Grid Settings / Protection
+  { reg: "5101", section: "Grid Settings", field: "Standard Code", unit: "enum", rw: "RW" },
+  { reg: "5000", section: "Grid Settings", field: "First Connect Delay Time(s)", unit: "s", rw: "RW" },
+  { reg: "5001", section: "Grid Settings", field: "Reconnect Delay Time (s)", unit: "s", rw: "RW" },
+  { reg: "502E", section: "Grid Settings", field: "First Connect Power Gradient(%/min)", unit: "s (ramp)", rw: "RW" },
+  { reg: "5019", section: "Grid Settings", field: "Reconnect Power Gradient(%/min)", unit: "%/min", rw: "RW" },
+
+  // Level 1 Protection
+  { reg: "5002", section: "Grid Settings", field: "Frequency High Loss Level_1(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "5003", section: "Grid Settings", field: "Frequency Low Loss Level_1(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "5004", section: "Grid Settings", field: "Voltage High Loss Level_1(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5005", section: "Grid Settings", field: "Voltage Low Loss Level_1(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5006", section: "Grid Settings", field: "Frequency High Loss Time Level_1(ms)", unit: "ms", rw: "RW" },
+  { reg: "5007", section: "Grid Settings", field: "Frequency Low Loss Time Level_1(ms)", unit: "ms", rw: "RW" },
+  { reg: "5008", section: "Grid Settings", field: "Voltage High Loss Time Level_1(ms)", unit: "ms", rw: "RW" },
+  { reg: "5009", section: "Grid Settings", field: "Voltage Low Loss Time Level_1(ms)", unit: "ms", rw: "RW" },
+
+  // Level 2 Protection
+  { reg: "500A", section: "Grid Settings", field: "Frequency High Loss Level_2(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "500B", section: "Grid Settings", field: "Frequency Low Loss Level_2(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "500C", section: "Grid Settings", field: "Voltage High Loss Level_2(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "500D", section: "Grid Settings", field: "Voltage Low Loss Level_2(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "500E", section: "Grid Settings", field: "Frequency High Loss Time Level_2(ms)", unit: "ms", rw: "RW" },
+  { reg: "500F", section: "Grid Settings", field: "Frequency Low Loss Time Level_2(ms)", unit: "ms", rw: "RW" },
+  { reg: "5010", section: "Grid Settings", field: "Voltage High Loss Time Level_2(ms)", unit: "ms", rw: "RW" },
+  { reg: "5011", section: "Grid Settings", field: "Voltage Low Loss Time Level_2(ms)", unit: "ms", rw: "RW" },
+
+  // Grid Connection Limits
+  { reg: "507B", section: "Grid Settings", field: "Grid First Connection Voltage Low Limit(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "507A", section: "Grid Settings", field: "Grid First Connection Voltage High Limit(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5013", section: "Grid Settings", field: "Grid First Connection Frequency Low Limit(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "5012", section: "Grid Settings", field: "Grid First Connection Frequency High Limit(Hz)", decode: fHz, unit: "Hz", rw: "RW" },
+  { reg: "5028", section: "Grid Settings", field: "Grid Reconnection Voltage Low Limit(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5027", section: "Grid Settings", field: "Grid Reconnection Voltage High Limit(V)", decode: fV, unit: "V", rw: "RW" },
+
+  // Derating Toggles
+  { reg: "5080", section: "Grid Settings", field: "Under Frequency Derating (toggle)", unit: "bool", rw: "RW" },
+  { reg: "501E", section: "Grid Settings", field: "Over Voltage Derating (toggle)", unit: "V-derate point", rw: "RW", decode: fV },
+
+  // Feature Settings
+  { reg: "5064", section: "Feature Setting", field: "HVRT Triggering Threshold(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5063", section: "Feature Setting", field: "LVRT Triggering Threshold(V)", decode: fV, unit: "V", rw: "RW" },
+  { reg: "5104", section: "Feature Setting", field: "Derated Power(%)", unit: "%", rw: "RW" },
+  { reg: "510E", section: "Feature Setting", field: "Island Detection (toggle)", unit: "bool", rw: "RW" },
+  { reg: "5115", section: "Feature Setting", field: "Terminal Resistor (toggle)", unit: "bool", rw: "RW" },
+
+  // Advanced Settings
+  { reg: "3005", section: "Advance Setting", field: "Power control", unit: "W derate set", rw: "RW" },
+  { reg: "30B5", section: "Advance Setting", field: "Meter location", unit: "enum", rw: "RW" },
+  { reg: "30B9", section: "Advance Setting", field: "Maximum feed in grid power(W)", unit: "W (U32)", rw: "RW" },
+  { reg: "5033", section: "Advance Setting", field: "Reactive power control setting time (s)", unit: "s", rw: "RW" },
+  { reg: "5030", section: "Advance Setting", field: "Reactive power control mode", unit: "enum", rw: "RW" },
+  { reg: "5031", section: "Advance Setting", field: "cosφ", unit: "×1000", rw: "RW", decode: div(1000) },
+  { reg: "2100", section: "Advance Setting", field: "Hybrid work mode", unit: "enum", rw: "RW" },
+  { reg: "1A44", section: "Advance Setting", field: "Grid Voltage type (Nominal Voltage)", unit: "V", rw: "R", decode: fV },
+];
+
+/** Get unique list of all register addresses */
+const getRegisterList = (): string[] => {
+  return [...new Set(MODBUS_REGISTER_MAP.map((m) => m.reg))];
+};
+
+/**
+ * Read Modbus registers from inverter
+ * @param GoodsID - Serial number of the inverter
+ * @param MemberID - Member ID for authentication
+ * @param registerList - Optional custom list of registers to read (default: all from MAP)
+ * @returns Grouped register data with decoded values
+ */
+export const readInverterModbusRegisters = async (
+  GoodsID: string,
+  MemberID: string,
+  registerList?: string[]
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  const regsToRead = registerList || getRegisterList();
+
+  const data = new FormData();
+  data.append("GoodsID", GoodsID);
+  data.append("MemberID", MemberID);
+  data.append("ModbusArr", JSON.stringify(regsToRead));
+  data.append("Sign", Sign);
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getInverterSeting`,
+    headers: {
+      ...data.getHeaders(),
+    },
+    data,
+    timeout: 30000,
+  };
+
+  try {
+    const response: AxiosResponse<any[]> = await axios.request(config);
+    const rows = response.data || [];
+
+    // Debug logging - remove after testing
+    console.log("📡 Modbus API Response:", JSON.stringify(response.data, null, 2));
+    console.log("📊 Rows received:", rows.length);
+
+    // Build raw register map from response
+    const rawMap: Record<string, number | string | null> = {};
+    
+    for (const r of rows) {
+      // Check if response format is { "Modbus": "5002", "Value": "5150" }
+      if (r.Modbus || r.modbus) {
+        const key = String(r.Modbus ?? r.modbus ?? "")
+          .replace(/^0x/i, "")
+          .toUpperCase();
+        rawMap[key] = r.Value ?? r.value ?? null;
+      } 
+      // Check if response format is { "5002": "5150", "5004": "2640" }
+      else {
+        for (const [regKey, regValue] of Object.entries(r)) {
+          const normalizedKey = regKey.replace(/^0x/i, "").toUpperCase();
+          rawMap[normalizedKey] = regValue as any;
+        }
+      }
+    }
+
+    console.log("🗺️ Raw register map:", rawMap);
+
+    // Build grouped and normalized payload
+    const grouped: Record<string, any> = {};
+    for (const m of MODBUS_REGISTER_MAP) {
+      const rawVal = rawMap[m.reg.toUpperCase()] ?? null;
+      const pretty = m.decode
+        ? m.decode(Number(rawVal))
+        : rawVal === null
+        ? null
+        : Number(rawVal);
+
+      if (!grouped[m.section]) {
+        grouped[m.section] = {};
+      }
+
+      grouped[m.section][m.field] = {
+        value: pretty,
+        unit: m.unit ?? "",
+        reg: m.reg,
+        rw: m.rw ?? "RW",
+        raw: rawVal,
+      };
+    }
+
+    return {
+      serial: GoodsID,
+      registersRequested: regsToRead,
+      data: grouped,
+      raw: rawMap,
+    };
+  } catch (error: any) {
+    console.error("Error reading inverter Modbus registers:", error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * Write Modbus registers to inverter
+ * @param GoodsID - Serial number of the inverter
+ * @param MemberID - Member ID for authentication
+ * @param registerValues - Object with register addresses as keys and values to write
+ * @returns API response
+ */
+export const writeInverterModbusRegisters = async (
+  GoodsID: string,
+  MemberID: string,
+  registerValues: Record<string, string | number>
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  const data = new FormData();
+  data.append("GoodsID", GoodsID);
+  data.append("MemberID", MemberID);
+  data.append("Sign", Sign);
+
+  // Add each register and its value
+  for (const [reg, value] of Object.entries(registerValues)) {
+    data.append(reg, String(value));
+  }
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/setInverterSeting`,
+    headers: {
+      ...data.getHeaders(),
+    },
+    data,
+    timeout: 30000,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error writing inverter Modbus registers:", error?.response?.data || error.message);
+    throw error;
+  }
+};

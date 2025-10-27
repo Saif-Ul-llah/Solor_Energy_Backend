@@ -201,7 +201,107 @@ class DeviceController {
       }
     }
   );
-
   
+  // Read Modbus Registers from Inverter
+  public static readModbusRegisters = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn ,memberId} = req.params;
+      const { registers } = req.query; // Optional: comma-separated list of specific registers
+
+      if (!sn) {
+        return next(HttpError.missingParameters("Serial Number is required!"));
+      }
+
+      // Parse custom register list if provided
+      const registerList = registers 
+        ? (registers as string).split(",").map(r => r.trim())
+        : undefined;
+
+      const data = await DeviceServices.readModbusRegistersService(
+        sn,
+        memberId as string,
+        registerList
+      );
+
+      if (data) {
+        return sendResponse(
+          res,
+          200,
+          "Modbus registers read successfully",
+          data,
+          "success"
+        );
+      }
+
+      return sendResponse(
+        res,
+        200,
+        "Failed to read Modbus registers",
+        {},
+        "failed"
+      );
+    }
+  );
+
+  // Write Modbus Registers to Inverter
+  public static writeModbusRegisters = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn ,memberId} = req.params;
+      const { registers } = req.body; // Object with register: value pairs
+
+      if (!sn) {
+        return next(HttpError.missingParameters("Serial Number is required!"));
+      }
+
+      if (!registers || typeof registers !== "object") {
+        return next(
+          HttpError.badRequest(
+            "Registers object is required with format { register: value }"
+          )
+        );
+      }
+
+      const data = await DeviceServices.writeModbusRegistersService(
+        sn,
+        memberId as string,
+        registers
+      );
+
+      if (data) {
+        return sendResponse(
+          res,
+          200,
+          "Modbus registers written successfully",
+          data,
+          "success"
+        );
+      }
+
+      return sendResponse(
+        res,
+        200,
+        "Failed to write Modbus registers",
+        {},
+        "failed"
+      );
+    }
+  );
+
+  // Get Available Modbus Register Map
+  public static getModbusRegisterMap = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const registerMap = await DeviceServices.getModbusRegisterMapService();
+      
+      return sendResponse(
+        res,
+        200,
+        "Modbus register map retrieved successfully",
+        registerMap,
+        "success"
+      );
+    }
+  );
 }
 export default DeviceController;
