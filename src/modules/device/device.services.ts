@@ -256,6 +256,82 @@ class DeviceService {
     const device = await DeviceRepo.deleteDeviceRepo(userId, sn);
     return device;
   };
+
+  // Read Modbus registers from inverter
+  public static readModbusRegistersService = async (
+    sn: string,
+    memberId: string,
+    registerList?: string[]
+  ) => {
+    try {
+      const { readInverterModbusRegisters } = await import("../../helpers/thirdParty");
+      const data = await readInverterModbusRegisters(sn, memberId, registerList);
+      return data;
+    } catch (error: any) {
+      logger("Error reading Modbus registers:", error);
+      throw new HttpError(
+        error.message || "Failed to read Modbus registers",
+        "internal-server-error",
+        500
+      );
+    }
+  };
+
+  // Write Modbus registers to inverter
+  public static writeModbusRegistersService = async (
+    sn: string,
+    memberId: string,
+    registerValues: Record<string, string | number>
+  ) => {
+    try {
+      const { writeInverterModbusRegisters } = await import("../../helpers/thirdParty");
+      const data = await writeInverterModbusRegisters(sn, memberId, registerValues);
+      return data;
+    } catch (error: any) {
+      logger("Error writing Modbus registers:", error);
+      throw new HttpError(
+        error.message || "Failed to write Modbus registers",
+        "internal-server-error",
+        500
+      );
+    }
+  };
+
+  // Get Modbus register map
+  public static getModbusRegisterMapService = async () => {
+    try {
+      const { MODBUS_REGISTER_MAP } = await import("../../helpers/thirdParty");
+      
+      // Group registers by section
+      const groupedMap: Record<string, any[]> = {};
+      
+      MODBUS_REGISTER_MAP.forEach((item) => {
+        if (!groupedMap[item.section]) {
+          groupedMap[item.section] = [];
+        }
+        groupedMap[item.section].push({
+          register: item.reg,
+          field: item.field,
+          unit: item.unit,
+          readWrite: item.rw,
+          description: `${item.field} (${item.unit})`,
+        });
+      });
+
+      return {
+        totalRegisters: MODBUS_REGISTER_MAP.length,
+        sections: groupedMap,
+        allRegisters: MODBUS_REGISTER_MAP.map((m) => m.reg),
+      };
+    } catch (error: any) {
+      logger("Error getting Modbus register map:", error);
+      throw new HttpError(
+        "Failed to get Modbus register map",
+        "internal-server-error",
+        500
+      );
+    }
+  };
 }
 
 export default DeviceService;
