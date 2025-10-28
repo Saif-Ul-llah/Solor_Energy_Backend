@@ -1,4 +1,4 @@
-import { User } from "@prisma/client";
+import { LogType, User } from "@prisma/client";
 import {
   getEndUserInfo,
   getGroupList,
@@ -78,6 +78,13 @@ class PlantService {
     await createLogs({
       userId: user.id,
       action: "Add New Plant",
+      logType: LogType.PLANT,
+      logData: {
+        plantName: payload.name,
+        customerId: user.id,
+        customerEmail: user.email,
+        plantId: plant.id,
+      },
       description: `Plant: ${payload.name} created by ${user.email}`,
     });
     return plant;
@@ -341,7 +348,7 @@ class PlantService {
   };
 
   // Modify Plant
-  public static updatePlantService = async (data: any) => {
+  public static updatePlantService = async (data: any, user?: User) => {
     //Get plant and Customer of that plant
     const getPlantByAutoId: any = await PlantRepo.getPlantByAutoIdRepo(
       data.AutoID
@@ -369,6 +376,23 @@ class PlantService {
     if (result.status) {
       // Modify on DB
       const plant = await PlantRepo.updatePlantRepo(data);
+      
+      // Log plant update
+      if (user) {
+        await createLogs({
+          userId: user.id,
+          action: "Update Plant",
+          logType: LogType.PLANT,
+          description: `Plant ${plant.name} (ID: ${plant.id}) was updated`,
+          logData: {
+            plantId: plant.id,
+            plantName: plant.name,
+            AutoID: data.AutoID,
+            updatedBy: user.email,
+          },
+        });
+      }
+      
       return plant;
     }
     return { message: "Failed to update plant" };
@@ -383,11 +407,33 @@ class PlantService {
   // Delete Plant
   public static deletePlantService = async (
     AutoID: string,
-    CustomerEmail: string
+    CustomerEmail: string,
+    user?: User
   ) => {
+    // Get plant info before deletion for logging
+    const plantInfo: any = await PlantRepo.getPlantByAutoIdRepo(AutoID);
+    
     let del = await deletePlantThirdParty(CustomerEmail, AutoID);
     if (del.status) {
       const plant = await PlantRepo.deletePlantRepo(AutoID, CustomerEmail);
+      
+      // Log plant deletion
+      if (user && plantInfo) {
+        await createLogs({
+          userId: user.id,
+          action: "Delete Plant",
+          logType: LogType.PLANT,
+          description: `Plant ${plantInfo.name} (ID: ${plantInfo.id}) was deleted`,
+          logData: {
+            plantId: plantInfo.id,
+            plantName: plantInfo.name,
+            AutoID,
+            CustomerEmail,
+            deletedBy: user.email,
+          },
+        });
+      }
+      
       return plant;
     }
     return { message: "Failed to delete plant" };

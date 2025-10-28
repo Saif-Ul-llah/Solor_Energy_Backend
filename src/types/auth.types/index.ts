@@ -1,3 +1,5 @@
+import { LogType } from "@prisma/client";
+
 export enum Roles {
   ADMIN = "ADMIN",
   SUB_ADMIN = "SUB_ADMIN",
@@ -79,7 +81,9 @@ export function getUserData(user: any) {
 }
 
 export interface LogsInterface {
-  userId: string;
+  userId?: string;
   action: string;
   description: string;
+  logType?: LogType;
+  logData?: any;
 }

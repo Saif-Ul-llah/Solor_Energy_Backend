@@ -121,13 +121,14 @@ class PlantController {
   // Update Plant Details
   public static updatePlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
+      let user = req.user;
       const { error, value } = updatePlantValidation.validate({
         ...req.body,
       });
       if (error) {
         return next(HttpError.validationError(error.details[0].message));
       }
-      const plant = await PlantServices.updatePlantService(value);
+      const plant = await PlantServices.updatePlantService(value, user as User);
       if (plant) {
         return sendResponse(
           res,
@@ -162,9 +163,10 @@ class PlantController {
   // Delete Plant
   public static deletePlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
+      let user = req.user;
       const { AutoId ,CustomerEmail} = req.query;
       if (!AutoId) return next(HttpError.badRequest("Auto ID is required"));
-      const plant = await PlantServices.deletePlantService(AutoId as string, CustomerEmail as string);
+      const plant = await PlantServices.deletePlantService(AutoId as string, CustomerEmail as string, user as User);
       if (plant) {
         return sendResponse(
           res,

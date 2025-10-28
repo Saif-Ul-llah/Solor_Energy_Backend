@@ -1,4 +1,4 @@
-import { DeviceType, User } from "@prisma/client";
+import { DeviceType, LogType, User } from "@prisma/client";
 import {
   getSign,
   HttpError,
@@ -57,6 +57,13 @@ class DeviceService {
       await createLogs({
         userId: user.id,
         action: "Add New Device",
+        logType: LogType.DEVICE,
+        logData: {
+          deviceType: deviceType,
+          sn: sn,
+          plantId: plantId,
+          customerId: customerId,
+        },
         description:
           "Device SN: " +
           sn +
@@ -239,6 +246,21 @@ class DeviceService {
   // Upload Firmware
   public static uploadFirmwareService = async (data: any) => {
     const upload = await DeviceRepo.uploadFirmwareRepo(data);
+    
+    // Log firmware upload
+    await createLogs({
+      userId: data.userId,
+      action: "Upload Firmware",
+      logType: LogType.FIRMWARE,
+      description: `Firmware ${data.name} (v${data.version}) uploaded for ${data.deviceType}`,
+      logData: {
+        firmwareName: data.name,
+        firmwareVersion: data.version,
+        deviceType: data.deviceType,
+        url: data.url,
+      },
+    });
+    
     return upload;
   };
 
@@ -254,6 +276,19 @@ class DeviceService {
     if (!checkDevice) throw new HttpError("Device not found", "not found", 404);
     
     const device = await DeviceRepo.deleteDeviceRepo(userId, sn);
+    
+    // Log device deletion
+    await createLogs({
+      userId: userId,
+      action: "Delete Device",
+      logType: LogType.DEVICE,
+      description: `Device ${sn} was deleted`,
+      logData: {
+        deviceSn: sn,
+        deviceType: checkDevice.deviceType,
+      },
+    });
+    
     return device;
   };
 
@@ -281,11 +316,24 @@ class DeviceService {
   public static writeModbusRegistersService = async (
     sn: string,
     memberId: string,
-    registerValues: Record<string, string | number>
+    registerValues: Record<string, string | number>,
+    user: User
   ) => {
     try {
       const { writeInverterModbusRegisters } = await import("../../helpers/thirdParty");
       const data = await writeInverterModbusRegisters(sn, memberId, registerValues);
+      await createLogs({
+        userId: user.id,
+        logType: LogType.MODBUS_WRITE_REGISTERS,
+        logData: {
+          sn: sn,
+          memberId: memberId,
+          registerValues: registerValues,
+          user: user,
+        },
+        action: "MODBUS_WRITE_REGISTERS",
+        description: `Modbus registers written to ${sn} by ${user.email} with values ${JSON.stringify(registerValues)}`,
+      });
       return data;
     } catch (error: any) {
       logger("Error writing Modbus registers:", error);
@@ -359,11 +407,11 @@ class DeviceService {
       const allFailed = Object.values(results).every((r) => r === false);
 
       // Log the result
-      await createLogs({
-        userId: "6abbc6f1-40c3-4f6e-9903-bbc29c870788",
-        action: "MODBUS_WRITE_RESULT",
-        description: `Modbus write ${allSuccess ? "succeeded" : allFailed ? "failed" : "partially succeeded"} for ${data.serialNumber}. Registers: ${JSON.stringify(results)}`,
-      });
+      // await createLogs({
+      //   userId: "6abbc6f1-40c3-4f6e-9903-bbc29c870788",
+      //   action: "MODBUS_WRITE_RESULT",
+      //   description: `Modbus write ${allSuccess ? "succeeded" : allFailed ? "failed" : "partially succeeded"} for ${data.serialNumber}. Registers: ${JSON.stringify(results)}`,
+      // });
 
       logger(allSuccess ? "✅" : "⚠️", "Modbus Write Results:", {
         serialNumber: data.serialNumber,
