@@ -321,7 +321,7 @@ class DeviceService {
       return {
         totalRegisters: MODBUS_REGISTER_MAP.length,
         sections: groupedMap,
-        allRegisters: MODBUS_REGISTER_MAP.map((m) => m.reg),
+        // allRegisters: MODBUS_REGISTER_MAP.map((m) => m.reg),
       };
     } catch (error: any) {
       logger("Error getting Modbus register map:", error);
@@ -330,6 +330,56 @@ class DeviceService {
         "internal-server-error",
         500
       );
+    }
+  };
+
+  // Process Modbus write callback from vendor
+  public static processModbusWriteCallbackService = async (data: {
+    serialNumber: string;
+    operation: string;
+    modbusData: any;
+    timestamp: string;
+  }) => {
+    try {
+      logger("📥 Processing Modbus Write Callback:", data);
+
+      // Parse the modbus data if it's a string
+      const modbusInfo = typeof data.modbusData === "string" 
+        ? JSON.parse(data.modbusData)
+        : data.modbusData;
+
+      // Check if operation was successful
+      // modbusInfo format: {"5000":"1","5001":"1"} where 1=success, 2=fail
+      const results: Record<string, boolean> = {};
+      for (const [reg, status] of Object.entries(modbusInfo)) {
+        results[reg] = status === "1" || status === 1;
+      }
+
+      const allSuccess = Object.values(results).every((r) => r === true);
+      const allFailed = Object.values(results).every((r) => r === false);
+
+      // Log the result
+      await createLogs({
+        userId: "6abbc6f1-40c3-4f6e-9903-bbc29c870788",
+        action: "MODBUS_WRITE_RESULT",
+        description: `Modbus write ${allSuccess ? "succeeded" : allFailed ? "failed" : "partially succeeded"} for ${data.serialNumber}. Registers: ${JSON.stringify(results)}`,
+      });
+
+      logger(allSuccess ? "✅" : "⚠️", "Modbus Write Results:", {
+        serialNumber: data.serialNumber,
+        timestamp: data.timestamp,
+        results,
+        allSuccess,
+      });
+
+      // TODO: Emit socket event to notify frontend
+      // io.emit('modbus:write:result', { serialNumber: data.serialNumber, results, timestamp: data.timestamp });
+
+      return { success: allSuccess, results };
+    } catch (error: any) {
+      logger("❌ Error processing Modbus write callback:", error);
+      // Don't throw - we still need to return "success" to vendor
+      return { success: false, error: error.message };
     }
   };
 }
