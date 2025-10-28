@@ -19,4 +19,8 @@ router.get("/modbus/register-map", checkToken, DeviceController.getModbusRegiste
 router.get("/modbus/:sn/:memberId/read", checkToken, DeviceController.readModbusRegisters);
 router.post("/modbus/:sn/:memberId/write", checkToken, DeviceController.writeModbusRegisters);
 
+// Modbus Write Callback (NO auth - called by vendor)
+router.post("/modbus/callback/write-result", DeviceController.modbusWriteCallback);
+
 export default router;
+    

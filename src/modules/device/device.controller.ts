@@ -201,12 +201,12 @@ class DeviceController {
       }
     }
   );
-  
+
   // Read Modbus Registers from Inverter
   public static readModbusRegisters = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
-      const { sn ,memberId} = req.params;
+      const { sn, memberId } = req.params;
       const { registers } = req.query; // Optional: comma-separated list of specific registers
 
       if (!sn) {
@@ -214,8 +214,8 @@ class DeviceController {
       }
 
       // Parse custom register list if provided
-      const registerList = registers 
-        ? (registers as string).split(",").map(r => r.trim())
+      const registerList = registers
+        ? (registers as string).split(",").map((r) => r.trim())
         : undefined;
 
       const data = await DeviceServices.readModbusRegistersService(
@@ -248,7 +248,7 @@ class DeviceController {
   public static writeModbusRegisters = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const user = req.user;
-      const { sn ,memberId} = req.params;
+      const { sn, memberId } = req.params;
       const { registers } = req.body; // Object with register: value pairs
 
       if (!sn) {
@@ -301,6 +301,32 @@ class DeviceController {
         registerMap,
         "success"
       );
+    }
+  );
+
+  // Callback endpoint for write operation results
+  public static modbusWriteCallback = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const { GoodsID, operate, modbusInfo, SystemTime } = req.body;
+
+      logger("📨 Modbus Write Callback Received:", {
+        GoodsID,
+        operate,
+        modbusInfo,
+        SystemTime,
+        fullBody: req.body,
+      });
+
+      // Process the callback result
+      await DeviceServices.processModbusWriteCallbackService({
+        serialNumber: GoodsID,
+        operation: operate,
+        modbusData: modbusInfo,
+        timestamp: SystemTime,
+      });
+
+      // IMPORTANT: Vendor requires lowercase "success" string response
+      res.status(200).send("success");
     }
   );
 }
