@@ -413,11 +413,11 @@ class AuthRepo {
       action: log.action,
       description: log.description,
       createdAt: log.createdAt,
-      userId: log.user.id,
-      email: log.user.email,
-      fullName: log.user.fullName,
-      role: log.user.role,
-      imageUrl: log.user.imageUrl,
+      userId: log.user?.id,
+      email: log.user?.email,
+      fullName: log.user?.fullName,
+      role: log.user?.role,
+      imageUrl: log.user?.imageUrl,
     }));
 
     return {

@@ -176,12 +176,24 @@ enum VerificationStatus {
 
 model ActivityLog {
     id          String   @id @default(uuid())
-    userId      String
-    user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    userId      String?
+    user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
     action      String
     description String?
     createdAt   DateTime @default(now())
+    logType     LogType @default(USER)
+    logData     Json?
 
+    @@schema("user")
+}
+
+enum LogType {
+    MODBUS_WRITE_REGISTERS
+    USER
+    DEVICE
+    PLANT
+    FIRMWARE
+    NOTIFICATION
     @@schema("user")
 }
 

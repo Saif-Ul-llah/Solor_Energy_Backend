@@ -266,7 +266,8 @@ class DeviceController {
       const data = await DeviceServices.writeModbusRegistersService(
         sn,
         memberId as string,
-        registers
+        registers,
+        user
       );
 
       if (data) {

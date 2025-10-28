@@ -19,7 +19,7 @@ import {
   generateRefreshToken,
   getEmailVerificationHtml,
 } from "../../utils/helpers";
-import { Role, User } from "@prisma/client";
+import { LogType, Role, User } from "@prisma/client";
 import PlantRepo from "../plant/plant.repo";
 
 dotenv.config();
@@ -87,6 +87,23 @@ class AuthServices {
 
     payload.password = await encryptPass(payload.password);
     const user = await AuthRepo.registerRepo(payload);
+    
+    // Create activity log for user registration
+    if (reqUser) {
+      await createLogs({
+        userId: reqUser.id,
+        action: "Create User",
+        logType: LogType.USER,
+        description: `Created new user ${payload.fullName} (${payload.email}) with role ${payload.role}`,
+        logData: {
+          newUserId: user.id,
+          newUserEmail: user.email,
+          newUserRole: user.role,
+          createdBy: reqUser.email,
+        },
+      });
+    }
+    
     return user;
   };
 
@@ -138,7 +155,14 @@ class AuthServices {
     await createLogs({
       userId: user.id,
       action: "Login",
+      logType: LogType.USER,
       description: `User logged in from ${deviceInfo.deviceInfo} (${deviceInfo.ip}) - ${deviceInfo.userAgent}`,
+      logData: {
+        deviceInfo: deviceInfo.deviceInfo,
+        ip: deviceInfo.ip,
+        userAgent: deviceInfo.userAgent,
+        location: deviceInfo.location,
+      },
     });
     return { accessToken, refreshToken, ...abstract };
   };
@@ -162,8 +186,13 @@ class AuthServices {
     await sendMail({ email, subject: "Password Reset OTP", html: template });
     await createLogs({
       userId: user.id,
+      logType: LogType.USER,
       action: "Forgot Password",
       description: "Requested password reset OTP",
+      logData: {
+        email: email,
+        expiresAt: expiresAt,
+      },
     });
     return [];
   };
@@ -205,6 +234,14 @@ class AuthServices {
     const hashed = await encryptPass(newPassword);
     await AuthRepo.resetPassword(user.id, hashed);
 
+    // Log password reset
+    await createLogs({
+      userId: user.id,
+      action: "Reset Password",
+      logType: LogType.USER,
+      description: `Password was reset successfully for ${user.email}`,
+    });
+
     return { message: "Password reset successful" };
   };
 
@@ -222,6 +259,14 @@ class AuthServices {
 
     const hashed = await encryptPass(newPassword);
     await AuthRepo.changePassword(user.id, hashed);
+
+    // Log password change
+    await createLogs({
+      userId: user.id,
+      action: "Change Password",
+      logType: LogType.USER,
+      description: `Password was changed successfully`,
+    });
 
     return { message: "Password changed successfully" };
   };
@@ -252,7 +297,22 @@ class AuthServices {
   public static updateUserService = async (payload: any) => {
     const user = await AuthRepo.findById(payload.userId);
     if (!user) throw HttpError.notFound("User not found");
-    return await AuthRepo.updateUser(payload);
+    
+    const updatedUser = await AuthRepo.updateUser(payload);
+    
+    // Log user update
+    await createLogs({
+      userId: payload.userId,
+      action: "Update User",
+      logType: LogType.USER,
+      description: `User profile updated for ${user.email}`,
+      logData: {
+        updatedFields: Object.keys(payload).filter(key => key !== 'userId'),
+        userId: payload.userId,
+      },
+    });
+    
+    return updatedUser;
   };
 
   /*===========================================================================================
@@ -307,6 +367,7 @@ class AuthServices {
     await createLogs({
       userId,
       action: "Logout All Devices",
+      logType: LogType.USER,
       description: "User logged out from all devices",
     });
 

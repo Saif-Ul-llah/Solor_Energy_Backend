@@ -1,9 +1,10 @@
-import { User } from "@prisma/client";
+import { LogType, User } from "@prisma/client";
 import { HttpError, logger, dotenv, plantsAlertById } from "../../imports";
 import NotificationRepo from "./notification.repo";
 import PlantServices from "./../plant/plant.services";
 import { sendPushNotification } from "../../utils/notification";
 import AuthRepo from "../auth/auth.repo";
+import { createLogs } from "../../utils/helpers";
 dotenv.config();
 
 class NotificationService {
@@ -103,6 +104,20 @@ let totalResolvedNum = alerts.flatMap(( a: any)=> a.infoerror)
       message: body,
       userId,
     });
+    
+    // Log notification sent
+    await createLogs({
+      userId: userId,
+      action: "Send Notification",
+      logType: LogType.NOTIFICATION,
+      description: `Push notification sent: ${title}`,
+      logData: {
+        title,
+        body,
+        recipientUserId: userId,
+      },
+    });
+    
     return;
   }
 
@@ -142,6 +157,18 @@ let totalResolvedNum = alerts.flatMap(( a: any)=> a.infoerror)
         userId,
         preferences
       );
+    
+    // Log notification preference update
+    await createLogs({
+      userId: userId,
+      action: "Update Notification Preferences",
+      logType: LogType.USER,
+      description: `Notification preferences updated`,
+      logData: {
+        preferences,
+      },
+    });
+    
     return updatedPreferences;
   }
 }
