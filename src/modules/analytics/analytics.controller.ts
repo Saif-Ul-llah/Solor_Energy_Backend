@@ -64,6 +64,57 @@ class AnalyticsController {
       );
     }
   );
+
+  /*===========================  Get Device Overview   =========================== */
+  public static getDeviceOverview = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+
+      const data = await AnalyticsServices.getDeviceOverviewService({
+        userId,
+      });
+
+      return sendResponse(
+        res,
+        200,
+        "Device overview fetched successfully",
+        data,
+        "success"
+      );
+    }
+  );
+
+  /*===========================  Get Device Monthly Graph   =========================== */
+  public static getDeviceMonthlyGraph = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const { year } = req.query;
+
+      // Default to current year if not provided
+      const currentYear = new Date().getFullYear();
+      const selectedYear = year ? parseInt(year as string) : currentYear;
+
+      // Validate year
+      if (isNaN(selectedYear) || selectedYear < 2000 || selectedYear > 2100) {
+        return next(
+          HttpError.badRequest("Invalid year. Must be between 2000 and 2100")
+        );
+      }
+
+      const data = await AnalyticsServices.getDeviceMonthlyGraphService({
+        userId,
+        year: selectedYear,
+      });
+
+      return sendResponse(
+        res,
+        200,
+        "Device monthly graph fetched successfully",
+        data,
+        "success"
+      );
+    }
+  );
 }
 
 export default AnalyticsController;

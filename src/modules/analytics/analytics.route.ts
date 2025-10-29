@@ -20,5 +20,18 @@ router.get(
   AnalyticsController.getActivityByLogType
 );
 
-export default router;
+// Device Overview - Total counts for devices, inverters, and batteries
+router.get(
+  "/analytics/device-overview",
+  checkToken,
+  AnalyticsController.getDeviceOverview
+);
 
+// Device Monthly Graph - Yearly view with month-wise breakdown
+router.get(
+  "/analytics/device-monthly-graph",
+  checkToken,
+  AnalyticsController.getDeviceMonthlyGraph
+);
+
+export default router;

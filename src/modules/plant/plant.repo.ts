@@ -239,6 +239,7 @@ class PlantRepo {
     return {
       id: plantId,
       deviceType: "PLANT",
+      lastCallTime : new Date(),
       children: deviceList,
     };
   }

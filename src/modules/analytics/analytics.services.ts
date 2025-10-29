@@ -108,20 +108,43 @@ class AnalyticsServices {
   public static async getActivityByLogTypeService(payload: any): Promise<any> {
     const stats = await AnalyticsRepo.getActivityByLogTypeRepo(payload);
 
-    // Calculate percentages
     const total = stats.totalLogsCount;
-    const percentages = {
-      totalUserActionsCount: total > 0 ? Math.round((stats.totalUserActionsCount / total) * 100) : 0,
-      deviceActionsCount: total > 0 ? Math.round((stats.deviceActionsCount / total) * 100) : 0,
-      firmwareCount: total > 0 ? Math.round((stats.firmwareCount / total) * 100) : 0,
+
+    // Calculate raw percentages (with decimals for accuracy)
+    const rawPercentages = {
+      userActionsCount: total > 0 ? (stats.userActionsCount / total) * 100 : 0,
+      deviceActionsCount: total > 0 ? (stats.deviceActionsCount / total) * 100 : 0,
+      firmwareCount: total > 0 ? (stats.firmwareCount / total) * 100 : 0,
+      plantActionsCount: total > 0 ? (stats.plantActionsCount / total) * 100 : 0,
+      notificationCount: total > 0 ? (stats.notificationCount / total) * 100 : 0,
+      modbusWriteCount: total > 0 ? (stats.modbusWriteCount / total) * 100 : 0,
     };
+
+    // Round percentages
+    let percentages = {
+      userActionsCount: Math.round(rawPercentages.userActionsCount),
+      deviceActionsCount: Math.round(rawPercentages.deviceActionsCount),
+      firmwareCount: Math.round(rawPercentages.firmwareCount),
+      plantActionsCount: Math.round(rawPercentages.plantActionsCount),
+      notificationCount: Math.round(rawPercentages.notificationCount),
+      modbusWriteCount: Math.round(rawPercentages.modbusWriteCount),
+    };
+
+    // Adjust percentages to ensure they sum to 100%
+    const percentageSum = Object.values(percentages).reduce((sum, val) => sum + val, 0);
+    if (percentageSum !== 100 && total > 0) {
+      // Find the largest percentage and adjust it
+      const keys = Object.keys(rawPercentages) as Array<keyof typeof rawPercentages>;
+      const largestKey = keys.reduce((a, b) => rawPercentages[a] > rawPercentages[b] ? a : b);
+      percentages[largestKey] += (100 - percentageSum);
+    }
 
     // Format for pie chart
     const chartData = [
       {
-        label: "Total User Actions",
-        value: stats.totalUserActionsCount,
-        percentage: percentages.totalUserActionsCount,
+        label: "User Actions",
+        value: stats.userActionsCount,
+        percentage: percentages.userActionsCount,
         color: "#4CAF50", // Green
       },
       {
@@ -129,6 +152,24 @@ class AnalyticsServices {
         value: stats.deviceActionsCount,
         percentage: percentages.deviceActionsCount,
         color: "#FFA726", // Orange
+      },
+      {
+        label: "Plant Actions",
+        value: stats.plantActionsCount,
+        percentage: percentages.plantActionsCount,
+        color: "#9C27B0", // Purple
+      },
+      {
+        label: "Modbus Write",
+        value: stats.modbusWriteCount,
+        percentage: percentages.modbusWriteCount,
+        color: "#00BCD4", // Cyan
+      },
+      {
+        label: "Notifications",
+        value: stats.notificationCount,
+        percentage: percentages.notificationCount,
+        color: "#FF5722", // Deep Orange
       },
       {
         label: "Firmware",
@@ -140,11 +181,82 @@ class AnalyticsServices {
 
     return {
       totalLogsCount: stats.totalLogsCount,
-      totalUserActionsCount: stats.totalUserActionsCount,
+      userActionsCount: stats.userActionsCount,
       deviceActionsCount: stats.deviceActionsCount,
       firmwareCount: stats.firmwareCount,
+      plantActionsCount: stats.plantActionsCount,
+      notificationCount: stats.notificationCount,
+      modbusWriteCount: stats.modbusWriteCount,
       percentages,
       chartData,
+    };
+  }
+
+  /*===========================  Get Device Overview   =========================== */
+  public static async getDeviceOverviewService(payload: any): Promise<any> {
+    const stats = await AnalyticsRepo.getDeviceOverviewRepo(payload);
+
+    return {
+      totalDevices: stats.totalDevices,
+      totalInverters: stats.totalInverters,
+      totalBatteries: stats.totalBatteries,
+    };
+  }
+
+  /*===========================  Get Device Monthly Graph   =========================== */
+  public static async getDeviceMonthlyGraphService(payload: any): Promise<any> {
+    const devices = await AnalyticsRepo.getDeviceMonthlyGraphRepo(payload);
+
+    // Initialize monthly data structure
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const monthlyData: any = {};
+    months.forEach((month) => {
+      monthlyData[month] = {
+        inverters: 0,
+        batteries: 0,
+        total: 0,
+      };
+    });
+
+    // Group devices by month - count NEW devices added each month
+    devices.forEach((device: any) => {
+      const month = months[new Date(device.createdAt).getMonth()];
+      if (device.deviceType === "INVERTER") {
+        monthlyData[month].inverters += 1;
+      } else if (device.deviceType === "BATTERY") {
+        monthlyData[month].batteries += 1;
+      }
+      monthlyData[month].total += 1;
+    });
+
+    // Calculate total for the year
+    let totalInverters = 0;
+    let totalBatteries = 0;
+    let totalDevices = 0;
+
+    months.forEach((month) => {
+      totalInverters += monthlyData[month].inverters;
+      totalBatteries += monthlyData[month].batteries;
+      totalDevices += monthlyData[month].total;
+    });
+
+    // Format for chart - showing monthly additions (not cumulative)
+    const chartData = months.map((month) => ({
+      month,
+      inverters: monthlyData[month].inverters,
+      batteries: monthlyData[month].batteries,
+      total: monthlyData[month].total,
+    }));
+
+    return {
+      year: payload.year,
+      chartData,
+      summary: {
+        totalInverters,
+        totalBatteries,
+        totalDevices,
+      },
     };
   }
 }
