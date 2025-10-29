@@ -71,27 +71,110 @@ class AnalyticsRepo {
     // Total logs count
     const totalLogsCount = await prisma.activityLog.count({ where });
 
-    // Total USER actions count
-    const totalUserActionsCount = await prisma.activityLog.count({
+    // Count by each log type
+    const userActionsCount = await prisma.activityLog.count({
       where: { ...where, logType: LogType.USER },
     });
 
-    // Total DEVICE actions count
     const deviceActionsCount = await prisma.activityLog.count({
       where: { ...where, logType: LogType.DEVICE },
     });
 
-    // Total FIRMWARE count
     const firmwareCount = await prisma.activityLog.count({
       where: { ...where, logType: LogType.FIRMWARE },
     });
 
+    const plantActionsCount = await prisma.activityLog.count({
+      where: { ...where, logType: LogType.PLANT },
+    });
+
+    const notificationCount = await prisma.activityLog.count({
+      where: { ...where, logType: LogType.NOTIFICATION },
+    });
+
+    const modbusWriteCount = await prisma.activityLog.count({
+      where: { ...where, logType: LogType.MODBUS_WRITE_REGISTERS },
+    });
+
     return {
       totalLogsCount,
-      totalUserActionsCount,
+      userActionsCount,
       deviceActionsCount,
       firmwareCount,
+      plantActionsCount,
+      notificationCount,
+      modbusWriteCount,
     };
+  }
+
+  /*===========================  Get Device Overview (Total Counts)   =========================== */
+  public static async getDeviceOverviewRepo(payload: any): Promise<any> {
+    const { userId } = payload;
+
+    // Get all children users recursively
+    let child = await this.getChildrenRecursively(userId);
+    let ids = child.map((c: any) => c.id);
+    ids = [...ids, userId];
+
+    // Total devices count
+    const totalDevices = await prisma.device.count({
+      where: { customerId: { in: ids } },
+    });
+
+    // Total inverters count
+    const totalInverters = await prisma.device.count({
+      where: {
+        customerId: { in: ids },
+        deviceType: "INVERTER",
+      },
+    });
+
+    // Total batteries count
+    const totalBatteries = await prisma.device.count({
+      where: {
+        customerId: { in: ids },
+        deviceType: "BATTERY",
+      },
+    });
+
+    return {
+      totalDevices,
+      totalInverters,
+      totalBatteries,
+    };
+  }
+
+  /*===========================  Get Device Monthly Graph (Yearly View)   =========================== */
+  public static async getDeviceMonthlyGraphRepo(payload: any): Promise<any> {
+    const { userId, year } = payload;
+
+    // Get all children users recursively
+    let child = await this.getChildrenRecursively(userId);
+    let ids = child.map((c: any) => c.id);
+    ids = [...ids, userId];
+
+    // Set year range
+    const startDate = new Date(year, 0, 1); // January 1st
+    const endDate = new Date(year, 11, 31, 23, 59, 59, 999); // December 31st
+
+    // Fetch all devices within the year for the users
+    const devices = await prisma.device.findMany({
+      where: {
+        customerId: { in: ids },
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      select: {
+        id: true,
+        deviceType: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+
+    return devices;
   }
 
   /*===========================  Helper: Get Children Recursively   =========================== */

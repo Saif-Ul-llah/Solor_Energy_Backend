@@ -343,6 +343,8 @@ class AuthRepo {
               .length,
           }
         : {}),
+        Active : forCount.filter((user: any) => user.IsActive === true).length,
+        InActive : forCount.filter((user: any) => user.IsActive === false).length,
     };
   }
 

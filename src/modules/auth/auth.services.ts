@@ -356,6 +356,10 @@ class AuthServices {
       totalCapacity: plantsCapacity || 0,
       totalDevice: deviceCount || 0,
       totalPlant: plantList.length || 0,
+      subAdminCount: users.filter((user: any) => user.role === "SUB_ADMIN").length || 0,
+      distributorCount: users.filter((user: any) => user.role === "DISTRIBUTOR").length || 0,
+      installerCount: users.filter((user: any) => user.role === "INSTALLER").length || 0,
+      customerCount: users.filter((user: any) => user.role === "CUSTOMER").length || 0,
     };
   };
 
