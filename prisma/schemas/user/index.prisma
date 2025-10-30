@@ -26,13 +26,14 @@ model User {
     allowFirmwareAlerts Boolean @default(true)
     allowLoginAlerts    Boolean @default(true)
 
-    parentId      String?
-    parent        User?          @relation("UserHierarchy", fields: [parentId], references: [id])
-    children      User[]         @relation("UserHierarchy")
-    device        Device[]       @relation("customer")
-    activity      ActivityLog[]
-    notifications Notification[]
-    firmware      Firmware[]
+    parentId           String?
+    parent             User?                @relation("UserHierarchy", fields: [parentId], references: [id])
+    children           User[]               @relation("UserHierarchy")
+    device             Device[]             @relation("customer")
+    activity           ActivityLog[]
+    notifications      Notification[]
+    firmware           Firmware[]
+    ThirdPartyUserData ThirdPartyUserData[]
 
     @@schema("user")
 }
@@ -69,11 +70,11 @@ enum VerificationStatus {
 model ActivityLog {
     id          String   @id @default(uuid())
     userId      String?
-    user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
     action      String
     description String?
     createdAt   DateTime @default(now())
-    logType     LogType @default(USER)
+    logType     LogType  @default(USER)
     logData     Json?
 
     @@schema("user")
@@ -86,6 +87,7 @@ enum LogType {
     PLANT
     FIRMWARE
     NOTIFICATION
+
     @@schema("user")
 }
 
@@ -97,5 +99,25 @@ model Notification {
     message   String
     createdAt DateTime @default(now())
 
+    @@schema("user")
+}
+
+model ThirdPartyUserData {
+    id               Int       @id @default(autoincrement())
+    MemberID         String
+    user             User?     @relation(fields: [MemberID], references: [email], onDelete: Cascade)
+    MemberStateCount Int[]
+    currentPower     Float     @default(0)
+    todayGeneration  Float     @default(0)
+    totalGeneration  Float     @default(0)
+    Kwp              Float?
+    CreateTime       DateTime?
+    Sign             String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([MemberID])
+    @@index([Sign])
     @@schema("user")
 }

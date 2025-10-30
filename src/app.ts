@@ -2,7 +2,7 @@ import { appConfig, allRoutes, errorHandler, Server } from "./imports";
 import { createServer } from "http";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
-
+import "./cron/replicating";
 export const app = express();
 const httpServer = createServer(app);
 export const io = new Server(httpServer);

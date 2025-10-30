@@ -1223,7 +1223,10 @@ export const writeInverterModbusRegisters = async (
   );
 
   // Use configured callback URL or provided one
-  const url = callbackUrl || process.env.MODBUS_CALLBACK_URL || `https://noncomical-fillingly-davian.ngrok-free.dev/modbus/callback/write-result`;
+  const url =
+    callbackUrl ||
+    process.env.MODBUS_CALLBACK_URL ||
+    `http://192.168.18.40:5000/api/modbus/callback/write-result`;
 
   const data = new FormData();
   data.append("GoodsID", GoodsID);
@@ -1246,15 +1249,16 @@ export const writeInverterModbusRegisters = async (
   try {
     // logger("📝 Writing Modbus registers:", registerValues);
     // logger("🔗 Callback URL:", url);
-    
+
     const response: AxiosResponse<ApiResponse> = await axios.request(config);
-    
+
     // logger("✅ Write command sent. Status:", response?.data?.status);
     // logger("⏳ Result will be sent to callback URL within 60-600 seconds");
-    
+
     return {
       status: response?.data?.status,
-      message: "Write command sent successfully. Result will be sent to callback URL.",
+      message:
+        "Write command sent successfully. Result will be sent to callback URL.",
       callbackUrl: url,
       registersWritten: Object.keys(registerValues),
     };
@@ -1263,6 +1267,115 @@ export const writeInverterModbusRegisters = async (
       "❌ Error writing inverter Modbus registers:",
       error?.response?.data || error?.message
     );
+    throw error;
+  }
+};
+
+// Function to get V1000 Line data
+export const getV1000Line = async (
+  MemberID: string,
+  GroupAutoID: string,
+  Type: string,
+  date: string
+): Promise<ApiResponse> => {
+  const Sign = await getSign(
+    MemberID,
+    process.env.MONITOR_ACCOUNT_PASSWORD as string
+  );
+
+  const data = qs.stringify({
+    MemberID,
+    GroupAutoID,
+    Type,
+    date,
+    Sign,
+  });
+
+  const config = {
+    method: "post" as const,
+    maxBodyLength: Infinity,
+    url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getV1000Line`,
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    data,
+  };
+
+  try {
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching V1000 Line data:", error);
+    throw error;
+  }
+};
+
+export const getHybridLine = async (
+  GoodsID: string,
+  MemberID: string,
+  Type: string,
+  date: string
+): Promise<ApiResponse> => {
+  try {
+    const Sign = await getSign(
+      MemberID,
+      process.env.MONITOR_ACCOUNT_PASSWORD as string
+    );
+    const data = new FormData();
+    data.append("GoodsID", GoodsID);
+    data.append("Type", Type);
+    data.append("MemberID", MemberID);
+    data.append("date", date);
+    data.append("Sign", Sign);
+
+    const config = {
+      method: "post" as const,
+      maxBodyLength: Infinity,
+      url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getHybridLine`,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...data.getHeaders(),
+      },
+      data,
+    };
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error fetching Hybrid Line data:", error);
+    throw error;
+  }
+};
+
+
+
+export const getEndUserSummaryInfo = async (Page: string = "1"): Promise<ApiResponse> => {
+  try {
+    const Sign = await getOperationSignature(
+      process.env.SERVICE_ACCOUNT_ID as string,
+      process.env.SERVICE_ACCOUNT_PASS as string
+    );
+
+   
+    const data = new FormData();
+    data.append("MemberID", process.env.SERVICE_ACCOUNT_ID as string);
+    data.append("Page", Page);
+    data.append("Sign", Sign);
+
+    const config = {
+      method: "post" as const,
+      maxBodyLength: Infinity,
+      url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getEndUserSummaryInfo`,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...data.getHeaders(),
+      },
+      data,
+    };
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+
+    return response?.data;
+  } catch (error: any) {
+    logger("Error:", error?.message || error);
     throw error;
   }
 };
