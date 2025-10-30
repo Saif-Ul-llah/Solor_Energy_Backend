@@ -257,7 +257,7 @@ export const comparePass = async (
   return bcrypt.compare(password, hashedPassword);
 };
 
-export const logger = (message: string, ...args: any[]) => {
+export const logger = (message: any, ...args: any[]) => {
   const now = new Date();
   const formattedDate = now
     .toLocaleString("en-GB", {

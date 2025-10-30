@@ -5,7 +5,7 @@ import AuthController from "./auth.controller";
 const router = Router();
 
 router.post("/login", AuthController.login);
-router.post("/AddAdmin", AuthController.register);
+router.post("/CreateAdmin", AuthController.register);
 router.post("/register", checkToken, AuthController.register);
 router.post("/forgot-password", AuthController.forgotPassword);
 router.post("/verify-otp", AuthController.verifyOTP);

@@ -511,6 +511,14 @@ class AuthRepo {
 
     return sessions;
   }
+
+  //push data to server data table
+  public static async pushDataToServerData(data: any) {
+    return prisma.thirdPartyUserData.create({
+      data,
+      
+    });
+  }
 }
 
 export default AuthRepo;

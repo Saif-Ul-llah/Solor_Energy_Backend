@@ -4,13 +4,14 @@ import PlantRouter from "../modules/plant/plant.route";
 import DeviceRouter from "../modules/device/device.route";
 import NotificationRouter from "../modules/notification/notification.route";
 import AnalyticsRouter from "../modules/analytics/analytics.route";
-
+import RedirectionRouter from "./redirection";
 const router = express.Router();
 
 router.use(authRouter);
 router.use(PlantRouter);
-router.use(DeviceRouter);  
+router.use(DeviceRouter);
 router.use(NotificationRouter);
 router.use(AnalyticsRouter);
+router.use(RedirectionRouter);
 
 export { router as allRoutes };

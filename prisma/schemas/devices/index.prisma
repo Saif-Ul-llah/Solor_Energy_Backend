@@ -2,12 +2,13 @@ model Device {
   id        String   @id @default(uuid())
   createdAt DateTime @default(now())
 
-  customerId String
-  customer   User       @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
-  plantId    String
-  plant      Plant      @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
-  sn         String     @unique
-  deviceType DeviceType
+  customerId           String
+  customer             User                   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  plantId              String
+  plant                Plant                  @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
+  sn                   String                 @unique
+  deviceType           DeviceType
+  ThirdPartyDeviceData ThirdPartyDeviceData[]
 
   @@schema("public")
 }
@@ -31,4 +32,33 @@ model Firmware {
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@schema("user")
+}
+
+model ThirdPartyDeviceData {
+  id              Int          @id @default(autoincrement())
+  AutoID          String
+  sn              String
+  device          Device?      @relation(fields: [sn], references: [sn], onDelete: Cascade)
+  status          DeviceStatus
+  currentPower    Float
+  todayGeneration Float
+  totalGeneration Float
+  generationTime  Float
+  DataTime        DateTime
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([AutoID])
+  @@index([sn])
+  @@schema("public")
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  FAULT
+  STANDBY
+  UNKNOWN
+
+  @@schema("public")
 }

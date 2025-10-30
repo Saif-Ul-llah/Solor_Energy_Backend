@@ -135,6 +135,7 @@ class PlantService {
       )
       .flatMap((res: any) => res.value.AllGroupList);
 
+    logger("plantList", plantList);
     // 7 Our DB Plants lists
     let plants = await PlantRepo.getAllPlants(
       userId,
@@ -350,6 +351,7 @@ class PlantService {
   // Modify Plant
   public static updatePlantService = async (data: any, user?: User) => {
     //Get plant and Customer of that plant
+    
     const getPlantByAutoId: any = await PlantRepo.getPlantByAutoIdRepo(
       data.AutoID
     );
