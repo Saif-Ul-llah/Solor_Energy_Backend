@@ -135,7 +135,7 @@ class PlantService {
       )
       .flatMap((res: any) => res.value.AllGroupList);
 
-    logger("plantList", plantList);
+    // logger("plantList", plantList);
     // 7 Our DB Plants lists
     let plants = await PlantRepo.getAllPlants(
       userId,
@@ -351,7 +351,7 @@ class PlantService {
   // Modify Plant
   public static updatePlantService = async (data: any, user?: User) => {
     //Get plant and Customer of that plant
-    
+
     const getPlantByAutoId: any = await PlantRepo.getPlantByAutoIdRepo(
       data.AutoID
     );
@@ -378,7 +378,7 @@ class PlantService {
     if (result.status) {
       // Modify on DB
       const plant = await PlantRepo.updatePlantRepo(data);
-      
+
       // Log plant update
       if (user) {
         await createLogs({
@@ -394,7 +394,7 @@ class PlantService {
           },
         });
       }
-      
+
       return plant;
     }
     return { message: "Failed to update plant" };
@@ -414,11 +414,11 @@ class PlantService {
   ) => {
     // Get plant info before deletion for logging
     const plantInfo: any = await PlantRepo.getPlantByAutoIdRepo(AutoID);
-    
+
     let del = await deletePlantThirdParty(CustomerEmail, AutoID);
     if (del.status) {
       const plant = await PlantRepo.deletePlantRepo(AutoID, CustomerEmail);
-      
+
       // Log plant deletion
       if (user && plantInfo) {
         await createLogs({
@@ -435,10 +435,38 @@ class PlantService {
           },
         });
       }
-      
+
       return plant;
     }
     return { message: "Failed to delete plant" };
+  };
+
+  // Get Analytics Count
+  public static getAnalyticsCountService = async (userId: string) => {
+    // Get under Users List
+    const usersList = await AuthRepo.getChildrenRecursively(userId, "CUSTOMER");
+    const emails = usersList.map((user: any) => user.email);
+    // Get Analytics From third Party user table
+    let thirdPartyData = await PlantRepo.getAnalyticsFromThirdParty(emails);
+    
+    // Calculate cumulative values
+    const analytics = thirdPartyData.reduce(
+      (acc, record) => {
+        acc.currentPower += record.currentPower || 0;
+        acc.totalGeneration += record.totalGeneration || 0;
+        acc.todayGeneration += record.todayGeneration || 0;
+        acc.totalKwp += record.Kwp || 0;
+        return acc;
+      },
+      {
+        currentPower: 0,
+        totalGeneration: 0,
+        todayGeneration: 0,
+        totalKwp: 0,
+      }
+    );
+
+    return analytics;
   };
 }
 

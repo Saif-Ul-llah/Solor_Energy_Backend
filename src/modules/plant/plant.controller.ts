@@ -164,9 +164,13 @@ class PlantController {
   public static deletePlant = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       let user = req.user;
-      const { AutoId ,CustomerEmail} = req.query;
+      const { AutoId, CustomerEmail } = req.query;
       if (!AutoId) return next(HttpError.badRequest("Auto ID is required"));
-      const plant = await PlantServices.deletePlantService(AutoId as string, CustomerEmail as string, user as User);
+      const plant = await PlantServices.deletePlantService(
+        AutoId as string,
+        CustomerEmail as string,
+        user as User
+      );
       if (plant) {
         return sendResponse(
           res,
@@ -176,6 +180,27 @@ class PlantController {
           "success"
         );
       }
+    }
+  );
+
+  // Get Analytics Count
+  public static getAnalyticsCount = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const analytics = await PlantServices.getAnalyticsCountService(
+        userId as string
+      );
+      if (analytics) {
+        return sendResponse(
+          res,
+          200,
+          "Analytics Count fetched successfully",
+          analytics,
+          "success"
+        );
+      }
+
+      return [];
     }
   );
 }

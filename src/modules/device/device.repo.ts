@@ -105,6 +105,18 @@ public static async deleteDeviceRepo(userId: string, sn: string) {
   return device;
 }
 
+// Get SN List Repo
+public static async getSnListRepo(customerIds: string[]) {
+  const snList = await prisma.device.findMany({
+    where: { customerId: { in: customerIds } },
+    select: {
+      sn: true,
+    },
+    distinct: ['sn'],
+  });
+  return snList.map((it: any) => it.sn)||[];
+}
+
 }
 
 export default DeviceRepo;

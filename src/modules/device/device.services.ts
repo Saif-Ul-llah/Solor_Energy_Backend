@@ -11,10 +11,12 @@ import {
   deviceDetailFilter,
   getDataForGraph,
   createLogs,
+  getHybridLine,
 } from "../../imports";
 import DeviceRepo from "./device.repo";
 import PlantRepo from "../plant/plant.repo";
 import PlantServices from "../plant/plant.services";
+import AuthRepo from "../auth/auth.repo";
 dotenv.config();
 
 class DeviceService {
@@ -429,6 +431,23 @@ class DeviceService {
       // Don't throw - we still need to return "success" to vendor
       return { success: false, error: error.message };
     }
+  };
+
+  // Get SN List 
+  public static getSnListService = async (userId: string) => {
+    let child = await AuthRepo.getChildrenRecursively(userId, "CUSTOMER");
+    let customerIds = child.map((child: any) => child.id)||[];
+    customerIds.push(userId);
+    let Devices = await DeviceRepo.getSnListRepo(customerIds);
+    return Devices;
+  };
+
+  // Device Report
+  public static deviceReportService = async (sn: string, type: string, date: string, user: User) => {
+    let device = await DeviceRepo.getDeviceByIdRepo(sn);
+    if (!device) throw new HttpError("Device not found", "not found", 404);
+   let reportData = await getHybridLine(device.sn, device.customer.email, type, date);
+    return reportData;
   };
 }
 
