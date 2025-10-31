@@ -22,5 +22,8 @@ router.post("/modbus/:sn/:memberId/write", checkToken, DeviceController.writeMod
 // Modbus Write Callback (NO auth - called by vendor)
 router.post("/modbus/callback/write-result", DeviceController.modbusWriteCallback);
 
+router.get("/SnList", checkToken, DeviceController.getSnList);
+router.post("/deviceReport", checkToken, DeviceController.deviceReport);
+
 export default router;
     

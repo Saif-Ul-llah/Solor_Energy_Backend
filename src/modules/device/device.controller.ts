@@ -294,7 +294,7 @@ class DeviceController {
   public static getModbusRegisterMap = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
       const registerMap = await DeviceServices.getModbusRegisterMapService();
-      
+
       return sendResponse(
         res,
         200,
@@ -328,6 +328,36 @@ class DeviceController {
 
       // IMPORTANT: Vendor requires lowercase "success" string response
       res.status(200).send("success");
+    }
+  );
+
+  // Get SN List
+  public static getSnList = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const snList: any = await DeviceServices.getSnListService(userId);
+      if (snList) {
+        return sendResponse(res, 200, "SN List Of Devices", snList, "success");
+      }
+    }
+  );
+
+  // Device Report
+  public static deviceReport = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn, type, date } = req.body;
+      if (!sn || !type || !date)
+        return HttpError.missingParameters("All fields are required! ")
+      const deviceReport: any = await DeviceServices.deviceReportService(
+        sn,
+        type,
+        date,
+        user
+      );
+      if (deviceReport) {
+        return sendResponse(res, 200, "Device Report", deviceReport, "success");
+      }
     }
   );
 }

@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/app.js",
     "build": "tsc",
-    "dev": "nodemon --watch src --ext ts --exec ts-node src/app.ts",
+    "dev": "cross-env PORT=5001 nodemon --watch src --ext ts --exec ts-node src/app.ts",
     "build:schema": "ts-node prisma/build-schema.ts",
     "st": "prisma studio",
     "gen": "npm run build:schema && prisma generate",
@@ -43,6 +43,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/multer": "^2.0.0",
     "@types/nodemailer": "^6.4.17",
+    "cross-env": "^10.1.0",
     "typescript": "^5.8.3"
   }
 }

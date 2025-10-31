@@ -14,6 +14,6 @@ router.get("/getDeviceListOfPlant", checkToken, PlantController.getDeviceListOfP
 router.put("/updatePlant", checkToken, PlantController.updatePlant);
 router.get("/getPlantFlowDiagram", checkToken, PlantController.getPlantFlowDiagram);
 router.delete("/deletePlant", checkToken, PlantController.deletePlant);
-
+router.get("/getAnalyticsCount", checkToken, PlantController.getAnalyticsCount);
 
 export default router;

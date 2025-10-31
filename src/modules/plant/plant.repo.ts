@@ -239,7 +239,7 @@ class PlantRepo {
     return {
       id: plantId,
       deviceType: "PLANT",
-      lastCallTime : new Date(),
+      lastCallTime: new Date(),
       children: deviceList,
     };
   }
@@ -262,6 +262,20 @@ class PlantRepo {
       where: { AutoId: AutoID },
     });
     return plant;
+  }
+
+  // Get Analytics From third Party user table
+  public static async getAnalyticsFromThirdParty(emails: string[]) {
+    let getData = await prisma.thirdPartyUserData.findMany({
+      where: {
+        MemberID: { in: emails },
+      },
+      distinct: ['MemberID'],
+      orderBy: {
+        id: 'desc',
+      },
+    });
+    return getData;
   }
 }
 
