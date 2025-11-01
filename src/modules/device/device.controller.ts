@@ -360,5 +360,20 @@ class DeviceController {
       }
     }
   );
+
+  // get device overview
+  public static deviceOverview = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn } = req.query;
+      if (!sn)
+        return next(HttpError.missingParameters("Serial Number is required! "));
+    const device: any = await DeviceServices.deviceOverviewService(sn as string);
+    if (device) {
+      return sendResponse(res, 200, "Device Overview", device, "success");
+    }
+    return sendResponse(res, 200, "Device Overview", [], "success");
+    }
+  );
 }
 export default DeviceController;

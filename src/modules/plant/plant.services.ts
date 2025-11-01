@@ -15,6 +15,7 @@ import {
   getBatteryDeviceData,
   createLogs,
   deletePlantThirdParty,
+  getGroupDetail,
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
@@ -448,7 +449,7 @@ class PlantService {
     const emails = usersList.map((user: any) => user.email);
     // Get Analytics From third Party user table
     let thirdPartyData = await PlantRepo.getAnalyticsFromThirdParty(emails);
-    
+
     // Calculate cumulative values
     const analytics = thirdPartyData.reduce(
       (acc, record) => {
@@ -468,6 +469,35 @@ class PlantService {
 
     return analytics;
   };
+
+  // get plant count by id
+  public static plantCountByIdService = async (plantId: string) => {
+    const plant: any = await PlantRepo.getPlantById(plantId);
+    if (!plant) throw HttpError.notFound("Plant not found");
+    const plantCount = await getGroupDetail(plant.customer.email, plant.AutoId);
+    
+    // Fetch weather data if location is available
+    let weatherData = null;
+    if (plant.location && plant.location.latitude && plant.location.longitude) {
+      const { getCurrentWeather } = await import("../../helpers/weather");
+      weatherData = await getCurrentWeather(
+        plant.location.latitude,
+        plant.location.longitude
+      );
+    }
+    
+    let filteredData = {
+      powerGeneration: plantCount.ETotal || 0,
+      revenue: plantCount.IncomeTotal || 0,
+      todayGeneration: plantCount.EToday || 0,
+      kwp: plantCount.GoodsKWP || 0,
+      unit: plantCount.unit || "",
+      installationDate: plantCount.CreateDate || "",
+      weather: weatherData || {},
+    };
+    return filteredData;
+  };
 }
 
 export default PlantService;
+
