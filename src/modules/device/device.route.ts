@@ -25,5 +25,7 @@ router.post("/modbus/callback/write-result", DeviceController.modbusWriteCallbac
 router.get("/SnList", checkToken, DeviceController.getSnList);
 router.post("/deviceReport", checkToken, DeviceController.deviceReport);
 
+router.get("/deviceOverview", checkToken, DeviceController.deviceOverview);
+
 export default router;
     

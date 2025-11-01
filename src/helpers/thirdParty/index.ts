@@ -1346,8 +1346,6 @@ export const getHybridLine = async (
   }
 };
 
-
-
 export const getEndUserSummaryInfo = async (Page: string = "1"): Promise<ApiResponse> => {
   try {
     const Sign = await getOperationSignature(
@@ -1376,6 +1374,36 @@ export const getEndUserSummaryInfo = async (Page: string = "1"): Promise<ApiResp
     return response?.data;
   } catch (error: any) {
     logger("Error:", error?.message || error);
+    throw error;
+  }
+};
+
+// Get Plant Count by Id
+export const getGroupDetail = async (MemberID: string, GroupAutoID: string) => {
+  try {
+    const Sign = await getSign(
+      MemberID,
+      process.env.MONITOR_ACCOUNT_PASSWORD as string
+    );
+    const data = new FormData();
+    data.append("MemberID", MemberID);
+    data.append("GroupAutoID", GroupAutoID);
+    data.append("Sign", Sign);
+
+    const config = {
+      method: "post" as const,
+      maxBodyLength: Infinity,
+      url: `${CLOUD_BASEURL}/OpenAPI/v1/Openapi/getGroupDetail`,
+      headers: {
+        "Content-Type": "multipart/form-data",
+        ...data.getHeaders(),
+      },
+      data,
+    };
+    const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    return response.data;
+  } catch (error: any) {
+    console.error("Error fetching Group Detail:", error);
     throw error;
   }
 };

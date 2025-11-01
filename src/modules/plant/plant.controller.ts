@@ -203,5 +203,25 @@ class PlantController {
       return [];
     }
   );
+
+  static plantOverView = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = req.user.id;
+      const { plantId } = req.query;
+      if (!plantId) return next(HttpError.badRequest("Plant ID is required"));
+      const plantCount = await PlantServices.plantCountByIdService(
+        plantId as string
+      );
+      if (plantCount) {
+        return sendResponse(
+          res,
+          200,
+          "Plant Count fetched successfully",
+          plantCount,
+          "success"
+        );
+      }
+    }
+  );
 }
 export default PlantController;

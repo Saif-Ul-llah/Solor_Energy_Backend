@@ -447,8 +447,55 @@ class DeviceService {
     let device = await DeviceRepo.getDeviceByIdRepo(sn);
     if (!device) throw new HttpError("Device not found", "not found", 404);
    let reportData = await getHybridLine(device.sn, device.customer.email, type, date);
-    return reportData;
+   if(!reportData) throw new HttpError("No report data found", "not found", 404);
+    return reportData.map((item: any) => ({
+   ...item,
+   sn: device.sn,
+    })) ;
+  };
+
+
+  // get device overview
+  public static deviceOverviewService = async (sn: string) => {
+    let device = await DeviceRepo.getDeviceByIdRepo(sn);
+    if (!device) throw new HttpError("Device not found", "not found", 404);
+    
+    // Get device details from third party
+    let deviceDetails = await getDeviceBySN(device.sn, device.customer.email);
+    
+    // Fetch weather data if plant location is available
+    let weatherData = null;
+    if (device.plant?.location?.latitude && device.plant?.location?.longitude) {
+      const { getCurrentWeather } = await import("../../helpers/weather");
+      weatherData = await getCurrentWeather(
+        device.plant.location.latitude,
+        device.plant.location.longitude
+      );
+    }
+    
+    // Filter and format the response
+    let filteredData = {
+      deviceId: device.id,
+      deviceName: deviceDetails.GoodsName || "",
+      serialNumber: deviceDetails.GoodsID || device.sn,
+      deviceType: device.deviceType,
+      status: deviceDetails.Light || 0,
+      currentPower: parseFloat(deviceDetails.CurrPac || "0"),
+      todayGeneration: parseFloat(deviceDetails.EToday || "0"),
+      totalGeneration: parseFloat(deviceDetails.ETotal || "0"),
+      totalHours: parseFloat(deviceDetails.Htotal || "0"),
+      lastUpdate: deviceDetails.DataTime || null,
+      plant: {
+        id: device.plant?.id,
+        name: device.plant?.name,
+        autoId: device.plant?.AutoId,
+      },
+      weather: weatherData || {},
+    };
+
+    return filteredData;
   };
 }
 
 export default DeviceService;
+

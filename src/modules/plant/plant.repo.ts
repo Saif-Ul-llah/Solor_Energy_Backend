@@ -132,7 +132,7 @@ class PlantRepo {
     return !!plant;
   }
 
-  // Get Plant By Id
+  // Get Plant By Name
   public static async getPlantByIdRepo(id: string): Promise<Plant | null> {
     const plant = await prisma.plant.findUnique({
       where: { name: id },
@@ -146,6 +146,18 @@ class PlantRepo {
     return plant;
   }
 
+public static async getPlantById(id: string): Promise<Plant | null> {
+  const plant = await prisma.plant.findUnique({
+    where: { id },
+    include: {
+      location: true,
+      customer: true,
+      installer: true,
+      plantImage: true,
+    },
+  });
+  return plant;
+}
   public static async getPlantByAutoIdRepo(id: string): Promise<Plant | null> {
     const plant = await prisma.plant.findUnique({
       where: { AutoId: id },
