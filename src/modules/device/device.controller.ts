@@ -100,8 +100,17 @@ class DeviceController {
         user,
         sn as string
       );
+      const deviceOverview: any = await DeviceServices.deviceOverviewService(
+        sn as string
+      );
       if (device) {
-        return sendResponse(res, 200, "Device List", device, "success");
+        return sendResponse(
+          res,
+          200,
+          "Device List",
+          { ...device, deviceOverview },
+          "success"
+        );
       }
     }
   );
@@ -143,6 +152,7 @@ class DeviceController {
           deviceType: type,
           children: Object.entries(device).map(([key, value]) => ({
             value: value,
+            id: Math.random().toString(36).substring(2, 15),
             // [key]:value,
             deviceType: key,
           })),
@@ -348,7 +358,7 @@ class DeviceController {
       const user = req.user;
       const { sn, type, date } = req.body;
       if (!sn || !type || !date)
-        return HttpError.missingParameters("All fields are required! ")
+        return HttpError.missingParameters("All fields are required! ");
       const deviceReport: any = await DeviceServices.deviceReportService(
         sn,
         type,
@@ -368,11 +378,13 @@ class DeviceController {
       const { sn } = req.query;
       if (!sn)
         return next(HttpError.missingParameters("Serial Number is required! "));
-    const device: any = await DeviceServices.deviceOverviewService(sn as string);
-    if (device) {
-      return sendResponse(res, 200, "Device Overview", device, "success");
-    }
-    return sendResponse(res, 200, "Device Overview", [], "success");
+      const device: any = await DeviceServices.deviceOverviewService(
+        sn as string
+      );
+      if (device) {
+        return sendResponse(res, 200, "Device Overview", device, "success");
+      }
+      return sendResponse(res, 200, "Device Overview", [], "success");
     }
   );
 }
