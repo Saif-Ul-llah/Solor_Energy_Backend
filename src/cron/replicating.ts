@@ -3,8 +3,10 @@ import {
   getDeviceBySN,
   getEndUserSummaryInfo,
   logger,
+  plantsAlertById,
   prisma,
 } from "../imports";
+import NotificationServices from "../modules/notification/notification.services";
 import AuthRepo from "../modules/auth/auth.repo";
 
 // for running on every minute
@@ -15,7 +17,7 @@ import AuthRepo from "../modules/auth/auth.repo";
 
 // Runs every day at midnight (server time)
 cron.schedule("0 0 * * *", async () => {
-// cron.schedule("* * * * *", async () => {
+  // cron.schedule("* * * * *", async () => {
   logger(
     "=======================[CRON] Pulling data from third party...=======================\n"
   );
@@ -52,11 +54,9 @@ cron.schedule("0 0 * * *", async () => {
           Sign: item.Sign,
         };
 
-
-          return prisma.thirdPartyUserData.create({
-            data: { MemberID: getUser.email, ...payload },
-          });
-        
+        return prisma.thirdPartyUserData.create({
+          data: { MemberID: getUser.email, ...payload },
+        });
       })
     );
 
@@ -70,8 +70,7 @@ cron.schedule("0 0 * * *", async () => {
 
 // for running on every minute
 cron.schedule("0 0 * * *", async () => {
-
-logger(
+  logger(
     "=======================[CRON] Pulling data from third party...=======================\n"
   );
 
@@ -150,17 +149,68 @@ logger(
   );
 });
 
-
 //  for running on every 5 minutes
 cron.schedule("*/5 * * * *", async () => {
   logger(
-    "=======================[CRON] Getting Plant Alarm and trigger notification to user ...=======================\n"
+    "=======================[CRON] Checking Plant Alarms ]=======================\n"
   );
-  // get all devices from our database
-  const deviceList = await prisma.device.findMany({
-    include: { customer: true ,plant: { include: { installer: true } } },
-  });
-// get alarm of every device from third party
-// if alarm is present and time is less than 4:59:59 minutes, then trigger notification to user
 
+  //Get all Plants
+  const Plants = await prisma.plant.findMany({
+    include: { customer: true, installer: true },
+  });
+
+  if (!Plants.length) {
+    logger("No plants found in the database.");
+    return;
+  }
+  // Get all Plants Alarms from third party
+  let alarms = await Promise.all(
+    Plants.map(async (plant: any) => {
+      const alarmsOfPlant = await plantsAlertById(
+        plant.AutoId,
+        plant.customer?.email
+      );
+
+      return alarmsOfPlant?.total_error_num > 0
+        ? alarmsOfPlant.infoerror
+        : null;
+    })
+  );
+
+  alarms = alarms.filter(Boolean).flat();
+
+  // TEST ONLY — REMOVE LATER
+  alarms.push({
+    ModelName: "SE 10KHB-210-T2",
+    GoodsName: "SE 10KHB-210-T2 2342-23820000PH",
+    MemberID: "progziel01",
+    GoodsID: "2342-23820000PH",
+    Time: "2025-11-05 01:00:23",
+    ErrorCode: "50",
+    status: "0",
+  });
+
+  logger("alarmsOfPlant:", alarms);
+
+  // Check if alarm is within 5 minutes then trigger notification
+  for (const alarm of alarms) {
+    const alarmTime = new Date(`${alarm.Time.replace(" ", "T")}`);
+    const now = new Date();
+    const diffSeconds = (now.getTime() - alarmTime.getTime()) / 1000;
+    logger("diffSeconds:", diffSeconds, "\nAlarmTime", alarmTime, "\nNow", now);
+    if (diffSeconds >= 0 && diffSeconds <= 5 * 60) {
+      logger("Triggering notification for alarm:", alarm);
+
+      const user = await AuthRepo.findByEmail(alarm.MemberID); // Ensure MemberID is email
+
+      if (user) {
+        await NotificationServices.sendPushNotificationService(
+          "Device Alarm Notification",
+          "Your device has triggered an alarm. Please check for more details.",
+          user.id
+        );
+      }
+    }
+  }
 });
