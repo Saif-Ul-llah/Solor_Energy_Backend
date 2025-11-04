@@ -486,8 +486,6 @@ export const plantsAlertById = async (
 // ✅ Config
 const BASE_URL = "https://eu.uzenergy-portal.com"; // or https://www.uzenergy-portal.com
 
-/*==================== Generate RSA + MD5 signature identical to the web tool ============================ */
-
 export async function getBatteryDeviceData(
   sn: string,
   date: string,
