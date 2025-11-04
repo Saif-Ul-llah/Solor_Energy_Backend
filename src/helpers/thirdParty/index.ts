@@ -457,7 +457,7 @@ export const plantsAlertById = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-logger("data \n", {GroupAutoID,MemberID,Sign});
+// logger("data \n", {GroupAutoID,MemberID,Sign});
   const data = new FormData();
   data.append("GroupAutoID", GroupAutoID);
   data.append("MemberID", MemberID);

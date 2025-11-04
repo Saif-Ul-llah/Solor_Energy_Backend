@@ -191,14 +191,14 @@ cron.schedule("*/5 * * * *", async () => {
     status: "0",
   });
 
-  logger("alarmsOfPlant:", alarms);
+  // logger("alarmsOfPlant:", alarms);
 
   // Check if alarm is within 5 minutes then trigger notification
   for (const alarm of alarms) {
     const alarmTime = new Date(`${alarm.Time.replace(" ", "T")}`);
     const now = new Date();
     const diffSeconds = (now.getTime() - alarmTime.getTime()) / 1000;
-    logger("diffSeconds:", diffSeconds, "\nAlarmTime", alarmTime, "\nNow", now);
+    // logger("diffSeconds:", diffSeconds, "\nAlarmTime", alarmTime, "\nNow", now);
     if (diffSeconds >= 0 && diffSeconds <= 5 * 60) {
       logger("Triggering notification for alarm:", alarm);
 
