@@ -341,7 +341,7 @@ export const insertInverterInfo = async (
   GroupAutoID: string,
   GoodsID: string
 ): Promise<ApiResponse> => {
-  logger("\n\n\ncheck they are hilting on type battery\n\n");
+  logger("\n\n\ncheck they are hilting Add device api \n\n");
   const Sign = await getSign(
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
@@ -367,6 +367,7 @@ export const insertInverterInfo = async (
 
   try {
     const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    // logger("response", response);
     return response.data;
   } catch (error) {
     console.error("Error inserting inverter info:", error);
@@ -456,7 +457,7 @@ export const plantsAlertById = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-
+logger("data \n", {GroupAutoID,MemberID,Sign});
   const data = new FormData();
   data.append("GroupAutoID", GroupAutoID);
   data.append("MemberID", MemberID);

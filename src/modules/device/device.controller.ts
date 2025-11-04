@@ -20,7 +20,7 @@ class DeviceController {
       let user = req.user;
       if (!deviceType || !sn || !plantId)
         return next(HttpError.missingParameters("All fields are required! "));
-      const device = await DeviceServices.addDeviceService(
+      const device :any = await DeviceServices.addDeviceService(
         deviceType,
         sn,
         plantId,
@@ -35,7 +35,7 @@ class DeviceController {
           "success"
         );
       }
-      return sendResponse(res, 200, "Failed to add device", [], "failed");
+      return sendResponse(res, 200, "Failed to bind device to plant on cloud platform", [], "failed");
     }
   );
   // Get Device By Sn

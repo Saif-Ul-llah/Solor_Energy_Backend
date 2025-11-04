@@ -4,3 +4,4 @@ service_account_key.json
 migrations
 
 dist
+prisma/schema.prisma
