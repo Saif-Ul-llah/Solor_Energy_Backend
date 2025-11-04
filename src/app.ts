@@ -1,4 +1,4 @@
-import { appConfig, allRoutes, errorHandler, Server } from "./imports";
+import { appConfig, allRoutes, errorHandler, Server, logger } from "./imports";
 import { createServer } from "http";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
@@ -32,7 +32,7 @@ app.use("/api", allRoutes);
 app.use(errorHandler);
 
 httpServer.listen(appConfig.port, () => {
-  console.log(
+  logger(
     `Server is running on: ${appConfig.appUrl || "http://localhost:5000"}`
   );
 });

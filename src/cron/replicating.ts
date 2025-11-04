@@ -149,3 +149,18 @@ logger(
     `[CRON] thirdPartyDeviceData insert: ${succeeded} succeeded, ${failed} failed`
   );
 });
+
+
+//  for running on every 5 minutes
+cron.schedule("*/5 * * * *", async () => {
+  logger(
+    "=======================[CRON] Getting Plant Alarm and trigger notification to user ...=======================\n"
+  );
+  // get all devices from our database
+  const deviceList = await prisma.device.findMany({
+    include: { customer: true ,plant: { include: { installer: true } } },
+  });
+// get alarm of every device from third party
+// if alarm is present and time is less than 4:59:59 minutes, then trigger notification to user
+
+});
