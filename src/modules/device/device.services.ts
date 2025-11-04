@@ -93,10 +93,10 @@ class DeviceService {
     search: string
   ) => {
     //======================================= Get user list from recursive function =======================================
-    // 1️ Get all child installers recursively
+    // 1️ Get all child recursively
     const userIdsList = await PlantRepo.getChildrenRecursively(userId, "");
     //======================================= Get There customers list =======================================
-    // 2 Build installer email list
+    // 2 Build email list
     const memberIds = userIdsList.map((child: any) => child.email);
 
     // 3️ Fetch all monitoring users once
@@ -105,6 +105,12 @@ class DeviceService {
     const validMonitorUsers = monitorUsers.filter((u: any) =>
       memberIds.includes(u.MemberID)
     );
+    // Get all device list from our db when deviceType is equal to BATTERY
+    if (deviceType === "BATTERY") {
+      //
+      //===================  Changes need to be done here 
+      //
+    }
     //======================================= Get there plants list with their devices =======================================
     // 5 Get Our DB Plants lists
     let plantsWithDevices = await PlantRepo.getAllPlants(
@@ -112,7 +118,7 @@ class DeviceService {
       validMonitorUsers.map((u: any) => u.MemberID)
     );
 
-    // ====================================== Get there device list for each plant =======================================
+    // ====================================== Get there device list for each plant From Third party =======================================
     let devicesList = await Promise.all(
       plantsWithDevices.map((plant: any) =>
         PlantServices.getDeviceListOfPlantService(
