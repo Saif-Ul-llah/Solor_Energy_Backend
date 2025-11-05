@@ -266,7 +266,7 @@ class AuthRepo {
 
   /*===========================  Get User List with Pagination   =========================== */
   public static async userListFlow(payload: any): Promise<any> {
-    const {
+    let {
       role,
       userId,
       page,
@@ -287,12 +287,14 @@ class AuthRepo {
       longitude
     );
 
-    // logger("allChildren", "info", allChildren);
+    // logger("allChildren", "info", IsActive);
     if (IsActive !== undefined) {
+      IsActive = IsActive === 'true'; 
       allChildren = allChildren.filter(
         (user: any) => user.IsActive === IsActive
       );
     }
+    // logger("after filter", "info", allChildren);
 
     if (search) {
       allChildren = allChildren.filter((user: any) =>

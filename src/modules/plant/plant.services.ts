@@ -317,24 +317,100 @@ class PlantService {
     return filtered;
   };
 
-  private static getBatteriesOfPlant = async (
+  public static getBatteriesOfPlant = async (
     email: string,
-    plantId: string
+    plantId: string[]
   ) => {
     const BatteryList: any = await PlantRepo.BatteriesOfPlant(email, plantId);
-    // const deviceList = Promise.all(
-    //   BatteryList.map(async (device: any) => {
-    //     const sn = "BZ2010302306020133";
-    //     const date = "2024-06-21";
-    //     const deviceData = await getBatteryDeviceData(sn, date);
-    //     return deviceData;
-    //   })
-    // );
-    // const filtered = (await deviceList).map((device: any) =>
 
-    // )
+    const deviceList = await Promise.all(
+      BatteryList.map(async (item: any) => {
+        const sn = item.sn;
+        const date = new Date().toISOString().split("T")[0];
+        const deviceData = await getBatteryDeviceData(sn, date);
+        return { ...deviceData, sn };
+      })
+    );
 
-    return BatteryList;
+    const filtered = deviceList
+      // .filter((device: any) => device && device.result && device.result.records && device.result.records.length > 0)
+      .map((device: any) => {
+        const record = device?.result?.records[0];
+
+        // Determine status based on battery type (Low Voltage or High Voltage)
+        let status = "UNKNOWN";
+
+        // Check if it's a Low Voltage Battery (has M_STATUS_1 field)
+        if (record?.M_STATUS_1 !== undefined) {
+          const mStatus = parseInt(record.M_STATUS_1) || 0;
+          // Check for faults first (FAULT_1 through FAULT_6)
+          const hasFault =
+            (parseInt(record.FAULT_1) || 0) !== 0 ||
+            (parseInt(record.FAULT_2) || 0) !== 0 ||
+            (parseInt(record.FAULT_3) || 0) !== 0 ||
+            (parseInt(record.FAULT_4) || 0) !== 0 ||
+            (parseInt(record.FAULT_5) || 0) !== 0 ||
+            (parseInt(record.FAULT_6) || 0) !== 0;
+
+          if (hasFault) {
+            status = "FAULT";
+          } else {
+            status =
+              mStatus === 1
+                ? "ONLINE"
+                : mStatus === 2
+                ? "FAULT"
+                : mStatus === 3
+                ? "STANDBY"
+                : mStatus === 4
+                ? "OFFLINE"
+                : "UNKNOWN";
+          }
+        }
+        // Check if it's a High Voltage Battery (has faultStatus field)
+        else if (record?.faultStatus !== undefined) {
+          const faultStatus = parseInt(record?.faultStatus) || -1;
+          // For High Voltage: 0 = normal (ONLINE), other = fault
+          status = faultStatus === 0 ? "ONLINE" : "FAULT";
+        }
+
+        // Extract power - Low Voltage uses POWER_1, High Voltage uses power
+        const currentPower =
+          parseFloat(record?.POWER_1 || record?.power || "0") || 0;
+
+        // Extract capacity - Low Voltage uses CAP_1, High Voltage might not have direct capacity
+        const capacity = parseFloat(record?.CAP_1 || "0") || 0;
+
+        // Extract today yield - Low Voltage uses CH_TODAY (charge) and DH_TODAY (discharge), High Voltage uses batteryChg and batteryDischg
+        const todayYield =
+          parseFloat(record?.CH_TODAY || record?.batteryChg || "0") || 0;
+
+        // Extract total yield - cumulative values
+        const totalYield =
+          parseFloat(record?.M_A_TOTAL_1 || record?.batteryChg || "0") || 0;
+
+        // Extract SOC - Low Voltage uses SOC_1, High Voltage uses soc
+        const soc = parseFloat(record?.SOC_1 || record?.soc || "0") || 0;
+
+        return {
+          currentPower,
+          AutoID: device?.sn || "",
+          status,
+          GoodsID: device?.sn || "0",
+          ModelName: device?.ModelName || "",
+          GoodsName: device?.GoodsName || "",
+          todayYield,
+          totalYield,
+          generationTime: record?.time || "",
+          DataTime: record?.time || "",
+          capacity,
+          deviceType: record?.deviceType !== undefined ? "BATTERY" : "BATTERY",
+          customerEmail: email,
+          soc,
+        };
+      });
+
+    return filtered;
   };
 
   // Get Device List of Plant
@@ -345,8 +421,8 @@ class PlantService {
   ) => {
     return type === "INVERTER"
       ? await this.getInvertersOfPlant(email, plantId)
-      : [];
-    // : await this.getBatteriesOfPlant(email, plantId);
+      // : await this.getBatteriesOfPlant(email, [plantId]);
+    : [];
   };
 
   // Modify Plant
@@ -475,7 +551,7 @@ class PlantService {
     const plant: any = await PlantRepo.getPlantById(plantId);
     if (!plant) throw HttpError.notFound("Plant not found");
     const plantCount = await getGroupDetail(plant.customer.email, plant.AutoId);
-    
+
     // Fetch weather data if location is available
     let weatherData = null;
     if (plant.location && plant.location.latitude && plant.location.longitude) {
@@ -485,7 +561,7 @@ class PlantService {
         plant.location.longitude
       );
     }
-    
+
     let filteredData = {
       powerGeneration: plantCount.ETotal || 0,
       revenue: plantCount.IncomeTotal || 0,
@@ -500,4 +576,3 @@ class PlantService {
 }
 
 export default PlantService;
-
