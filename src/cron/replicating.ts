@@ -150,7 +150,7 @@ cron.schedule("0 0 * * *", async () => {
 });
 
 //  for running on every 5 minutes
-cron.schedule("*/5 * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   logger(
     "=======================[CRON] Checking Plant Alarms ]=======================\n"
   );

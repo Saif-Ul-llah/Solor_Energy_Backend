@@ -88,7 +88,7 @@ class PlantRepo {
     latitude?: number,
     longitude?: number
   ): Promise<Plant[]> {
-    // Get Nested Installer's Ids
+    // Get Nested customer's Ids
     // logger("userIdsList", userIdsList);
     const latRange = 0.1;
     const lonRange = 0.1;
@@ -146,18 +146,18 @@ class PlantRepo {
     return plant;
   }
 
-public static async getPlantById(id: string): Promise<Plant | null> {
-  const plant = await prisma.plant.findUnique({
-    where: { id },
-    include: {
-      location: true,
-      customer: true,
-      installer: true,
-      plantImage: true,
-    },
-  });
-  return plant;
-}
+  public static async getPlantById(id: string): Promise<Plant | null> {
+    const plant = await prisma.plant.findUnique({
+      where: { id },
+      include: {
+        location: true,
+        customer: true,
+        installer: true,
+        plantImage: true,
+      },
+    });
+    return plant;
+  }
   public static async getPlantByAutoIdRepo(id: string): Promise<Plant | null> {
     const plant = await prisma.plant.findUnique({
       where: { AutoId: id },
@@ -257,15 +257,16 @@ public static async getPlantById(id: string): Promise<Plant | null> {
   }
 
   // Get batteries List of a plant by plant id
-  public static async BatteriesOfPlant(email: string, plantId: string) {
-    const batteryList = await prisma.plant.findMany({
-      where: { AutoId: plantId, device: { some: { deviceType: "BATTERY" } } },
-      select: {
-        device: true,
+  public static async BatteriesOfPlant(email: string, plantId: string[]) {
+    const batteryDevices = await prisma.device.findMany({
+      where: {
+        plant: { AutoId: { in: plantId } },
+        deviceType: "BATTERY",
       },
     });
-    if (!batteryList || batteryList.length === 0) return [];
-    return batteryList;
+    
+    if (!batteryDevices || batteryDevices.length === 0) return [];
+    return batteryDevices;
   }
 
   // Delete Plant
@@ -282,9 +283,9 @@ public static async getPlantById(id: string): Promise<Plant | null> {
       where: {
         MemberID: { in: emails },
       },
-      distinct: ['MemberID'],
+      distinct: ["MemberID"],
       orderBy: {
-        id: 'desc',
+        id: "desc",
       },
     });
     return getData;

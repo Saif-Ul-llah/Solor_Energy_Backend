@@ -5,7 +5,7 @@ class DeviceRepo {
   public static async checkDeviceRepo(sn: string) {
     const device = await prisma.device.findUnique({
       where: { sn },
-      include:{
+      include: {
         customer: true,
         plant: true,
       },
@@ -97,26 +97,54 @@ class DeviceRepo {
     }));
   }
 
-// Delete Device Repo
-public static async deleteDeviceRepo(userId: string, sn: string) {
-  const device = await prisma.device.delete({
-    where: { sn },
-  });
-  return device;
-}
+  // Delete Device Repo
+  public static async deleteDeviceRepo(userId: string, sn: string) {
+    const device = await prisma.device.delete({
+      where: { sn },
+    });
+    return device;
+  }
 
-// Get SN List Repo
-public static async getSnListRepo(customerIds: string[]) {
-  const snList = await prisma.device.findMany({
-    where: { customerId: { in: customerIds } },
-    select: {
-      sn: true,
-    },
-    distinct: ['sn'],
-  });
-  return snList.map((it: any) => it.sn)||[];
-}
+  // Get SN List Repo
+  public static async getSnListRepo(customerIds: string[]) {
+    const snList = await prisma.device.findMany({
+      where: { customerId: { in: customerIds } },
+      select: {
+        sn: true,
+      },
+      distinct: ["sn"],
+    });
+    return snList.map((it: any) => it.sn) || [];
+  }
 
+  // Get Device List By userId
+  public static async getDeviceListByUserIdRepo(userIds: string[]) {
+    const deviceList = await prisma.device.findMany({
+      where: { customerId: { in: userIds } ,deviceType: "BATTERY"},
+      include: {
+        plant: true,
+      },
+    });
+    return deviceList;
+  }
+
+  // Get Device List By userId and DeviceType
+  public static async getDeviceListByUserIdAndTypeRepo(
+    userIds: string[],
+    deviceType: DeviceType
+  ) {
+    const deviceList = await prisma.device.findMany({
+      where: { 
+        customerId: { in: userIds },
+        deviceType: deviceType
+      },
+      include: {
+        plant: true,
+        customer: true,
+      },
+    });
+    return deviceList;
+  }
 }
 
 export default DeviceRepo;

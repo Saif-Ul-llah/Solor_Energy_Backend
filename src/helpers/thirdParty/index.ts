@@ -194,7 +194,7 @@ export const getSign = async (
     MemberID,
     Password,
   });
-
+  // logger("data", MemberID, Password);
   const config = {
     method: "post" as const,
     maxBodyLength: Infinity,
@@ -207,6 +207,7 @@ export const getSign = async (
 
   try {
     const response: AxiosResponse<ApiResponse> = await axios.request(config);
+    // logger("response", response.data);
     return response.data;
   } catch (error) {
     console.error("Error fetching sign:", error);
@@ -259,6 +260,9 @@ export const InvertersOfPlant = async (
   );
 
   // logger("Sign", Sign);
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
   const data = new FormData();
   data.append("MemberID", MemberID);
   data.append("GroupAutoID", GroupAutoID);
@@ -301,6 +305,9 @@ export const ModifyPlant = async (
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
   // logger("Sign", Sign);
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   const data = new FormData();
   data.append("GroupName", GroupName);
@@ -347,6 +354,9 @@ export const insertInverterInfo = async (
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
   // logger("Sign", Sign);
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   const data = new FormData();
   data.append("MemberID", MemberID);
@@ -385,6 +395,9 @@ export const getDeviceBySN = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   const data = new FormData();
   data.append("GoodsID", GoodsID);
@@ -421,6 +434,9 @@ export const getDataForGraph = async (
     // MemberID,
     // process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   const data = new FormData();
   data.append("GoodsID", GoodsID);
@@ -457,7 +473,11 @@ export const plantsAlertById = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
-// logger("data \n", {GroupAutoID,MemberID,Sign});
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
+
+  // logger("data \n", {GroupAutoID,MemberID,Sign});
   const data = new FormData();
   data.append("GroupAutoID", GroupAutoID);
   data.append("MemberID", MemberID);
@@ -524,6 +544,10 @@ export const deletePlantThirdParty = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
+
   const data = new FormData();
   data.append("MemberID", MemberID);
   data.append("GroupAutoID", GroupAutoID);
@@ -1112,6 +1136,10 @@ export const readInverterModbusRegisters = async (
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
 
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
+
   const regsToRead = registerList || getRegisterList();
 
   const data = new FormData();
@@ -1220,6 +1248,9 @@ export const writeInverterModbusRegisters = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   // Use configured callback URL or provided one
   const url =
@@ -1281,6 +1312,9 @@ export const getV1000Line = async (
     MemberID,
     process.env.MONITOR_ACCOUNT_PASSWORD as string
   );
+  if (Sign.status === false) {
+    throw new Error(Sign?.message || "Sign is required");
+  }
 
   const data = qs.stringify({
     MemberID,
@@ -1320,6 +1354,10 @@ export const getHybridLine = async (
       MemberID,
       process.env.MONITOR_ACCOUNT_PASSWORD as string
     );
+    if (Sign.status === false) {
+      throw new Error(Sign?.message || "Sign is required");
+    }
+
     const data = new FormData();
     data.append("GoodsID", GoodsID);
     data.append("Type", Type);
@@ -1345,14 +1383,18 @@ export const getHybridLine = async (
   }
 };
 
-export const getEndUserSummaryInfo = async (Page: string = "1"): Promise<ApiResponse> => {
+export const getEndUserSummaryInfo = async (
+  Page: string = "1"
+): Promise<ApiResponse> => {
   try {
     const Sign = await getOperationSignature(
       process.env.SERVICE_ACCOUNT_ID as string,
       process.env.SERVICE_ACCOUNT_PASS as string
     );
+    if (!Sign || !Sign.status) {
+      throw new Error(Sign?.message || "Sign is required");
+    }
 
-   
     const data = new FormData();
     data.append("MemberID", process.env.SERVICE_ACCOUNT_ID as string);
     data.append("Page", Page);
@@ -1384,6 +1426,10 @@ export const getGroupDetail = async (MemberID: string, GroupAutoID: string) => {
       MemberID,
       process.env.MONITOR_ACCOUNT_PASSWORD as string
     );
+    if (Sign.status === false) {
+      throw new Error(Sign?.message || "Sign is required");
+    }
+
     const data = new FormData();
     data.append("MemberID", MemberID);
     data.append("GroupAutoID", GroupAutoID);

@@ -94,105 +94,153 @@ class DeviceService {
   ) => {
     //======================================= Get user list from recursive function =======================================
     // 1️ Get all child recursively
-    const userIdsList = await PlantRepo.getChildrenRecursively(userId, "");
-    //======================================= Get There customers list =======================================
-    // 2 Build email list
-    const memberIds = userIdsList.map((child: any) => child.email);
+    const userIdsList: any = await PlantRepo.getChildrenRecursively(userId, "");
 
-    // 3️ Fetch all monitoring users once
-    const monitorUsers = await getEndUserInfo();
-    // 4 Filter only users present in both lists
-    const validMonitorUsers = monitorUsers.filter((u: any) =>
-      memberIds.includes(u.MemberID)
-    );
+    let flatDevicesList: any[] = [];
+    let ForCount: any[] = [];
+
     // Get all device list from our db when deviceType is equal to BATTERY
     if (deviceType === "BATTERY") {
-      //
-      //===================  Changes need to be done here 
-      //
-    }
-    //======================================= Get there plants list with their devices =======================================
-    // 5 Get Our DB Plants lists
-    let plantsWithDevices = await PlantRepo.getAllPlants(
-      "",
-      validMonitorUsers.map((u: any) => u.MemberID)
-    );
+      let deviceList = await DeviceRepo.getDeviceListByUserIdRepo(
+        userIdsList.map((child: any) => child.id)
+      );
+      let deviceData = await PlantServices.getBatteriesOfPlant(
+        "",
+        deviceList.map((device: any) => device.plant.AutoId)
+      );
+      flatDevicesList = deviceData;
+      ForCount = deviceData;
+    } else if (deviceType === "INVERTER") {
+      // Handle INVERTER - fetch from DB first to ensure we get all devices, then enrich with third-party data
+      // Get all INVERTER devices from our database
+      let dbDeviceList = await DeviceRepo.getDeviceListByUserIdAndTypeRepo(
+        userIdsList.map((child: any) => child.id),
+        deviceType
+      );
 
-    // ====================================== Get there device list for each plant From Third party =======================================
-    let devicesList = await Promise.all(
-      plantsWithDevices.map((plant: any) =>
-        PlantServices.getDeviceListOfPlantService(
-          plant.AutoId,
-          deviceType,
-          plant.customer.email
+      // Group devices by plant AutoId and customer email to minimize API calls
+      const plantDeviceMap = new Map<string, { devices: any[]; email: string }>();
+      
+      dbDeviceList.forEach((device: any) => {
+        const key = `${device.plant.AutoId}_${device.customer.email}`;
+        if (!plantDeviceMap.has(key)) {
+          plantDeviceMap.set(key, {
+            devices: [],
+            email: device.customer.email,
+          });
+        }
+        plantDeviceMap.get(key)!.devices.push(device);
+      });
+
+      // Fetch inverter data from third-party API for each unique plant
+      let thirdPartyDataList = await Promise.all(
+        Array.from(plantDeviceMap.entries()).map(
+          async ([key, { devices, email }]) => {
+            const plantAutoId = devices[0].plant.AutoId;
+            const inverterData = await PlantServices.getDeviceListOfPlantService(
+              plantAutoId,
+              deviceType,
+              email
+            );
+            return inverterData || [];
+          }
         )
-      )
-    );
+      );
 
-    let flatDevicesList = devicesList.flat();
-    let ForCount = devicesList.flat();
-    // console.log(flatDevicesList);
+      // Create a map of third-party data by GoodsID (SN) for quick lookup
+      const thirdPartyDataMap = new Map<string, any>();
+      thirdPartyDataList.flat().forEach((inv: any) => {
+        if (inv.GoodsID) {
+          thirdPartyDataMap.set(inv.GoodsID, inv);
+        }
+      });
 
+      // Merge DB devices with third-party data
+      // Include ALL devices from DB, enriching with third-party data where available
+      flatDevicesList = dbDeviceList.map((dbDevice: any) => {
+        const thirdPartyData = thirdPartyDataMap.get(dbDevice.sn);
+        if (thirdPartyData) {
+          // Use third-party data if available
+          return thirdPartyData;
+        } else {
+          // Fallback to DB device with default values if third-party data not available
+          return {
+            currentPower: 0,
+            AutoID: dbDevice.plant?.AutoId || "",
+            status: "OFFLINE",
+            GoodsID: dbDevice.sn,
+            ModelName: "",
+            GoodsName: dbDevice.sn,
+            todayYield: 0,
+            totalYield: 0,
+            generationTime: "",
+            DataTime: "",
+            capacity: 0,
+            deviceType: "INVERTER",
+            customerEmail: dbDevice.customer?.email || "",
+          };
+        }
+      });
+
+      ForCount = flatDevicesList;
+    } else {
+      // Handle other device types (fallback to old method)
+      //======================================= Get There customers list =======================================
+      // 2 Build email list
+      const memberIds = userIdsList.map((child: any) => child.email);
+
+      // 3️ Fetch all monitoring users once
+      const monitorUsers = await getEndUserInfo();
+      // 4 Filter only users present in both lists
+      const validMonitorUsers = monitorUsers.filter((u: any) =>
+        memberIds.includes(u.MemberID)
+      );
+      //======================================= Get there plants list with their devices =======================================
+      // 5 Get Our DB Plants lists
+      let plantsWithDevices = await PlantRepo.getAllPlants(
+        "",
+        validMonitorUsers.map((u: any) => u.MemberID)
+      );
+
+      // ====================================== Get there device list for each plant From Third party =======================================
+      let devicesList = await Promise.all(
+        plantsWithDevices.map((plant: any) =>
+          PlantServices.getDeviceListOfPlantService(
+            plant.AutoId,
+            deviceType,
+            plant.customer.email
+          )
+        )
+      );
+
+      flatDevicesList = devicesList.flat();
+      ForCount = devicesList.flat();
+    }
+
+    // Apply search filter if provided
     if (search) {
       flatDevicesList = flatDevicesList.filter((device: any) =>
-        device.GoodsName.toLowerCase().includes(search.toLowerCase())
+        device.GoodsName?.toLowerCase().includes(search.toLowerCase())
       );
     }
 
-    // return flatDevicesList;
+    // Apply status filter if provided
     const validStatuses = ["OFFLINE", "STANDBY", "FAULT", "ONLINE"];
-
     if (status && validStatuses.includes(status)) {
-      let newData = flatDevicesList.filter(
-        (plant: any) => plant.status === status
+      flatDevicesList = flatDevicesList.filter(
+        (device: any) => device.status === status
       );
-      // Ensure valid page number (minimum 1)
-      const validPage = Math.max(page, 1);
-
-      // Calculate skip and take for slicing the array
-      const skip = (validPage - 1) * pageSize;
-      const take = pageSize;
-
-      // Get the total number of items in the array
-      const total = newData.length;
-
-      // Slice the array to get the paginated items
-      const paginatedResults = newData.slice(skip, skip + take);
-
-      // Return the response in the desired format
-      return {
-        devices: paginatedResults, // Paginated plant list
-        currentPage: validPage,
-        pageSize,
-        total,
-        recordsCount: ForCount.length,
-        totalPages: Math.ceil(total / pageSize),
-        online: ForCount.filter((device: any) => device.status === "ONLINE")
-          .length,
-        offline: ForCount.filter((device: any) => device.status === "OFFLINE")
-          .length,
-        fault: ForCount.filter((device: any) => device.status === "FAULT")
-          .length,
-        standby: ForCount.filter((device: any) => device.status === "STANDBY")
-          .length,
-      };
     }
 
+    // Calculate pagination
     const validPage = Math.max(page, 1);
-
-    // Calculate skip and take for slicing the array
     const skip = (validPage - 1) * pageSize;
-    const take = pageSize;
-
-    // Get the total number of items in the array
     const total = flatDevicesList.length;
-
-    // Slice the array to get the paginated items
-    const paginatedResults = flatDevicesList.slice(skip, skip + take);
+    const paginatedResults = flatDevicesList.slice(skip, skip + pageSize);
 
     // Return the response in the desired format
     return {
-      devices: paginatedResults, // Paginated plant list
+      devices: paginatedResults,
       currentPage: validPage,
       pageSize,
       total,
@@ -202,7 +250,8 @@ class DeviceService {
         .length,
       offline: ForCount.filter((device: any) => device.status === "OFFLINE")
         .length,
-      fault: ForCount.filter((device: any) => device.status === "FAULT").length,
+      fault: ForCount.filter((device: any) => device.status === "FAULT")
+        .length,
       standby: ForCount.filter((device: any) => device.status === "STANDBY")
         .length,
     };
@@ -254,7 +303,7 @@ class DeviceService {
   // Upload Firmware
   public static uploadFirmwareService = async (data: any) => {
     const upload = await DeviceRepo.uploadFirmwareRepo(data);
-    
+
     // Log firmware upload
     await createLogs({
       userId: data.userId,
@@ -268,7 +317,7 @@ class DeviceService {
         url: data.url,
       },
     });
-    
+
     return upload;
   };
 
@@ -282,9 +331,9 @@ class DeviceService {
   public static deleteDeviceService = async (userId: string, sn: string) => {
     const checkDevice = await DeviceRepo.checkDeviceRepo(sn);
     if (!checkDevice) throw new HttpError("Device not found", "not found", 404);
-    
+
     const device = await DeviceRepo.deleteDeviceRepo(userId, sn);
-    
+
     // Log device deletion
     await createLogs({
       userId: userId,
@@ -296,7 +345,7 @@ class DeviceService {
         deviceType: checkDevice.deviceType,
       },
     });
-    
+
     return device;
   };
 
@@ -307,8 +356,14 @@ class DeviceService {
     registerList?: string[]
   ) => {
     try {
-      const { readInverterModbusRegisters } = await import("../../helpers/thirdParty");
-      const data = await readInverterModbusRegisters(sn, memberId, registerList);
+      const { readInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+      const data = await readInverterModbusRegisters(
+        sn,
+        memberId,
+        registerList
+      );
       return data;
     } catch (error: any) {
       logger("Error reading Modbus registers:", error);
@@ -328,8 +383,14 @@ class DeviceService {
     user: User
   ) => {
     try {
-      const { writeInverterModbusRegisters } = await import("../../helpers/thirdParty");
-      const data = await writeInverterModbusRegisters(sn, memberId, registerValues);
+      const { writeInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+      const data = await writeInverterModbusRegisters(
+        sn,
+        memberId,
+        registerValues
+      );
       await createLogs({
         userId: user.id,
         logType: LogType.MODBUS_WRITE_REGISTERS,
@@ -340,7 +401,9 @@ class DeviceService {
           user: user,
         },
         action: "MODBUS_WRITE_REGISTERS",
-        description: `Modbus registers written to ${sn} by ${user.email} with values ${JSON.stringify(registerValues)}`,
+        description: `Modbus registers written to ${sn} by ${
+          user.email
+        } with values ${JSON.stringify(registerValues)}`,
       });
       return data;
     } catch (error: any) {
@@ -357,10 +420,10 @@ class DeviceService {
   public static getModbusRegisterMapService = async () => {
     try {
       const { MODBUS_REGISTER_MAP } = await import("../../helpers/thirdParty");
-      
+
       // Group registers by section
       const groupedMap: Record<string, any[]> = {};
-      
+
       MODBUS_REGISTER_MAP.forEach((item) => {
         if (!groupedMap[item.section]) {
           groupedMap[item.section] = [];
@@ -400,9 +463,10 @@ class DeviceService {
       logger("📥 Processing Modbus Write Callback:", data);
 
       // Parse the modbus data if it's a string
-      const modbusInfo = typeof data.modbusData === "string" 
-        ? JSON.parse(data.modbusData)
-        : data.modbusData;
+      const modbusInfo =
+        typeof data.modbusData === "string"
+          ? JSON.parse(data.modbusData)
+          : data.modbusData;
 
       // Check if operation was successful
       // modbusInfo format: {"5000":"1","5001":"1"} where 1=success, 2=fail
@@ -439,36 +503,46 @@ class DeviceService {
     }
   };
 
-  // Get SN List 
+  // Get SN List
   public static getSnListService = async (userId: string) => {
     let child = await AuthRepo.getChildrenRecursively(userId, "CUSTOMER");
-    let customerIds = child.map((child: any) => child.id)||[];
+    let customerIds = child.map((child: any) => child.id) || [];
     customerIds.push(userId);
     let Devices = await DeviceRepo.getSnListRepo(customerIds);
     return Devices;
   };
 
   // Device Report
-  public static deviceReportService = async (sn: string, type: string, date: string, user: User) => {
+  public static deviceReportService = async (
+    sn: string,
+    type: string,
+    date: string,
+    user: User
+  ) => {
     let device = await DeviceRepo.getDeviceByIdRepo(sn);
     if (!device) throw new HttpError("Device not found", "not found", 404);
-   let reportData = await getHybridLine(device.sn, device.customer.email, type, date);
-   if(!reportData) throw new HttpError("No report data found", "not found", 404);
+    let reportData = await getHybridLine(
+      device.sn,
+      device.customer.email,
+      type,
+      date
+    );
+    if (!reportData)
+      throw new HttpError("No report data found", "not found", 404);
     return reportData.map((item: any) => ({
-   ...item,
-   sn: device.sn,
-    })) ;
+      ...item,
+      sn: device.sn,
+    }));
   };
-
 
   // get device overview
   public static deviceOverviewService = async (sn: string) => {
     let device = await DeviceRepo.getDeviceByIdRepo(sn);
     if (!device) throw new HttpError("Device not found", "not found", 404);
-    
+
     // Get device details from third party
     let deviceDetails = await getDeviceBySN(device.sn, device.customer.email);
-    
+
     // Fetch weather data if plant location is available
     let weatherData = null;
     if (device.plant?.location?.latitude && device.plant?.location?.longitude) {
@@ -478,7 +552,7 @@ class DeviceService {
         device.plant.location.longitude
       );
     }
-    
+
     // Filter and format the response
     let filteredData = {
       deviceId: device.id,
@@ -504,4 +578,3 @@ class DeviceService {
 }
 
 export default DeviceService;
-

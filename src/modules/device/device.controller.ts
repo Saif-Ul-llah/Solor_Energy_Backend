@@ -9,6 +9,8 @@ import {
   logger,
   validateFirmwareUpload,
 } from "../../imports";
+import ExcelJS from "exceljs";
+import { stringify } from "csv-stringify/sync";
 
 import DeviceServices from "./device.services";
 
@@ -79,7 +81,7 @@ class DeviceController {
         return next(HttpError.missingParameters("User Id is required! "));
       const device: any = await DeviceServices.getAllDeviceListService(
         userId as string,
-        "INVERTER" as DeviceType,
+        deviceType as DeviceType,
         status as string,
         Number(page),
         Number(pageSize),
@@ -367,6 +369,144 @@ class DeviceController {
       );
       if (deviceReport) {
         return sendResponse(res, 200, "Device Report", deviceReport, "success");
+      }
+    }
+  );
+
+  // Device Report Export (CSV/Excel)
+  public static deviceReportExport = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn, type, date } = req.body;
+      const format = (req.query.format as string) || "csv"; // csv or excel
+
+      if (!sn || !type || !date) {
+        return next(HttpError.missingParameters("All fields are required! "));
+      }
+
+      if (!["csv", "excel"].includes(format.toLowerCase())) {
+        return next(
+          HttpError.badRequest("Format must be either 'csv' or 'excel'")
+        );
+      }
+
+      try {
+        const deviceReport: any = await DeviceServices.deviceReportService(
+          sn,
+          type,
+          date,
+          user
+        );
+
+        if (!deviceReport || !Array.isArray(deviceReport) || deviceReport.length === 0) {
+          return next(HttpError.notFound("No report data found"));
+        }
+
+        // Generate filename with timestamp
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-").split("T")[0];
+        const filename = `device-report-${sn}-${timestamp}`;
+
+        if (format.toLowerCase() === "csv") {
+          // Generate CSV
+          const headers = Object.keys(deviceReport[0]);
+          const rows = deviceReport.map((row: any) =>
+            headers.map((header) => {
+              const value = row[header];
+              // Handle null, undefined, and objects
+              if (value === null || value === undefined) return "";
+              if (typeof value === "object") return JSON.stringify(value);
+              return String(value);
+            })
+          );
+
+          const csvData = stringify([headers, ...rows], {
+            header: false,
+            quoted: true,
+          });
+
+          res.setHeader("Content-Type", "text/csv");
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${filename}.csv"`
+          );
+          return res.send(csvData);
+        } else {
+          // Generate Excel
+          const workbook = new ExcelJS.Workbook();
+          const worksheet = workbook.addWorksheet("Device Report");
+
+          // Get headers from first row
+          const headers = Object.keys(deviceReport[0]);
+          
+          // Format headers with proper capitalization
+          const formattedHeaders = headers.map((header) => {
+            return header
+              .replace(/([A-Z])/g, " $1")
+              .replace(/^./, (str) => str.toUpperCase())
+              .trim();
+          });
+
+          // Add headers row
+          worksheet.addRow(formattedHeaders);
+
+          // Style the header row
+          const headerRow = worksheet.getRow(1);
+          headerRow.font = { bold: true, size: 12 };
+          headerRow.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FFE0E0E0" },
+          };
+          headerRow.alignment = { vertical: "middle", horizontal: "center" };
+
+          // Add data rows
+          deviceReport.forEach((row: any) => {
+            const rowData = headers.map((header) => {
+              const value = row[header];
+              if (value === null || value === undefined) return "";
+              if (typeof value === "object") return JSON.stringify(value);
+              return value;
+            });
+            worksheet.addRow(rowData);
+          });
+
+          // Auto-fit columns
+          worksheet.columns.forEach((column: any) => {
+            if (column.header) {
+              let maxLength = 0;
+              column.eachCell({ includeEmpty: true }, (cell: any) => {
+                const columnLength = cell.value
+                  ? cell.value.toString().length
+                  : 10;
+                if (columnLength > maxLength) {
+                  maxLength = columnLength;
+                }
+              });
+              column.width = Math.min(Math.max(maxLength + 2, 10), 50);
+            }
+          });
+
+          // Set response headers
+          res.setHeader(
+            "Content-Type",
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          );
+          res.setHeader(
+            "Content-Disposition",
+            `attachment; filename="${filename}.xlsx"`
+          );
+
+          // Write to response
+          await workbook.xlsx.write(res);
+          return res.end();
+        }
+      } catch (error: any) {
+        logger("Error exporting device report:", error);
+        return next(
+          HttpError.internalServerError(
+            error.message || "Failed to export device report"
+          )
+        );
       }
     }
   );
