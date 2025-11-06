@@ -108,7 +108,7 @@ class DeviceRepo {
   // Get SN List Repo
   public static async getSnListRepo(customerIds: string[]) {
     const snList = await prisma.device.findMany({
-      where: { customerId: { in: customerIds } },
+      where: { customerId: { in: customerIds }, deviceType: "INVERTER" },
       select: {
         sn: true,
       },
@@ -120,7 +120,7 @@ class DeviceRepo {
   // Get Device List By userId
   public static async getDeviceListByUserIdRepo(userIds: string[]) {
     const deviceList = await prisma.device.findMany({
-      where: { customerId: { in: userIds } ,deviceType: "BATTERY"},
+      where: { customerId: { in: userIds }, deviceType: "BATTERY" },
       include: {
         plant: true,
       },
@@ -134,9 +134,9 @@ class DeviceRepo {
     deviceType: DeviceType
   ) {
     const deviceList = await prisma.device.findMany({
-      where: { 
+      where: {
         customerId: { in: userIds },
-        deviceType: deviceType
+        deviceType: deviceType,
       },
       include: {
         plant: true,

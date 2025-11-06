@@ -271,7 +271,7 @@ export const logger = (message: any, ...args: any[]) => {
     })
     .replace(",", "");
 
-  console.log(`\x1b[33m[${formattedDate}]\x1b[0m`, message, ...args);
+  console.log(` [${formattedDate}]\x1b[0m`, message, ...args);
 };
 
 export const createLogs = async (payload: LogsInterface): Promise<any> => {
