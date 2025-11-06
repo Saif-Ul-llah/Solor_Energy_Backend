@@ -376,8 +376,9 @@ class DeviceController {
   // Device Report Export (CSV/Excel)
   public static deviceReportExport = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {
+      logger("\x1b[32m Device Report Export\x1b[0m");
       const user = req.user;
-      const { sn, type, date } = req.body;
+      const { sn, type, date } = req.query;
       const format = (req.query.format as string) || "csv"; // csv or excel
 
       if (!sn || !type || !date) {
@@ -392,9 +393,9 @@ class DeviceController {
 
       try {
         const deviceReport: any = await DeviceServices.deviceReportService(
-          sn,
-          type,
-          date,
+          sn as string,
+          type as string,
+          date as string,
           user
         );
 

@@ -1,5 +1,6 @@
 import cron from "node-cron";
 import {
+  getBatteryDeviceData,
   getDeviceBySN,
   getEndUserSummaryInfo,
   logger,
@@ -152,7 +153,7 @@ cron.schedule("0 0 * * *", async () => {
 //  for running on every 5 minutes
 cron.schedule("* * * * *", async () => {
   logger(
-    "=======================[CRON] Checking Plant Alarms ]=======================\n"
+    "=======================[CRON] Checking Plant Alarms =======================\n"
   );
 
   //Get all Plants
@@ -184,7 +185,7 @@ cron.schedule("* * * * *", async () => {
   alarms.push({
     ModelName: "SE 10KHB-210-T2",
     GoodsName: "SE 10KHB-210-T2 2342-23820000PH",
-    MemberID: "progziel01",
+    MemberID: "customer@gmail.com",
     GoodsID: "2342-23820000PH",
     Time: "2025-11-05 01:00:23",
     ErrorCode: "50",
@@ -213,4 +214,27 @@ cron.schedule("* * * * *", async () => {
       }
     }
   }
+});
+
+// Same For Battery Status
+cron.schedule("* * * * *", async () => {
+  logger(
+    "=======================[CRON] Checking Battery Status =======================\n")
+    // Get all batteries from our database
+    const batteries = await prisma.device.findMany({
+      where: { deviceType: "BATTERY" },
+    });
+    if (!batteries.length) {
+      logger("No batteries found in the database.");
+      return;
+    }
+    // get status from third party
+    const status = await Promise.all(
+      batteries.map(async (battery: any) => {
+        const status = await getBatteryDeviceData(battery.sn, new Date().toISOString().split("T")[0], 1, 10);
+        return { ...status, sn: battery.sn };
+      })
+    );
+    logger("status:", status);
+    
 });
