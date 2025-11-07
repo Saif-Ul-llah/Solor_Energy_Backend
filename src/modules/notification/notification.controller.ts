@@ -102,5 +102,31 @@ class NotificationController {
       );
     }
   );
+
+  public static getAlertsSummary = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { period = "monthly" } = req.query;
+
+      if (!["daily", "weekly", "monthly", "yearly"].includes(period as string)) {
+        return next(
+          HttpError.badRequest("Period must be: daily, weekly, monthly, or yearly")
+        );
+      }
+
+      const summary = await NotificationServices.getAlertsSummaryService(
+        user.id,
+        period as "daily" | "weekly" | "monthly" | "yearly"
+      );
+
+      return sendResponse(
+        res,
+        200,
+        "Alerts summary fetched successfully",
+        summary,
+        "success"
+      );
+    }
+  );
 }
 export default NotificationController;

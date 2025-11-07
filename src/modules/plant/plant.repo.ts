@@ -263,6 +263,10 @@ class PlantRepo {
         plant: { AutoId: { in: plantId } },
         deviceType: "BATTERY",
       },
+      include: {
+        customer: true,
+        plant: true,
+      },
     });
     
     if (!batteryDevices || batteryDevices.length === 0) return [];

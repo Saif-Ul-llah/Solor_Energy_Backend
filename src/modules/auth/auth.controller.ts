@@ -18,6 +18,7 @@ import {
 import AuthServices from "./auth.services";
 
 class AuthController {
+  
   /**==============================  Register New User  ============================== */
   public static register = asyncHandler(
     async (req: Request, res: Response, next: NextFunction) => {

@@ -167,6 +167,7 @@ class PlantService {
         currentPower: plant?.CurrPac || 0,
         AutoID: plant?.AutoID || "0",
         CustomerEmail: plant?.customer.email || "",
+        customerName: plant?.customer.fullName || "",
         status:
           plant?.Light === 1
             ? "ONLINE"
@@ -328,7 +329,7 @@ class PlantService {
         const sn = item.sn;
         const date = new Date().toISOString().split("T")[0];
         const deviceData = await getBatteryDeviceData(sn, date);
-        return { ...deviceData, sn };
+        return { ...deviceData, sn , ...item };
       })
     );
 
@@ -404,8 +405,10 @@ class PlantService {
           generationTime: record?.time || "",
           DataTime: record?.time || "",
           capacity,
-          deviceType: record?.deviceType !== undefined ? "BATTERY" : "BATTERY",
+          deviceType:  "BATTERY",
           customerEmail: email,
+          customerName: device?.customer?.fullName || "",
+          address: device?.plant?.address || "",
           soc,
         };
       });
@@ -421,8 +424,8 @@ class PlantService {
   ) => {
     return type === "INVERTER"
       ? await this.getInvertersOfPlant(email, plantId)
-      // : await this.getBatteriesOfPlant(email, [plantId]);
-    : [];
+      : await this.getBatteriesOfPlant(email, [plantId]);
+    // : [];
   };
 
   // Modify Plant

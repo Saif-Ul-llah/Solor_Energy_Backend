@@ -83,10 +83,97 @@ class DeviceService {
     return null;
   };
 
+  // Helper function to fetch BATTERY devices
+  private static fetchBatteryDevices = async (userIdsList: any[]) => {
+    let deviceList = await DeviceRepo.getDeviceListByUserIdRepo(
+      userIdsList.map((child: any) => child.id)
+    );
+    let deviceData = await PlantServices.getBatteriesOfPlant(
+      "",
+      deviceList.map((device: any) => device.plant.AutoId)
+    );
+    return deviceData;
+  };
+
+  // Helper function to fetch INVERTER devices
+  private static fetchInverterDevices = async (userIdsList: any[]) => {
+    // Get all INVERTER devices from our database
+    let dbDeviceList = await DeviceRepo.getDeviceListByUserIdAndTypeRepo(
+      userIdsList.map((child: any) => child.id),
+      "INVERTER"
+    );
+
+    // Group devices by plant AutoId and customer email to minimize API calls
+    const plantDeviceMap = new Map<string, { devices: any[]; email: string }>();
+    
+    dbDeviceList.forEach((device: any) => {
+      const key = `${device.plant.AutoId}_${device.customer.email}`;
+      if (!plantDeviceMap.has(key)) {
+        plantDeviceMap.set(key, {
+          devices: [],
+          email: device.customer.email,
+        });
+      }
+      plantDeviceMap.get(key)!.devices.push(device);
+    });
+
+    // Fetch inverter data from third-party API for each unique plant
+    let thirdPartyDataList = await Promise.all(
+      Array.from(plantDeviceMap.entries()).map(
+        async ([key, { devices, email }]) => {
+          const plantAutoId = devices[0].plant.AutoId;
+          const inverterData = await PlantServices.getDeviceListOfPlantService(
+            plantAutoId,
+            "INVERTER",
+            email
+          );
+          return inverterData || [];
+        }
+      )
+    );
+
+    // Create a map of third-party data by GoodsID (SN) for quick lookup
+    const thirdPartyDataMap = new Map<string, any>();
+    thirdPartyDataList.flat().forEach((inv: any) => {
+      if (inv.GoodsID) {
+        thirdPartyDataMap.set(inv.GoodsID, inv);
+      }
+    });
+
+    // Merge DB devices with third-party data
+    // Include ALL devices from DB, enriching with third-party data where available
+    return dbDeviceList.map((dbDevice: any) => {
+      const thirdPartyData = thirdPartyDataMap.get(dbDevice.sn);
+      if (thirdPartyData) {
+        // Use third-party data if available
+        return thirdPartyData;
+      } else {
+        // Fallback to DB device with default values if third-party data not available
+        return {
+          currentPower: 0,
+          AutoID: dbDevice.plant?.AutoId || "",
+          status: "OFFLINE",
+          GoodsID: dbDevice.sn,
+          ModelName: "",
+          GoodsName: dbDevice.sn,
+          todayYield: 0,
+          totalYield: 0,
+          generationTime: "",
+          DataTime: "",
+          capacity: 0,
+          deviceType: "INVERTER",
+          customerEmail: dbDevice.customer?.email || "",
+          customerName: dbDevice.customer?.fullName || "",
+          address: dbDevice.plant?.address || "",
+        };
+      }
+    });
+  };
+
   // Get All devices for home page
   public static getAllDeviceListService = async (
     userId: string,
-    deviceType: DeviceType,
+    deviceType: DeviceType | "All",
     status: string,
     page: number,
     pageSize: number,
@@ -99,89 +186,24 @@ class DeviceService {
     let flatDevicesList: any[] = [];
     let ForCount: any[] = [];
 
-    // Get all device list from our db when deviceType is equal to BATTERY
+    // Handle different device types
     if (deviceType === "BATTERY") {
-      let deviceList = await DeviceRepo.getDeviceListByUserIdRepo(
-        userIdsList.map((child: any) => child.id)
-      );
-      let deviceData = await PlantServices.getBatteriesOfPlant(
-        "",
-        deviceList.map((device: any) => device.plant.AutoId)
-      );
-      flatDevicesList = deviceData;
-      ForCount = deviceData;
+      // Fetch only BATTERY devices
+      flatDevicesList = await this.fetchBatteryDevices(userIdsList);
+      ForCount = flatDevicesList;
     } else if (deviceType === "INVERTER") {
-      // Handle INVERTER - fetch from DB first to ensure we get all devices, then enrich with third-party data
-      // Get all INVERTER devices from our database
-      let dbDeviceList = await DeviceRepo.getDeviceListByUserIdAndTypeRepo(
-        userIdsList.map((child: any) => child.id),
-        deviceType
-      );
-
-      // Group devices by plant AutoId and customer email to minimize API calls
-      const plantDeviceMap = new Map<string, { devices: any[]; email: string }>();
+      // Fetch only INVERTER devices
+      flatDevicesList = await this.fetchInverterDevices(userIdsList);
+      ForCount = flatDevicesList;
+    } else if (deviceType === "All") {
+      // Fetch both BATTERY and INVERTER devices
+      const [batteryDevices, inverterDevices] = await Promise.all([
+        this.fetchBatteryDevices(userIdsList),
+        this.fetchInverterDevices(userIdsList),
+      ]);
       
-      dbDeviceList.forEach((device: any) => {
-        const key = `${device.plant.AutoId}_${device.customer.email}`;
-        if (!plantDeviceMap.has(key)) {
-          plantDeviceMap.set(key, {
-            devices: [],
-            email: device.customer.email,
-          });
-        }
-        plantDeviceMap.get(key)!.devices.push(device);
-      });
-
-      // Fetch inverter data from third-party API for each unique plant
-      let thirdPartyDataList = await Promise.all(
-        Array.from(plantDeviceMap.entries()).map(
-          async ([key, { devices, email }]) => {
-            const plantAutoId = devices[0].plant.AutoId;
-            const inverterData = await PlantServices.getDeviceListOfPlantService(
-              plantAutoId,
-              deviceType,
-              email
-            );
-            return inverterData || [];
-          }
-        )
-      );
-
-      // Create a map of third-party data by GoodsID (SN) for quick lookup
-      const thirdPartyDataMap = new Map<string, any>();
-      thirdPartyDataList.flat().forEach((inv: any) => {
-        if (inv.GoodsID) {
-          thirdPartyDataMap.set(inv.GoodsID, inv);
-        }
-      });
-
-      // Merge DB devices with third-party data
-      // Include ALL devices from DB, enriching with third-party data where available
-      flatDevicesList = dbDeviceList.map((dbDevice: any) => {
-        const thirdPartyData = thirdPartyDataMap.get(dbDevice.sn);
-        if (thirdPartyData) {
-          // Use third-party data if available
-          return thirdPartyData;
-        } else {
-          // Fallback to DB device with default values if third-party data not available
-          return {
-            currentPower: 0,
-            AutoID: dbDevice.plant?.AutoId || "",
-            status: "OFFLINE",
-            GoodsID: dbDevice.sn,
-            ModelName: "",
-            GoodsName: dbDevice.sn,
-            todayYield: 0,
-            totalYield: 0,
-            generationTime: "",
-            DataTime: "",
-            capacity: 0,
-            deviceType: "INVERTER",
-            customerEmail: dbDevice.customer?.email || "",
-          };
-        }
-      });
-
+      // Combine both device types
+      flatDevicesList = [...batteryDevices, ...inverterDevices];
       ForCount = flatDevicesList;
     } else {
       // Handle other device types (fallback to old method)

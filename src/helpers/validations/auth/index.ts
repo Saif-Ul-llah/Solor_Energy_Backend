@@ -63,7 +63,7 @@ export const registerValidation = Joi.object({
       "string.empty": "Parent ID must be a string and not empty",
       "any.required": "Parent ID is required unless role is ADMIN",
     }),
-  imageUrl: Joi.string().uri().messages({
+  imageUrl: Joi.string().uri().optional().allow(null, "").messages({
     "string.uri": "Image URL must be a valid URI",
     "string.base": "Image URL must be a string",
   }),
