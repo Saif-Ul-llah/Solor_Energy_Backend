@@ -5,6 +5,7 @@ import NotificationController from "./notification.controller";
 const router = Router();
 
 router.get("/getPlantsAlerts", checkToken, NotificationController.getPlantsAlerts);
+router.get("/getAlertsSummary", checkToken, NotificationController.getAlertsSummary);
 router.post("/sendNotification", checkToken, NotificationController.sendNotification);
 router.get("/notificationList", checkToken, NotificationController.getNotificationList);
 router.get("/getNotificationPreference", checkToken, NotificationController.getNotificationPreference);

@@ -70,7 +70,7 @@ class DeviceController {
     async (req: Request, res: Response, next: NextFunction) => {
       // const user = req.user;
       const {
-        deviceType = "INVERTER",
+        deviceType = "All",
         status,
         page = 1,
         pageSize = 10,
@@ -81,7 +81,7 @@ class DeviceController {
         return next(HttpError.missingParameters("User Id is required! "));
       const device: any = await DeviceServices.getAllDeviceListService(
         userId as string,
-        deviceType as DeviceType,
+        deviceType as DeviceType | "All",
         status as string,
         Number(page),
         Number(pageSize),

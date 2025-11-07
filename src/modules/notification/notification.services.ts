@@ -1,10 +1,11 @@
 import { LogType, User } from "@prisma/client";
-import { HttpError, logger, dotenv, plantsAlertById } from "../../imports";
+import { HttpError, logger, dotenv, prisma, plantsAlertById } from "../../imports";
 import NotificationRepo from "./notification.repo";
 import PlantServices from "./../plant/plant.services";
 import { sendPushNotification } from "../../utils/notification";
 import AuthRepo from "../auth/auth.repo";
 import { createLogs } from "../../utils/helpers";
+import PlantRepo from "../plant/plant.repo";
 dotenv.config();
 
 class NotificationService {
@@ -170,6 +171,82 @@ let totalResolvedNum = alerts.flatMap(( a: any)=> a.infoerror)
     });
     
     return updatedPreferences;
+  }
+
+  // Get Alerts Summary for Inverters and Batteries
+  public static async getAlertsSummaryService(
+    userId: string,
+    period: "daily" | "weekly" | "monthly" | "yearly" = "monthly"
+  ): Promise<any> {
+    try {
+      // Get all child users recursively
+      const userIdsList: any = await PlantRepo.getChildrenRecursively(userId, "");
+      const userIds = userIdsList.map((child: any) => child.id);
+      userIds.push(userId); // Include self
+
+      // Calculate date range based on period
+      const now = new Date();
+      let startDate = new Date();
+      
+      switch (period) {
+        case "daily":
+          startDate.setHours(0, 0, 0, 0);
+          break;
+        case "weekly":
+          startDate.setDate(now.getDate() - 7);
+          break;
+        case "monthly":
+          startDate.setMonth(now.getMonth() - 1);
+          break;
+        case "yearly":
+          startDate.setFullYear(now.getFullYear() - 1);
+          break;
+      }
+
+      // Count notifications from Notification table
+      // Battery notifications: "Battery Fault Alert"
+      // Inverter notifications: "Device Alarm Notification"
+
+      const [batteryCount, inverterCount] = await Promise.all([
+        // Count Battery Fault Alert notifications
+        prisma.notification.count({
+          where: {
+            userId: { in: userIds },
+            title: "Battery Fault Alert",
+            createdAt: {
+              gte: startDate,
+              lte: now,
+            },
+          },
+        }),
+        // Count Device Alarm Notification notifications (inverters)
+        prisma.notification.count({
+          where: {
+            userId: { in: userIds },
+            title: "Device Alarm Notification",
+            createdAt: {
+              gte: startDate,
+              lte: now,
+            },
+          },
+        }),
+      ]);
+
+      const total = batteryCount + inverterCount;
+
+      return {
+        BATTERY: batteryCount,
+        INVERTER: inverterCount,
+        total: total,
+      };
+    } catch (error: any) {
+      logger("[Alerts Summary] Error:", error?.message || error);
+      throw new HttpError(
+        "Failed to fetch alerts summary",
+        "internal-server-error",
+        500
+      );
+    }
   }
 }
 export default NotificationService;
