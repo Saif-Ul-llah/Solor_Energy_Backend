@@ -334,6 +334,33 @@ class AuthController {
       );
     }
   );
+
+  /**==============================  Logout Single Device  ============================== */
+  public static logoutSingleDevice = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const userId = (req as any).user.id; // populated by checkToken
+      const { refreshToken, clearFcmToken = true } = req.body;
+
+      if (!refreshToken) {
+        return next(HttpError.validationError("Refresh token is required"));
+      }
+
+      const result = await AuthServices.logoutSingleDeviceService(
+        userId,
+        refreshToken,
+        clearFcmToken,
+        req
+      );
+
+      return sendResponse(
+        res,
+        200,
+        result.message,
+        result,
+        "success"
+      );
+    }
+  );
   
 }
 export default AuthController;

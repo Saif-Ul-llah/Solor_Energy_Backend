@@ -388,6 +388,46 @@ class AuthServices {
       message: "Active sessions retrieved successfully"
     };
   };
+
+  /**==============================  Logout Single Device  ============================== */
+  public static logoutSingleDeviceService = async (
+    userId: string, 
+    refreshToken: string, 
+    clearFcmToken: boolean = false,
+    req?: any
+  ) => {
+    const result = await AuthRepo.logoutSingleDevice(userId, refreshToken, clearFcmToken);
+    
+    // Extract device information from request
+    const deviceInfo = req ? getDeviceInfo(req) : {
+      deviceInfo: 'Unknown Device',
+      browser: 'Unknown Browser',
+      os: 'Unknown OS',
+      userAgent: 'Unknown User Agent',
+      ip: 'Unknown IP',
+      location: 'Unknown Location'
+    };
+    
+    // Create activity log
+    await createLogs({
+      userId,
+      action: "Logout Single Device",
+      logType: LogType.USER,
+      description: `User logged out from ${deviceInfo.deviceInfo} (${deviceInfo.ip})${clearFcmToken ? ' - FCM Token Cleared' : ''}`,
+      logData: {
+        deviceInfo: deviceInfo.deviceInfo,
+        ip: deviceInfo.ip,
+        userAgent: deviceInfo.userAgent,
+        clearFcmToken,
+        remainingSessions: result.remainingSessions,
+      },
+    });
+
+    return {
+      message: result.message,
+      remainingSessions: result.remainingSessions,
+    };
+  };
 }
 
 export default AuthServices;

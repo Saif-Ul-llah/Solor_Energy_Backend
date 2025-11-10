@@ -13,6 +13,7 @@ router.post("/reset-password", checkToken, AuthController.resetPassword);
 router.post("/change-password", checkToken, AuthController.changePassword);
 router.post("/refreshToken", AuthController.refreshToken);
 router.post("/logout-all-devices", checkToken, AuthController.logoutAllDevices);
+router.post("/logout-device", checkToken, AuthController.logoutSingleDevice);
 router.get("/get-active-sessions", checkToken, AuthController.getActiveSessions);
 
 // ======================== User Management ========================
