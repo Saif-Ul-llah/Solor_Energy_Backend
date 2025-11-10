@@ -462,7 +462,7 @@ class AuthRepo {
       return [];
     }
 
-    // Get user's recent login activity from activity logs
+    // Get user's recent login activity from activity logs (only Login actions, not Logout)
     const recentLogins = await prisma.activityLog.findMany({
       where: {
         userId,
@@ -512,6 +512,50 @@ class AuthRepo {
     });
 
     return sessions;
+  }
+
+  /*===========================  Logout Single Device   =========================== */
+  public static async logoutSingleDevice(userId: string, refreshToken: string, clearFcmToken: boolean = false) {
+    // Get current refresh tokens
+    const userVerification = await prisma.userVerification.findUnique({
+      where: { userId },
+      select: { refreshToken: true },
+    });
+
+    if (!userVerification || !userVerification.refreshToken.length) {
+      throw new Error("No active sessions found");
+    }
+
+    // Check if the provided refresh token exists in the array
+    const tokenIndex = userVerification.refreshToken.indexOf(refreshToken);
+
+    if (tokenIndex === -1) {
+      throw new Error("Invalid or expired refresh token");
+    }
+
+    // Remove the specific refresh token
+    const updatedRefreshTokens = userVerification.refreshToken.filter(
+      (token) => token !== refreshToken
+    );
+
+    // Update the user verification with the new refresh token array
+    await prisma.userVerification.update({
+      where: { userId },
+      data: { refreshToken: updatedRefreshTokens },
+    });
+
+    // Clear FCM token if requested
+    if (clearFcmToken) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { fcmToken: null },
+      });
+    }
+
+    return {
+      message: "Logged out from device successfully",
+      remainingSessions: updatedRefreshTokens.length,
+    };
   }
 
   //push data to server data table

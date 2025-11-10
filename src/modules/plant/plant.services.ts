@@ -102,11 +102,18 @@ class PlantService {
     latitude: number = 0,
     longitude: number = 0
   ) => {
+    let getUser = await AuthRepo.findById(userId);
+    if (!getUser) {
+      throw HttpError.notFound("User not found");
+    }
     // 1️ Get all child installers recursively
-    const userIdsList = await PlantRepo.getChildrenRecursively(
-      userId,
-      "INSTALLER"
-    );
+    let userIdsList: any[] = await PlantRepo.getChildrenRecursively(userId, null);
+    userIdsList.push({
+      id: getUser.id,
+      email: getUser.email,
+      role: getUser.role,
+    });
+    logger("userIdsList", userIdsList);
 
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
@@ -329,7 +336,7 @@ class PlantService {
         const sn = item.sn;
         const date = new Date().toISOString().split("T")[0];
         const deviceData = await getBatteryDeviceData(sn, date);
-        return { ...deviceData, sn , ...item };
+        return { ...deviceData, sn, ...item };
       })
     );
 
@@ -405,7 +412,7 @@ class PlantService {
           generationTime: record?.time || "",
           DataTime: record?.time || "",
           capacity,
-          deviceType:  "BATTERY",
+          deviceType: "BATTERY",
           customerEmail: email,
           customerName: device?.customer?.fullName || "",
           address: device?.plant?.address || "",
