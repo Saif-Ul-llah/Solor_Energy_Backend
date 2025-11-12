@@ -179,10 +179,18 @@ class DeviceService {
     pageSize: number,
     search: string
   ) => {
+    let getUser = await AuthRepo.findById(userId);
+    if (!getUser) {
+      throw HttpError.notFound("User not found");
+    }
     //======================================= Get user list from recursive function =======================================
     // 1️ Get all child recursively
-    const userIdsList: any = await PlantRepo.getChildrenRecursively(userId, "");
-
+    let userIdsList: any = await PlantRepo.getChildrenRecursively(userId, "");
+    userIdsList.push({
+      id: getUser.id,
+      email: getUser.email,
+      role: getUser.role,
+    });
     let flatDevicesList: any[] = [];
     let ForCount: any[] = [];
 

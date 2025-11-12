@@ -113,7 +113,7 @@ class PlantService {
       email: getUser.email,
       role: getUser.role,
     });
-    logger("userIdsList", userIdsList);
+    // logger("userIdsList", userIdsList);
 
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
