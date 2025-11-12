@@ -148,7 +148,7 @@ class AuthRepo {
   ): Promise<User[]> {
     // always fetch all children regardless of role
     const children = await prisma.user.findMany({
-      where: { parentId: userId },
+      where: { parentId: userId ,IsActive: true},
       select: {
         id: true,
         email: true,
@@ -205,6 +205,7 @@ class AuthRepo {
     const children = await prisma.user.findMany({
       where: {
         parentId: userId,
+        IsActive: true,
         location: {
           ...(latitude && longitude
             ? {

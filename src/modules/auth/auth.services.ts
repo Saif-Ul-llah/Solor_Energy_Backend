@@ -110,7 +110,7 @@ class AuthServices {
   /**==============================  Login User  ============================== */
   public static loginService = async (payload: loginInterface, req?: any) => {
     const user = await AuthRepo.findByEmail(payload.email);
-    if (!user || !user.password) throw HttpError.notFound("User not found");
+    if (!user || !user.password || !user.IsActive) throw HttpError.notFound("User not found");
 
     const isMatch = await comparePass(payload.password, user.password);
     if (!isMatch) throw HttpError.unauthorized("Invalid credentials");
