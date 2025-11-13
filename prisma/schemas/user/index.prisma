@@ -5,6 +5,7 @@ model User {
     phoneNumber  String
     role         Role
     IsActive     Boolean           @default(true)
+    isDeleted    Boolean           @default(false)
     createdAt    DateTime          @default(now())
     locationId   Int?              @unique
     location     Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
