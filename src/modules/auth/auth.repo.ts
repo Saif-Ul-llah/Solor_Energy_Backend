@@ -148,7 +148,7 @@ class AuthRepo {
   ): Promise<User[]> {
     // always fetch all children regardless of role
     const children = await prisma.user.findMany({
-      where: { parentId: userId ,IsActive: true},
+      where: { parentId: userId ,isDeleted: false},
       select: {
         id: true,
         email: true,
@@ -205,7 +205,7 @@ class AuthRepo {
     const children = await prisma.user.findMany({
       where: {
         parentId: userId,
-        IsActive: true,
+        isDeleted: false,
         location: {
           ...(latitude && longitude
             ? {
@@ -524,7 +524,10 @@ class AuthRepo {
     });
 
     if (!userVerification || !userVerification.refreshToken.length) {
-      throw new Error("No active sessions found");
+      return {
+        message: "No active sessions found",
+        remainingSessions: 0,
+      };
     }
 
     // Check if the provided refresh token exists in the array

@@ -12,6 +12,7 @@ import {
   getDataForGraph,
   createLogs,
   getHybridLine,
+  getBatteryDeviceData,
 } from "../../imports";
 import DeviceRepo from "./device.repo";
 import PlantRepo from "../plant/plant.repo";
@@ -105,7 +106,7 @@ class DeviceService {
 
     // Group devices by plant AutoId and customer email to minimize API calls
     const plantDeviceMap = new Map<string, { devices: any[]; email: string }>();
-    
+
     dbDeviceList.forEach((device: any) => {
       const key = `${device.plant.AutoId}_${device.customer.email}`;
       if (!plantDeviceMap.has(key)) {
@@ -209,7 +210,7 @@ class DeviceService {
         this.fetchBatteryDevices(userIdsList),
         this.fetchInverterDevices(userIdsList),
       ]);
-      
+
       // Combine both device types
       flatDevicesList = [...batteryDevices, ...inverterDevices];
       ForCount = flatDevicesList;
@@ -280,8 +281,7 @@ class DeviceService {
         .length,
       offline: ForCount.filter((device: any) => device.status === "OFFLINE")
         .length,
-      fault: ForCount.filter((device: any) => device.status === "FAULT")
-        .length,
+      fault: ForCount.filter((device: any) => device.status === "FAULT").length,
       standby: ForCount.filter((device: any) => device.status === "STANDBY")
         .length,
     };
@@ -301,30 +301,83 @@ class DeviceService {
   public static getFlowDiagramService = async (user: any, sn: string) => {
     const device: any = await DeviceRepo.getDeviceByIdRepo(sn);
     if (!device) throw new HttpError("Device not found", "not found", 404);
+
+    if (device.deviceType === "BATTERY") {
+      let batteryData = await getBatteryDeviceData(device.sn,new Date().toISOString().split("T")[0]);
+      logger("batteryData", batteryData);
+      
+      // Extract the first record from the response
+      const record = batteryData?.result?.records?.[0];
+      
+      // Map battery data based on whether it's Low Voltage or High Voltage battery
+      const batteryPower = record?.power !== undefined 
+        ? parseFloat(record.power) || 0  // High Voltage Battery
+        : parseFloat(record?.POWER_1 || 0);  // Low Voltage Battery
+      
+      const dischargeEnergy = record?.batteryDischg !== undefined
+        ? parseFloat(record.batteryDischg) || 0  // High Voltage Battery (cumulative)
+        : parseFloat(record?.DH_TODAY || 0);  // Low Voltage Battery (today)
+      
+      const chargeEnergy = record?.batteryChg !== undefined
+        ? parseFloat(record.batteryChg) || 0  // High Voltage Battery (cumulative)
+        : parseFloat(record?.CH_TODAY || 0);  // Low Voltage Battery (today)
+      
+      const soc = record?.soc !== undefined
+        ? parseFloat(record.soc) || 0  // High Voltage Battery
+        : parseFloat(record?.SOC_1 || 0);  // Low Voltage Battery
+      
+      return {
+        Battery: batteryPower,  // Current battery power (W)
+        LoadConsumed: dischargeEnergy,  // Discharge energy
+        ChargeEnergy: chargeEnergy,  // Charge energy (additional field)
+        SOC: soc,  // State of Charge (%)
+        deviceType: device?.deviceType,
+      };
+    }
     // Get Device From third party
     const deviceDetails = await getDataForGraph(
       device.sn,
       device.customer.email
     );
-    logger("deviceDetails", deviceDetails);
-    if (!deviceDetails.status)
-      return {
-        PV: 0,
-        Grid: 0,
-        Battery: 0,
-        Generator: 0,
-        LoadConsumed: 0,
-        deviceType: device?.deviceType,
-      };
+    
+    // logger("deviceDetails", deviceDetails);
 
-    const energyFlow = {
-      PV: deviceDetails?.ACDCInfo?.Pdc[0] || 0, // First value of Pdc for Solar input power
-      Grid: deviceDetails?.gridCurrpac[1] || 0, // Grid power (currpac array)
-      Battery: deviceDetails?.fromPbat || 0, // Power discharging from the battery
-      Generator: deviceDetails?.genCurrpac[1] || 0, // Generator power (currpac array)
-      LoadConsumed: deviceDetails?.loadCurrpac[1] || 0, // Load power consumption (currpac array)
+    // Check if Generator Port is enabled (Register 0x2122 / 8482)
+    // Read register 2122 to check if generator is enabled
+    let isGeneratorEnabled = false;
+    try {
+      const { readInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+      const generatorPortData = await readInverterModbusRegisters(
+        device.sn,
+        device.customer.email,
+        ["2122"] // 0x2122 = GEN Port register
+      );
+      
+      // Check if Generator Port register value is 1 (Generator mode)
+      const genPortValue = generatorPortData?.data?.["Generator Setting"]?.["GEN Port"]?.value;
+      isGeneratorEnabled = genPortValue === 1;
+      
+      logger(`🔌 Generator Port Check for ${device.sn}: ${isGeneratorEnabled ? 'ENABLED (value=1)' : 'DISABLED (value=' + genPortValue + ')'}`);
+    } catch (error) {
+      logger("⚠️ Could not read Generator Port register, assuming disabled");
+      isGeneratorEnabled = false;
+    }
+
+    // Build energy flow object
+    const energyFlow: any = {
+      PV: parseFloat(deviceDetails?.ACDCInfo?.Pdc[0] || 0), // First value of Pdc for Solar input power
+      Grid: parseFloat(deviceDetails?.gridCurrpac[1] || 0), // Grid power (currpac array)
+      Battery: parseFloat(deviceDetails?.fromPbat || 0), // Power discharging from the battery
+      LoadConsumed: parseFloat(deviceDetails?.loadCurrpac[1] || 0), // Load power consumption (currpac array)
       deviceType: device?.deviceType,
     };
+
+    // Only include Generator if it's enabled (register 2122 = 1)
+    if (isGeneratorEnabled) {
+      energyFlow.Generator = parseFloat(deviceDetails?.genCurrpac[1] || 0);
+    }
 
     // Return filtered and mapped data
     return energyFlow;
@@ -530,6 +583,265 @@ class DeviceService {
       logger("❌ Error processing Modbus write callback:", error);
       // Don't throw - we still need to return "success" to vendor
       return { success: false, error: error.message };
+    }
+  };
+
+  // Get Complete Generator Data (Settings + Runtime)
+  public static getGeneratorStatusService = async (
+    sn: string,
+    memberId: string
+  ) => {
+    try {
+      const { readInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+      
+      // Read all generator-related registers
+      const generatorRegisters = [
+        // Settings
+        "2122", "2156", "2157", "2158", "2159", "215A", "215B", "215C", "215D", "215E",
+        // Runtime Data
+        "136A", "136B", "136D", "136F", "1370", "1372", "1374", "1375", "1377",
+        "1379", "137A", "137C",
+        // Summary Data
+        "13C4", "13C6", "13C8", "13CA", "13CC", "13CE", "13D0", "13D2"
+      ];
+      
+      const generatorData = await readInverterModbusRegisters(
+        sn,
+        memberId,
+        generatorRegisters
+      );
+
+      const settings = generatorData?.data?.["Generator Setting"] || {};
+      const runtime = generatorData?.data?.["Generator Runtime"] || {};
+      const summary = generatorData?.data?.["Generator Summary"] || {};
+
+      // Extract key values
+      const genPort = settings?.["GEN Port"]?.value ?? 0;
+      const genForce = settings?.["Generator Dry force ON/OFF"]?.value ?? 0;
+      const startSOC = settings?.["Start When SOC Below"]?.value ?? 0;
+      const stopSOC = settings?.["Stop When SOC Reaches"]?.value ?? 0;
+      const powerOutput = settings?.["Power Output"]?.value ?? 0;
+      const voltageOutput = settings?.["Voltage Output"]?.value ?? 0;
+      const capacity = settings?.["Capacity"]?.value ?? 0;
+      const frequency = settings?.["Frequency"]?.value ?? 0;
+
+      const isPortGenerator = genPort === 1;
+      const isNotForcedOff = genForce !== 2;
+      const isEnabled = isPortGenerator && isNotForcedOff;
+
+      return {
+        enabled: isEnabled,
+        basicInfo: {
+          powerOutput: powerOutput,
+          voltageOutput: voltageOutput,
+          capacity: capacity,
+          frequency: frequency,
+          fuelType: "Diesel", // Could be made configurable
+        },
+        socSetting: {
+          startWhenSOCBelow: startSOC,
+          stopWhenSOCReaches: stopSOC,
+          startTime: settings?.["Start Time (Manual Mode)"]?.value ?? null,
+          runDuration: settings?.["Run Duration (Manual Start)"]?.value ?? null,
+        },
+        genPort: {
+          value: genPort,
+          description: ["Disable", "Generator Input", "Smart Load", "Inverter Input"][genPort] || "Unknown",
+        },
+        genForce: {
+          value: genForce,
+          description: ["Auto", "On", "Off"][genForce] || "Unknown",
+        },
+        runtime: {
+          frequency: runtime?.["Generator frequency"]?.value ?? 0,
+          todayEnergy: runtime?.["Generator today energy"]?.value ?? 0,
+          totalEnergy: runtime?.["Generator total energy"]?.value ?? 0,
+          todayRuntime: "2h 50m", // This could be calculated from energy/power
+          phases: {
+            L1: {
+              voltage: runtime?.["L1 phase voltage"]?.value ?? 0,
+              current: runtime?.["L1 phase current"]?.value ?? 0,
+              power: runtime?.["L1 phase power"]?.value ?? 0,
+            },
+            L2: {
+              voltage: runtime?.["L2 phase voltage"]?.value ?? 0,
+              current: runtime?.["L2 phase current"]?.value ?? 0,
+              power: runtime?.["L2 phase power"]?.value ?? 0,
+            },
+            L3: {
+              voltage: runtime?.["L3 phase voltage"]?.value ?? 0,
+              current: runtime?.["L3 phase current"]?.value ?? 0,
+              power: runtime?.["L3 phase power"]?.value ?? 0,
+            },
+          },
+        },
+        summary: {
+          phaseL1WattSum: summary?.["Phase L1 watt sum"]?.value ?? 0,
+          phaseL2WattSum: summary?.["Phase L2 watt sum"]?.value ?? 0,
+          phaseL3WattSum: summary?.["Phase L3 watt sum"]?.value ?? 0,
+          phaseL1ApparentPowerSum: summary?.["Phase L1 apparent power sum"]?.value ?? 0,
+          phaseL2ApparentPowerSum: summary?.["Phase L2 apparent power sum"]?.value ?? 0,
+          phaseL3ApparentPowerSum: summary?.["Phase L3 apparent power sum"]?.value ?? 0,
+          todayEnergySum: summary?.["Generator today energy sum"]?.value ?? 0,
+          totalEnergySum: summary?.["Generator total energy sum"]?.value ?? 0,
+        },
+        status: isEnabled 
+          ? "Generator is ENABLED and operational" 
+          : !isPortGenerator 
+          ? `Generator port not configured (current: ${["Disable", "Generator Input", "Smart Load", "Inverter Input"][genPort]})` 
+          : "Generator is forced OFF",
+      };
+    } catch (error: any) {
+      logger("Error getting generator status:", error);
+      throw new HttpError(
+        "Failed to get generator status",
+        "internal-server-error",
+        500
+      );
+    }
+  };
+
+  // Control Generator
+  public static controlGeneratorService = async (
+    sn: string,
+    memberId: string,
+    mode: number, // 0: Auto, 1: On, 2: Off
+    user: User
+  ) => {
+    try {
+      const { writeInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+
+      // Write to Generator Dry force ON/OFF register (2156)
+      const result = await writeInverterModbusRegisters(
+        sn,
+        memberId,
+        { "2156": mode }
+      );
+
+      // Log the action
+      await createLogs({
+        userId: user.id,
+        action: "GENERATOR_CONTROL",
+        logType: LogType.MODBUS_WRITE_REGISTERS,
+        description: `Generator control set to ${["Auto", "On", "Off"][mode]} for device ${sn}`,
+        logData: {
+          sn,
+          memberId,
+          register: "2156",
+          mode,
+          modeDescription: ["Auto", "On", "Off"][mode],
+        },
+      });
+
+      return {
+        ...result,
+        mode,
+        modeDescription: ["Auto", "On", "Off"][mode],
+        message: `Generator ${["Auto", "On", "Off"][mode]} command sent. Result will arrive via callback.`,
+      };
+    } catch (error: any) {
+      logger("Error controlling generator:", error);
+      throw new HttpError(
+        "Failed to control generator",
+        "internal-server-error",
+        500
+      );
+    }
+  };
+
+  // Update Generator Settings (SOC, Power, etc.)
+  public static updateGeneratorSettingsService = async (
+    sn: string,
+    memberId: string,
+    settings: {
+      startWhenSOCBelow?: number;
+      stopWhenSOCReaches?: number;
+      startTime?: string;
+      runDuration?: number;
+      powerOutput?: number;
+      voltageOutput?: number;
+      capacity?: number;
+      frequency?: number;
+    },
+    user: User
+  ) => {
+    try {
+      const { writeInverterModbusRegisters } = await import(
+        "../../helpers/thirdParty"
+      );
+
+      // Build register values object
+      const registerValues: Record<string, number | string> = {};
+
+      if (settings.startWhenSOCBelow !== undefined) {
+        registerValues["2157"] = settings.startWhenSOCBelow;
+      }
+      if (settings.stopWhenSOCReaches !== undefined) {
+        registerValues["2158"] = settings.stopWhenSOCReaches;
+      }
+      if (settings.startTime !== undefined) {
+        registerValues["2159"] = settings.startTime;
+      }
+      if (settings.runDuration !== undefined) {
+        registerValues["215A"] = settings.runDuration;
+      }
+      if (settings.powerOutput !== undefined) {
+        // Convert kW to raw (multiply by 10)
+        registerValues["215B"] = Math.round(settings.powerOutput * 10);
+      }
+      if (settings.voltageOutput !== undefined) {
+        // Convert V to raw (multiply by 10)
+        registerValues["215C"] = Math.round(settings.voltageOutput * 10);
+      }
+      if (settings.capacity !== undefined) {
+        // Convert kWh to raw (multiply by 10)
+        registerValues["215D"] = Math.round(settings.capacity * 10);
+      }
+      if (settings.frequency !== undefined) {
+        // Convert Hz to raw (multiply by 100)
+        registerValues["215E"] = Math.round(settings.frequency * 100);
+      }
+
+      if (Object.keys(registerValues).length === 0) {
+        throw new Error("No settings provided to update");
+      }
+
+      const result = await writeInverterModbusRegisters(
+        sn,
+        memberId,
+        registerValues
+      );
+
+      // Log the action
+      await createLogs({
+        userId: user.id,
+        action: "GENERATOR_SETTINGS_UPDATE",
+        logType: LogType.MODBUS_WRITE_REGISTERS,
+        description: `Generator settings updated for device ${sn}`,
+        logData: {
+          sn,
+          memberId,
+          settings,
+          registers: registerValues,
+        },
+      });
+
+      return {
+        ...result,
+        updatedSettings: settings,
+        message: "Generator settings update command sent. Result will arrive via callback.",
+      };
+    } catch (error: any) {
+      logger("Error updating generator settings:", error);
+      throw new HttpError(
+        "Failed to update generator settings",
+        "internal-server-error",
+        500
+      );
     }
   };
 
