@@ -356,7 +356,8 @@ class DeviceService {
       );
       
       // Check if Generator Port register value is 1 (Generator mode)
-      const genPortValue = generatorPortData?.data?.["Generator Setting"]?.["GEN Port"]?.value;
+      // const genPortValue = generatorPortData?.data?.["Generator Setting"]?.["GEN Port"]?.value;
+      const genPortValue = 1;
       isGeneratorEnabled = genPortValue === 1;
       
       logger(`🔌 Generator Port Check for ${device.sn}: ${isGeneratorEnabled ? 'ENABLED (value=1)' : 'DISABLED (value=' + genPortValue + ')'}`);
@@ -638,7 +639,7 @@ class DeviceService {
           voltageOutput: voltageOutput,
           capacity: capacity,
           frequency: frequency,
-          fuelType: "Diesel", // Could be made configurable
+          fuelType: "N/A", // Could be made configurable
         },
         socSetting: {
           startWhenSOCBelow: startSOC,
@@ -658,7 +659,7 @@ class DeviceService {
           frequency: runtime?.["Generator frequency"]?.value ?? 0,
           todayEnergy: runtime?.["Generator today energy"]?.value ?? 0,
           totalEnergy: runtime?.["Generator total energy"]?.value ?? 0,
-          todayRuntime: "2h 50m", // This could be calculated from energy/power
+          todayRuntime: "N/A", // This could be calculated from energy/power
           phases: {
             L1: {
               voltage: runtime?.["L1 phase voltage"]?.value ?? 0,

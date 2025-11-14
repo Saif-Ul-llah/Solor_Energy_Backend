@@ -1,5 +1,6 @@
 import { dotenv } from "./../imports";
-dotenv.config();
+// Don't override existing environment variables (important for Docker)
+dotenv.config({ override: false });
 
 interface AppConfig {
   port: number;

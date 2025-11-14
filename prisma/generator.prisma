@@ -1,5 +1,5 @@
 generator client {
   provider = "prisma-client-js"
   previewFeatures = ["multiSchema"]
-
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
