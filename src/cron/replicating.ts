@@ -16,7 +16,7 @@ import AuthRepo from "../modules/auth/auth.repo";
 // Runs every 5 minutes (server time)
 // cron.schedule("*/5 * * * *", async () => {
 
-// Runs every day at midnight (server time)
+// for pulling data from third party Runs every day at midnight (server time)
 cron.schedule("0 0 * * *", async () => {
   // cron.schedule("* * * * *", async () => {
   logger(
@@ -69,7 +69,7 @@ cron.schedule("0 0 * * *", async () => {
   }
 });
 
-// for running on every minute
+// for pulling data from third party for Inverters running on every day at midnight
 cron.schedule("0 0 * * *", async () => {
   logger(
     "=======================[CRON] Pulling data from third party...=======================\n"
@@ -150,8 +150,8 @@ cron.schedule("0 0 * * *", async () => {
   );
 });
 
-//  for running on every 5 minutes
-cron.schedule("* * * * *", async () => {
+//  for running on every 5 minutes Inverters
+cron.schedule("*/5 * * * *", async () => {
   logger(
     "=======================[CRON] Checking Plant Alarms =======================\n"
   );
@@ -217,7 +217,7 @@ cron.schedule("* * * * *", async () => {
 });
 
 // Same For Battery Status
-cron.schedule("* * * * *", async () => {
+cron.schedule("*/5 * * * *", async () => {
   try {
     logger(
       "=======================[CRON] Checking Battery Status =======================\n"
