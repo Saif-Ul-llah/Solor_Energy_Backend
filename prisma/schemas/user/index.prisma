@@ -1,0 +1,123 @@
+model User {
+    id           String            @id @default(uuid())
+    email        String            @unique
+    password     String?
+    phoneNumber  String
+    role         Role
+    IsActive     Boolean           @default(true)
+    createdAt    DateTime          @default(now())
+    locationId   Int?              @unique
+    location     Location?         @relation(fields: [locationId], references: [id], onDelete: Cascade)
+    fullName     String
+    address      String?
+    fcmToken     String?
+    imageUrl     String?
+    TFA_enabled  Boolean           @default(false)
+    verification UserVerification?
+    customer     Plant[]           @relation("customer")
+    installer    Plant[]           @relation("installer")
+    language     String
+
+    allowPlantCreation  Boolean @default(true)
+    allowUserCreation   Boolean @default(true)
+    allowDeviceCreation Boolean @default(true)
+
+    allowDeviceAlerts   Boolean @default(true)
+    allowFirmwareAlerts Boolean @default(true)
+    allowLoginAlerts    Boolean @default(true)
+
+    parentId           String?
+    parent             User?                @relation("UserHierarchy", fields: [parentId], references: [id])
+    children           User[]               @relation("UserHierarchy")
+    device             Device[]             @relation("customer")
+    activity           ActivityLog[]
+    notifications      Notification[]
+    firmware           Firmware[]
+    ThirdPartyUserData ThirdPartyUserData[]
+
+    @@schema("user")
+}
+
+model UserVerification {
+    id                Int                @id @default(autoincrement())
+    userId            String             @unique
+    resetOtp          Int?
+    resetOtpExpiresAt DateTime?
+    isEmailVerified   VerificationStatus @default(NOT_VERIFIED)
+    refreshToken      String[]
+    user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@schema("user")
+}
+
+enum Role {
+    ADMIN
+    SUB_ADMIN
+    DISTRIBUTOR
+    INSTALLER
+    CUSTOMER
+
+    @@schema("user")
+}
+
+enum VerificationStatus {
+    VERIFIED
+    NOT_VERIFIED
+
+    @@schema("user")
+}
+
+model ActivityLog {
+    id          String   @id @default(uuid())
+    userId      String?
+    user        User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+    action      String
+    description String?
+    createdAt   DateTime @default(now())
+    logType     LogType  @default(USER)
+    logData     Json?
+
+    @@schema("user")
+}
+
+enum LogType {
+    MODBUS_WRITE_REGISTERS
+    USER
+    DEVICE
+    PLANT
+    FIRMWARE
+    NOTIFICATION
+
+    @@schema("user")
+}
+
+model Notification {
+    id        String   @id @default(uuid())
+    userId    String
+    user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    title     String
+    message   String
+    createdAt DateTime @default(now())
+
+    @@schema("user")
+}
+
+model ThirdPartyUserData {
+    id               Int       @id @default(autoincrement())
+    MemberID         String
+    user             User?     @relation(fields: [MemberID], references: [email], onDelete: Cascade)
+    MemberStateCount Int[]
+    currentPower     Float     @default(0)
+    todayGeneration  Float     @default(0)
+    totalGeneration  Float     @default(0)
+    Kwp              Float?
+    CreateTime       DateTime?
+    Sign             String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([MemberID])
+    @@index([Sign])
+    @@schema("user")
+}

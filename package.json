@@ -1,0 +1,51 @@
+{
+  "name": "ts",
+  "version": "1.0.0",
+  "description": "",
+  "type": "commonjs",
+  "main": "app.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node dist/app.js",
+    "build": "tsc",
+    "dev": "cross-env PORT=5001 nodemon --watch src --ext ts --exec ts-node src/app.ts",
+    "build:schema": "ts-node prisma/build-schema.ts",
+    "st": "prisma studio",
+    "gen": "npm run build:schema && prisma generate",
+    "mig": "prisma migrate dev"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@prisma/client": "^6.7.0",
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
+    "cloudinary": "^2.7.0",
+    "cors": "^2.8.5",
+    "csv-stringify": "^6.6.0",
+    "dotenv": "^16.5.0",
+    "exceljs": "^4.4.0",
+    "express": "^5.1.0",
+    "firebase-admin": "^13.4.0",
+    "fs-extra": "^11.3.2",
+    "joi": "^18.0.1",
+    "multer": "^2.0.2",
+    "node-cron": "^4.2.1",
+    "nodemailer": "^7.0.3",
+    "nodemon": "^3.1.10",
+    "path": "^0.12.7",
+    "socket.io": "^4.8.1",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^5.0.2",
+    "@types/express": "^5.0.1",
+    "@types/fs-extra": "^11.0.4",
+    "@types/multer": "^2.0.0",
+    "@types/nodemailer": "^6.4.17",
+    "cross-env": "^10.1.0",
+    "prisma": "^6.18.0",
+    "typescript": "^5.8.3"
+  }
+}

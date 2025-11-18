@@ -1,0 +1,50 @@
+model Plant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  customerId String
+  customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  installerId String
+  installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
+
+  name               String    @unique
+  plantType          PlantType
+  capacity           Int
+  region             String
+  locationId         Int       @unique
+  location           Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  tariff             Float
+  timeZone           String?
+  address            String
+  currency           String    @default("USD")
+  installationDate   DateTime  @default(now())
+  gridConnectionType String?
+  gridConnectionDate DateTime?
+  notes              String?
+  imagesNotes        String?
+  plantProfile       String?
+  plantImage         Media[]
+  AutoId             String    @unique
+  device             Device[]  @relation("plant")
+
+  @@schema("public")
+}
+
+enum PlantType {
+  Grid
+  Grid_Meter
+  Hybrid
+
+  @@schema("public")
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  file_url  String
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
