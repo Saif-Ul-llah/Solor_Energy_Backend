@@ -11,10 +11,9 @@ definitions:
         - apt-get install -y openssh-client
 
         - BASE_CMD="cd /data/services/backend/scaron-backend"
-        - SSH_CMD="ssh -o StrictHostKeyChecking=no -i prog-stage.pem administrator@$MACHINE_IP_PROG"
+        - SSH_CMD="ssh -p 2222 -o StrictHostKeyChecking=no -i prog-stage.pem administrator@$MACHINE_IP_PROG"
 
         - $SSH_CMD "$BASE_CMD && git fetch origin && git reset --hard origin/devops"
-
         - $SSH_CMD "$BASE_CMD && docker-compose down && docker-compose up --build -d"
 
 pipelines:
