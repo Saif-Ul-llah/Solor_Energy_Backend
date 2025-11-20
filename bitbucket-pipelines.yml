@@ -1,0 +1,23 @@
+definitions:
+  steps:
+    deploy-to-stage: &deploy-to-stage
+      name: Deploy to Stage
+      image: ubuntu:22.04
+      script:
+        - echo "$PEM_KEY_PROG" | base64 --decode > prog-stage.pem
+        - chmod 400 prog-stage.pem
+
+        - apt-get update
+        - apt-get install -y openssh-client
+
+        - BASE_CMD="cd /data/services/backend/scaron-backend"
+        - SSH_CMD="ssh -o StrictHostKeyChecking=no -i prog-stage.pem administrator@$MACHINE_IP_PROG"
+
+        - $SSH_CMD "$BASE_CMD && git fetch origin && git reset --hard origin/devops"
+
+        - $SSH_CMD "$BASE_CMD && docker-compose down && docker-compose up --build -d"
+
+pipelines:
+  branches:
+    devops:
+      - step: *deploy-to-stage
