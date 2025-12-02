@@ -377,7 +377,7 @@ export const insertInverterInfo = async (
 
   try {
     const response: AxiosResponse<ApiResponse> = await axios.request(config);
-    // logger("response", response);
+    logger("response", response.data);
     return response.data;
   } catch (error) {
     console.error("Error inserting inverter info:", error);
