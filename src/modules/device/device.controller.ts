@@ -37,7 +37,7 @@ class DeviceController {
           "success"
         );
       }
-      return sendResponse(res, 200, "Failed to bind device to plant on cloud platform", [], "failed");
+      return sendResponse(res, 409, "Failed to bind device to plant on cloud platform", [], "failed");
     }
   );
   // Get Device By Sn
