@@ -3,6 +3,8 @@ import { createServer } from "http";
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import "./cron/replicating";
+import 'dotenv/config';
+
 export const app = express();
 const httpServer = createServer(app);
 export const io = new Server(httpServer);
