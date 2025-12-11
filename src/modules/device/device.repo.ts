@@ -145,6 +145,15 @@ class DeviceRepo {
     });
     return deviceList;
   }
+
+  // Get Device List By Plant's AutoId
+  public static async getDeviceListByPlantAutoIdRepo(plantAutoId: string) {
+    const deviceList = await prisma.device.findMany({
+      where: { plantId: plantAutoId, deviceType: "INVERTER" },
+    });
+    if (!deviceList || deviceList.length === 0) return [];
+    return deviceList;
+  }
 }
 
 export default DeviceRepo;

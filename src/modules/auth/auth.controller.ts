@@ -293,7 +293,7 @@ class AuthController {
       if (!userId) return next(HttpError.badRequest("User ID is required"));
       const user = await AuthServices.updateUserService({
         userId,
-        IsActive: false,
+        isDeleted: true,
       });
       return sendResponse(
         res,

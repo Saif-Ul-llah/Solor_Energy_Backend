@@ -19,6 +19,11 @@ router.get("/modbus/register-map", checkToken, DeviceController.getModbusRegiste
 router.get("/modbus/:sn/:memberId/read", checkToken, DeviceController.readModbusRegisters);
 router.post("/modbus/:sn/:memberId/write", checkToken, DeviceController.writeModbusRegisters);
 
+// Generator Control Routes
+router.get("/generator/:sn/:memberId/status", checkToken, DeviceController.getGeneratorStatus);
+router.post("/generator/:sn/:memberId/control", checkToken, DeviceController.controlGenerator);
+router.put("/generator/:sn/:memberId/settings", checkToken, DeviceController.updateGeneratorSettings);
+
 // Modbus Write Callback (NO auth - called by vendor)
 router.post("/modbus/callback/write-result", DeviceController.modbusWriteCallback);
 
@@ -27,6 +32,9 @@ router.post("/deviceReport", checkToken, DeviceController.deviceReport);
 router.get("/deviceReport/export", checkToken, DeviceController.deviceReportExport);
 
 router.get("/deviceOverview", checkToken, DeviceController.deviceOverview);
+
+//Generator Flow implementation
+// router.get("/")
 
 export default router;
     
