@@ -1,3 +1,141 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["user", "public"]
+}
+
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["multiSchema"]
+
+}
+model Device {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  customerId           String
+  customer             User                   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+  plantId              String
+  plant                Plant                  @relation("plant", fields: [plantId], references: [id], onDelete: Cascade)
+  sn                   String                 @unique
+  deviceType           DeviceType
+  ThirdPartyDeviceData ThirdPartyDeviceData[]
+
+  @@schema("public")
+}
+
+enum DeviceType {
+  BATTERY
+  INVERTER
+
+  @@schema("public")
+}
+
+model Firmware {
+  id          Int        @id @default(autoincrement())
+  name        String
+  version     String     @unique
+  deviceType  DeviceType
+  url         String
+  releaseDate DateTime   @default(now())
+  releaseNote String?
+  userId      String
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@schema("user")
+}
+
+model ThirdPartyDeviceData {
+  id              Int          @id @default(autoincrement())
+  AutoID          String
+  sn              String
+  device          Device?      @relation(fields: [sn], references: [sn], onDelete: Cascade)
+  status          DeviceStatus
+  currentPower    Float
+  todayGeneration Float
+  totalGeneration Float
+  generationTime  Float
+  DataTime        DateTime
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([AutoID])
+  @@index([sn])
+  @@schema("public")
+}
+
+enum DeviceStatus {
+  ONLINE
+  OFFLINE
+  FAULT
+  STANDBY
+  UNKNOWN
+
+  @@schema("public")
+}
+
+model Location {
+    id          Int           @id @default(autoincrement())
+    latitude    Float
+    longitude   Float
+    user        User?         @relation
+    createdAt   DateTime      @default(now())
+    updatedAt   DateTime      @updatedAt
+    plants      Plant[]
+    @@schema("public")
+}
+
+model Plant {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  customerId String
+  customer   User   @relation("customer", fields: [customerId], references: [id], onDelete: Cascade)
+
+  installerId String
+  installer   User   @relation("installer", fields: [installerId], references: [id], onDelete: Cascade)
+
+  name               String    @unique
+  plantType          PlantType
+  capacity           Int
+  region             String
+  locationId         Int       @unique
+  location           Location  @relation(fields: [locationId], references: [id], onDelete: Cascade)
+  tariff             Float
+  timeZone           String?
+  address            String
+  currency           String    @default("USD")
+  installationDate   DateTime  @default(now())
+  gridConnectionType String?
+  gridConnectionDate DateTime?
+  notes              String?
+  imagesNotes        String?
+  plantProfile       String?
+  plantImage         Media[]
+  AutoId             String    @unique
+  device             Device[]  @relation("plant")
+
+  @@schema("public")
+}
+
+enum PlantType {
+  Grid
+  Grid_Meter
+  Hybrid
+
+  @@schema("public")
+}
+
+model Media {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  file_url  String
+  plantId   String
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+
+  @@schema("public")
+}
+
 model User {
     id           String            @id @default(uuid())
     email        String            @unique
@@ -122,3 +260,4 @@ model ThirdPartyUserData {
     @@index([Sign])
     @@schema("user")
 }
+

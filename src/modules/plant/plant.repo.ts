@@ -52,7 +52,7 @@ class PlantRepo {
   ): Promise<String[]> {
     // always fetch all children regardless of role
     const children = await prisma.user.findMany({
-      where: { parentId: userId },
+      where: { parentId: userId ,IsActive: true},
       select: {
         role: true,
         id: true,

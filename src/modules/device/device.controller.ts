@@ -37,7 +37,7 @@ class DeviceController {
           "success"
         );
       }
-      return sendResponse(res, 200, "Failed to bind device to plant on cloud platform", [], "failed");
+      return sendResponse(res, 409, "Failed to bind device to plant on cloud platform", [], "failed");
     }
   );
   // Get Device By Sn
@@ -340,6 +340,97 @@ class DeviceController {
 
       // IMPORTANT: Vendor requires lowercase "success" string response
       res.status(200).send("success");
+    }
+  );
+
+  // Get Generator Status
+  public static getGeneratorStatus = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn, memberId } = req.params;
+
+      if (!sn) {
+        return next(HttpError.missingParameters("Serial Number is required!"));
+      }
+
+      const status = await DeviceServices.getGeneratorStatusService(
+        sn,
+        memberId as string
+      );
+
+      return sendResponse(
+        res,
+        200,
+        "Generator status retrieved successfully",
+        status,
+        "success"
+      );
+    }
+  );
+
+  // Control Generator (ON/OFF/AUTO)
+  public static controlGenerator = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn, memberId } = req.params;
+      const { mode } = req.body; // 0: Auto, 1: On, 2: Off
+
+      if (!sn) {
+        return next(HttpError.missingParameters("Serial Number is required!"));
+      }
+
+      if (mode === undefined || ![0, 1, 2].includes(Number(mode))) {
+        return next(
+          HttpError.badRequest("Mode must be 0 (Auto), 1 (On), or 2 (Off)")
+        );
+      }
+
+      const result = await DeviceServices.controlGeneratorService(
+        sn,
+        memberId as string,
+        Number(mode),
+        user
+      );
+
+      return sendResponse(
+        res,
+        200,
+        `Generator control command sent (mode=${mode})`,
+        result,
+        "success"
+      );
+    }
+  );
+
+  // Update Generator Settings
+  public static updateGeneratorSettings = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction) => {
+      const user = req.user;
+      const { sn, memberId } = req.params;
+      const settings = req.body;
+
+      if (!sn) {
+        return next(HttpError.missingParameters("Serial Number is required!"));
+      }
+
+      if (!settings || Object.keys(settings).length === 0) {
+        return next(HttpError.badRequest("At least one setting must be provided"));
+      }
+
+      const result = await DeviceServices.updateGeneratorSettingsService(
+        sn,
+        memberId as string,
+        settings,
+        user
+      );
+
+      return sendResponse(
+        res,
+        200,
+        "Generator settings update command sent",
+        result,
+        "success"
+      );
     }
   );
 

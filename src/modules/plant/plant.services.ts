@@ -19,6 +19,7 @@ import {
 } from "../../imports";
 import PlantRepo from "./plant.repo";
 import AuthRepo from "./../auth/auth.repo";
+import DeviceRepo from "../device/device.repo";
 dotenv.config();
 
 class PlantService {
@@ -113,7 +114,7 @@ class PlantService {
       email: getUser.email,
       role: getUser.role,
     });
-    logger("userIdsList", userIdsList);
+    // logger("userIdsList", userIdsList);
 
     // 2 Build installer email list
     const memberIds = userIdsList.map((child: any) => child.email);
@@ -289,6 +290,11 @@ class PlantService {
     email: string,
     plantId: string
   ) => {
+    // Get plant's inverters list from our database
+    const inverters = await DeviceRepo.getDeviceListByPlantAutoIdRepo(plantId);
+
+    if (!inverters || inverters.length === 0) return [];
+
     const InverterList: any = await InvertersOfPlant(email, plantId);
     if (
       !InverterList ||
@@ -297,31 +303,41 @@ class PlantService {
     ) {
       return [];
     }
-    let filtered = InverterList.AllInverterList.map((device: any) => ({
-      currentPower: device?.CurrPac || 0,
-      AutoID: device?.AutoID || "0",
-      status:
-        device?.Light === 1
-          ? "ONLINE"
-          : device?.Light == 2
-          ? "FAULT"
-          : device?.Light == 3
-          ? "STANDBY"
-          : device?.Light == 4
-          ? "OFFLINE"
-          : "UNKNOWN",
-      GoodsID: device?.GoodsID || "",
-      ModelName: device?.ModelName || "",
-      GoodsName: device?.GoodsName || "",
-      todayYield: device?.EToday || 0,
-      totalYield: device?.ETotal || 0,
-      generationTime: device?.Htotal || "",
-      DataTime: device?.DataTime || "",
-      capacity: device?.Capacity || 0,
-      deviceType: device?.DeviceType || "GRID",
-      customerEmail: email,
-    }));
 
+    // Create a Set of SNs from our database for efficient matching
+    const inverterSns = new Set(inverters.map((inv: any) => inv.sn));
+
+    // Filter and map only matching records where GoodsID matches sn
+    let filtered = InverterList.AllInverterList
+      .filter((device: any) => {
+        const goodsID = device?.GoodsID || "";
+        return inverterSns.has(goodsID);
+      })
+      .map((device: any) => ({
+        currentPower: device?.CurrPac || 0,
+        AutoID: device?.AutoID || "0",
+        status:
+          device?.Light === 1
+            ? "ONLINE"
+            : device?.Light == 2
+            ? "FAULT"
+            : device?.Light == 3
+            ? "STANDBY"
+            : device?.Light == 4
+            ? "OFFLINE"
+            : "UNKNOWN",
+        GoodsID: device?.GoodsID || "",
+        ModelName: device?.ModelName || "",
+        GoodsName: device?.GoodsName || "",
+        todayYield: device?.EToday || 0,
+        totalYield: device?.ETotal || 0,
+        generationTime: device?.Htotal || "",
+        DataTime: device?.DataTime || "",
+        capacity: device?.Capacity || 0,
+        deviceType: device?.DeviceType || "GRID",
+        customerEmail: email,
+      }));
+// logger("filtered", filtered);
     return filtered;
   };
 
